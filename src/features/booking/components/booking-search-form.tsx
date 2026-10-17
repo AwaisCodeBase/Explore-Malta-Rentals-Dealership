@@ -65,6 +65,7 @@ import {
   BOOKING_TIME_SLOTS,
   nextBookingSlotWithinHours,
 } from "@/features/booking/lib/time-slots";
+import { BookingAddressField } from "@/features/booking/components/booking-address-field";
 import { TimeSlotSelect } from "@/features/booking/components/time-slot-select";
 import { buildVehiclesSearchUrl } from "@/features/booking/lib/build-vehicles-url";
 import type { EngineCcFilter } from "@/features/vehicles/lib/booking-search-params";
@@ -100,9 +101,6 @@ const fieldIconClass = "h-4 w-4 shrink-0 text-[var(--orange-500)]";
 
 const changeAffordanceClass =
   "type-spec shrink-0 text-[var(--text-muted)] transition-colors duration-[var(--dur-fast)] group-hover:text-[var(--ink-800)]";
-
-const textareaClass =
-  "mt-1.5 w-full min-h-[3.5rem] rounded-[var(--r-field)] border border-[var(--line)] bg-[var(--surface-card)] px-3 py-2 text-sm leading-relaxed text-[var(--ink-900)] shadow-[var(--elev-1)] outline-none transition-[border-color,box-shadow] duration-[var(--dur-fast)] ease-[var(--ease-standard)] placeholder:text-[var(--ink-400)] hover:border-[var(--line-strong)] focus:border-[var(--blue-500)] focus:ring-2 focus:ring-[var(--blue-500)]/25 sm:mt-2 sm:min-h-[5rem] sm:px-3.5 sm:py-2.5";
 
 /* ── Quick-link chips (50cc / 125cc / services) ─────────────────────────────
    The hero variant sits on dark photography, so it uses a glass treatment;
@@ -780,13 +778,19 @@ export function BookingSearchForm({
               <label htmlFor="alternate-pickup-address" className={fieldLabelClass}>
                 {tSearch("exactPickupLabel")}
               </label>
-              <textarea
-                id="alternate-pickup-address"
-                placeholder={tSearch("addressPlaceholder")}
-                className={`${textareaClass} ${
-                  errors.alternatePickupAddress ? inputShellErrorClass : ""
-                }`}
-                {...register("alternatePickupAddress")}
+              <Controller
+                name="alternatePickupAddress"
+                control={control}
+                render={({ field }) => (
+                  <BookingAddressField
+                    id="alternate-pickup-address"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    placeholder={tSearch("addressPlaceholder")}
+                    hasError={Boolean(errors.alternatePickupAddress)}
+                  />
+                )}
               />
               {errors.alternatePickupAddress ? (
                 <p className={fieldErrorClass}>{errors.alternatePickupAddress.message}</p>
@@ -806,13 +810,19 @@ export function BookingSearchForm({
               <label htmlFor="dropoff-address" className={fieldLabelClass}>
                 {tSearch("exactDropoffLabel")}
               </label>
-              <textarea
-                id="dropoff-address"
-                placeholder={tSearch("addressPlaceholder")}
-                className={`${textareaClass} ${
-                  errors.dropoffAddress ? inputShellErrorClass : ""
-                }`}
-                {...register("dropoffAddress")}
+              <Controller
+                name="dropoffAddress"
+                control={control}
+                render={({ field }) => (
+                  <BookingAddressField
+                    id="dropoff-address"
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    placeholder={tSearch("addressPlaceholder")}
+                    hasError={Boolean(errors.dropoffAddress)}
+                  />
+                )}
               />
               {errors.dropoffAddress ? (
                 <p className={fieldErrorClass}>{errors.dropoffAddress.message}</p>

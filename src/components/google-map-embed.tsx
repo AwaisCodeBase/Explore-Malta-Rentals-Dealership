@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { SITE_GOOGLE_MAPS_URL } from "@/lib/site-brand-copy";
 
@@ -15,23 +16,48 @@ type GoogleMapEmbedProps = Readonly<{
   muted?: boolean;
 }>;
 
+const DEFAULT_SHOP_EMBED =
+  "https://maps.google.com/maps?q=Explore+Malta+Rentals,+Pieta,+Malta&ll=35.8930132,14.4967482&z=16&hl=en&output=embed";
+
+function biasQueryToMalta(query: string): string {
+  const trimmed = query.trim();
+  if (!trimmed) return trimmed;
+  return /malta/i.test(trimmed) ? trimmed : `${trimmed}, Malta`;
+}
+
 /**
  * Embedded map — set `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_URL` to a full embed URL from
  * Google Maps → Share → Embed for a precise pin; otherwise uses a coordinates-based
  * embed that pins the exact shop location.
+ *
+ * When `query` is provided, the embed searches that address instead of the shop pin.
  */
 export function GoogleMapEmbed({
   className,
+  query,
   showFooterLink = true,
   draggableCursor = false,
   muted = false,
 }: GoogleMapEmbedProps) {
   const t = useTranslations("Common");
   const embedUrl = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_URL?.trim();
+  const [debouncedQuery, setDebouncedQuery] = useState(query?.trim() ?? "");
 
-  const src =
-    embedUrl ||
-    `https://maps.google.com/maps?q=Explore+Malta+Rentals,+Pieta,+Malta&ll=35.8930132,14.4967482&z=16&hl=en&output=embed`;
+  useEffect(() => {
+    const next = query?.trim() ?? "";
+    const timer = window.setTimeout(() => {
+      setDebouncedQuery(next);
+    }, 450);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+
+  const searchQuery = debouncedQuery ? biasQueryToMalta(debouncedQuery) : "";
+  const src = searchQuery
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(searchQuery)}&z=16&hl=en&output=embed`
+    : embedUrl || DEFAULT_SHOP_EMBED;
+  const mapsHref = searchQuery
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(searchQuery)}`
+    : SITE_GOOGLE_MAPS_URL;
 
   return (
     <div className={`relative flex flex-col overflow-hidden ${className ?? ""}`}>
@@ -47,7 +73,7 @@ export function GoogleMapEmbed({
       </div>
       {showFooterLink ? (
         <a
-          href={SITE_GOOGLE_MAPS_URL}
+          href={mapsHref}
           target="_blank"
           rel="noopener noreferrer"
           className={

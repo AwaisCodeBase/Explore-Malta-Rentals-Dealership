@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { m, useReducedMotion } from "motion/react";
 import { Loader2 } from "lucide-react";
@@ -172,6 +173,11 @@ export function TermsConsentModal({ isOpen, onCancel, onAgree, isSubmitting = fa
   const tTerms = useTranslations("BookingWizard.terms");
   const reduceMotion = useReducedMotion();
   const [confirmChecked, setConfirmChecked] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -206,11 +212,17 @@ export function TermsConsentModal({ isOpen, onCancel, onAgree, isSubmitting = fa
     };
   }, [isOpen, onCancel]);
 
-  if (!isOpen) {
+  useEffect(() => {
+    if (!isOpen) {
+      setConfirmChecked(false);
+    }
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) {
     return null;
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--ink-950)]/55 p-4 backdrop-blur-md sm:p-6">
       <m.div
         role="dialog"
@@ -307,6 +319,7 @@ export function TermsConsentModal({ isOpen, onCancel, onAgree, isSubmitting = fa
           </div>
         </footer>
       </m.div>
-    </div>
+    </div>,
+    document.body,
   );
 }

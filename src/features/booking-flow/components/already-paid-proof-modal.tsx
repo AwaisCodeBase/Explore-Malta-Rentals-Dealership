@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { m, useReducedMotion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { DocumentUploadField } from "@/features/booking-flow/components/document-upload-field";
@@ -25,6 +26,11 @@ export function AlreadyPaidProofModal({
   const t = useTranslations("BookingWizard.bookingSummary");
   const reduceMotion = useReducedMotion();
   const [localError, setLocalError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -67,11 +73,11 @@ export function AlreadyPaidProofModal({
     }
   }, [isOpen]);
 
-  if (!isOpen) {
+  if (!isOpen || !mounted) {
     return null;
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--ink-950)]/55 p-4 backdrop-blur-md sm:p-6">
       <m.div
         role="dialog"
@@ -138,6 +144,7 @@ export function AlreadyPaidProofModal({
           </button>
         </footer>
       </m.div>
-    </div>
+    </div>,
+    document.body,
   );
 }

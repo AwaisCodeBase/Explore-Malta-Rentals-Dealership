@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { m, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -29,6 +30,11 @@ export function InsurancePromptModal({
   const overlayRef = useRef<HTMLDivElement>(null);
   const [draftPlan, setDraftPlan] = useState<InsurancePlanSelection>(initialPlan);
   const [showError, setShowError] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -43,7 +49,7 @@ export function InsurancePromptModal({
     return () => document.removeEventListener("keydown", handleKey);
   }, [isOpen, onCancel]);
 
-  if (!isOpen) {
+  if (!isOpen || !mounted) {
     return null;
   }
 
@@ -61,7 +67,7 @@ export function InsurancePromptModal({
     onConfirm(draftPlan);
   }
 
-  return (
+  return createPortal(
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
@@ -137,6 +143,7 @@ export function InsurancePromptModal({
           </p>
         </div>
       </m.div>
-    </div>
+    </div>,
+    document.body,
   );
 }

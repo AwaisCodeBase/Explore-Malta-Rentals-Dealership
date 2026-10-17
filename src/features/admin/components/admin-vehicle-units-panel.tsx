@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { AdminRowActionsMenu } from "@/features/admin/components/admin-row-actions-menu";
+import { VehicleColorSelect } from "@/features/admin/components/vehicle-color-select";
 import type { AdminVehicleUnitDto } from "@/lib/admin/vehicle-units/types";
 import { VEHICLE_UNIT_STATUSES } from "@/lib/admin/vehicle-units/vehicle-unit-schema";
 import type { VehicleUnitStatus } from "@/generated/prisma/client";
@@ -17,6 +18,7 @@ type AdminVehicleUnitsPanelProps = Readonly<{
 
 type UnitFormState = {
   licensePlate: string;
+  color: string;
   status: VehicleUnitStatus;
   isActive: boolean;
   notes: string;
@@ -24,6 +26,7 @@ type UnitFormState = {
 
 const emptyForm = (): UnitFormState => ({
   licensePlate: "",
+  color: "",
   status: "AVAILABLE",
   isActive: true,
   notes: "",
@@ -86,6 +89,7 @@ export function AdminVehicleUnitsPanel({ vehicleId, initialUnits }: AdminVehicle
     setEditingUnitId(unit.id);
     setForm({
       licensePlate: unit.licensePlate,
+      color: unit.color ?? "",
       status: unit.status,
       isActive: unit.isActive,
       notes: unit.notes ?? "",
@@ -102,6 +106,7 @@ export function AdminVehicleUnitsPanel({ vehicleId, initialUnits }: AdminVehicle
 
     const payload = {
       licensePlate: form.licensePlate.trim().toUpperCase(),
+      color: form.color.trim() || null,
       status: form.status,
       isActive: form.isActive,
       notes: form.notes.trim() || null,
@@ -224,6 +229,19 @@ export function AdminVehicleUnitsPanel({ vehicleId, initialUnits }: AdminVehicle
             />
           </label>
           <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-slate-700">{t("color")}</span>
+            <VehicleColorSelect
+              value={form.color}
+              onChange={(color) => setForm((current) => ({ ...current, color }))}
+              allowEmpty={isEditing}
+              emptyLabel={t("colorNone")}
+              customColorLabel={t("colorCustom")}
+              customColorPlaceholder={t("colorCustomPlaceholder")}
+              applyCustomLabel={t("colorCustomApply")}
+              required={!isEditing}
+            />
+          </label>
+          <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-slate-700">{t("status")}</span>
             <select
               value={form.status}
@@ -284,6 +302,7 @@ export function AdminVehicleUnitsPanel({ vehicleId, initialUnits }: AdminVehicle
           <thead>
             <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500">
               <th className="px-3 py-2 font-semibold">{t("table.licensePlate")}</th>
+              <th className="px-3 py-2 font-semibold">{t("table.color")}</th>
               <th className="px-3 py-2 font-semibold">{t("table.status")}</th>
               <th className="px-3 py-2 font-semibold">{t("table.active")}</th>
               <th className="px-3 py-2 font-semibold">{t("table.notes")}</th>
@@ -293,7 +312,7 @@ export function AdminVehicleUnitsPanel({ vehicleId, initialUnits }: AdminVehicle
           <tbody>
             {sortedUnits.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-sm text-slate-500">
+                <td colSpan={6} className="px-3 py-8 text-center text-sm text-slate-500">
                   {t("table.empty")}
                 </td>
               </tr>
@@ -301,6 +320,15 @@ export function AdminVehicleUnitsPanel({ vehicleId, initialUnits }: AdminVehicle
               sortedUnits.map((unit) => (
                 <tr key={unit.id} className="border-b border-slate-50 last:border-0">
                   <td className="px-3 py-3 font-mono font-semibold text-slate-900">{unit.licensePlate}</td>
+                  <td className="px-3 py-3 text-slate-700">
+                    {unit.color ? (
+                      unit.color
+                    ) : (
+                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                        {t("colorMissing")}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-3 py-3">
                     <span
                       className={[

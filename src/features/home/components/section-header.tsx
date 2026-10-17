@@ -17,38 +17,36 @@ export function SectionHeader({
   align = "center",
   tone = "light",
 }: SectionHeaderProps) {
-  const alignClasses =
-    align === "left" ? "text-left" : "text-center";
+  const isCentered = align === "center";
+  const alignClasses = isCentered ? "text-center" : "text-left";
 
-  const titleColor =
-    tone === "dark"
-      ? "text-white"
-      : "text-slate-950";
+  const titleColor = tone === "dark" ? "text-white" : "text-ink-900";
 
-  const descriptionColor =
-    tone === "dark"
-      ? "text-white/80"
-      : "text-slate-600";
+  const descriptionColor = tone === "dark" ? "text-white/72" : "text-ink-600";
+
+  const kickerColor =
+    tone === "dark" ? "text-orange-300" : "text-orange-600";
 
   return (
     <div className={alignClasses}>
       {kicker ? (
-        <p className="text-sm font-semibold tracking-[0.08em] text-[var(--brand-orange)]">
-          {kicker}
-        </p>
+        <p className={`type-eyebrow ${kickerColor}`}>{kicker}</p>
       ) : null}
       <h2
         id={titleId}
-        className={`${kicker ? "mt-2" : "mt-0"} text-3xl font-bold tracking-[-0.045em] ${titleColor} sm:text-4xl`}
+        className={`type-h2 ${kicker ? "mt-4" : "mt-0"} ${titleColor}`}
       >
         {title}
       </h2>
       {description ? (
-        <div className={`mt-3 text-base leading-7 ${descriptionColor}`}>
+        <div
+          className={`mt-4 max-w-2xl text-[length:var(--text-lead)] leading-[1.62] ${descriptionColor} ${
+            isCentered ? "mx-auto" : ""
+          }`}
+        >
           {description}
         </div>
       ) : null}
     </div>
   );
 }
-

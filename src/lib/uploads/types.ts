@@ -3,6 +3,7 @@ export const UPLOAD_CATEGORIES = [
   "customer_passport",
   "additional_driver_license",
   "additional_driver_passport",
+  "payment_proof",
 ] as const;
 
 export type UploadCategory = (typeof UPLOAD_CATEGORIES)[number];

@@ -1,6 +1,10 @@
 import type { BookingSubmissionInput, VehicleType as ApiVehicleType } from "@/lib/booking/types";
 import type { BookingFlowState } from "@/features/booking-flow/lib/types";
 import { isApiVehicleType } from "@/features/vehicles/data/vehicles";
+import {
+  isInsurancePlanCode,
+  mapInsurancePlanToStoredCdw,
+} from "@/lib/pricing/insurance-plans";
 
 export function mapVehicleTypeToApiVehicleType(
   stateVehicleType: string,
@@ -41,24 +45,11 @@ function toHelmetSize(value: string): "S" | "M" | "L" | null {
 
 function mapCdwPlanToApi(
   plan: BookingFlowState["addons"]["cdwPlan"],
-  apiVehicle: ApiVehicleType,
 ): BookingSubmissionInput["addons"]["cdwOption"] {
-  if (plan === "none") {
-    return "NO_CDW";
+  if (!isInsurancePlanCode(plan)) {
+    throw new Error("Insurance plan must be explicitly selected before booking submission");
   }
-  if (plan === "atv_full") {
-    return "REDUCE_800_ATV";
-  }
-  if (plan === "scooter_full") {
-    return "FULL_COVERAGE_50CC_125CC";
-  }
-  if (plan === "scooter_50") {
-    return apiVehicle === "Scooter" ? "REDUCE_350_50CC" : "NO_CDW";
-  }
-  if (plan === "scooter_125") {
-    return apiVehicle === "Motorcycle" ? "REDUCE_500_125CC" : "NO_CDW";
-  }
-  return "NO_CDW";
+  return mapInsurancePlanToStoredCdw(plan);
 }
 
 function emptyToNull(value: string): string | null {
@@ -80,7 +71,12 @@ export function mapBookingFlowStateToSubmission(
   const helmetRequired = isHelmetRequiredForApiVehicle(apiVehicle);
   const pickupOption = state.delivery.pickupOption === "office" ? "OFFICE" : "DELIVERY";
   const dropoffOption = state.delivery.dropoffOption === "office" ? "OFFICE" : "DROPOFF";
-  const depositMethod = state.deposit.depositMethod === "online" ? "ONLINE" : "IN_PERSON";
+  const depositMethod =
+    state.payment.mode === "already_paid"
+      ? "IN_PERSON"
+      : state.deposit.depositMethod === "online"
+        ? "ONLINE"
+        : "IN_PERSON";
   const additionalEnabled = state.addons.additionalDriver === true;
 
   const licensePath = pathOrNull(state.customer.driverLicenseUpload);
@@ -95,10 +91,14 @@ export function mapBookingFlowStateToSubmission(
     rental: {
       vehicleId: state.rental.vehicleId ?? undefined,
       vehicleType: apiVehicle,
+      ...(state.rental.engineCc === 50 || state.rental.engineCc === 125
+        ? { engineCc: state.rental.engineCc }
+        : {}),
       pickupDate: state.rental.pickupDate.trim(),
       returnDate: state.rental.returnDate.trim(),
       pickupTime: state.rental.pickupTime.trim(),
       returnTime: state.rental.returnTime.trim(),
+      ...(state.rental.selectedColor ? { selectedColor: state.rental.selectedColor } : {}),
     },
     delivery: {
       pickupOption,
@@ -111,7 +111,7 @@ export function mapBookingFlowStateToSubmission(
       dropoffLongitude: null,
     },
     addons: {
-      cdwOption: mapCdwPlanToApi(state.addons.cdwPlan, apiVehicle),
+      cdwOption: mapCdwPlanToApi(state.addons.cdwPlan),
       additionalDriverEnabled: additionalEnabled,
       helmetSize1: helmetRequired ? toHelmetSize(state.addons.helmetSize1) : null,
       helmetSize2: helmetRequired ? toHelmetSize(state.addons.helmetSize2) : null,
@@ -146,6 +146,10 @@ export function mapBookingFlowStateToSubmission(
     },
     deposit: {
       depositMethod,
+    },
+    payment: {
+      mode: state.payment.mode === "already_paid" ? "ALREADY_PAID" : "STRIPE",
+      proofPath: state.payment.mode === "already_paid" ? pathOrNull(state.payment.proofPath) : null,
     },
     consent: {
       termsAccepted: state.consent.termsAccepted === true,

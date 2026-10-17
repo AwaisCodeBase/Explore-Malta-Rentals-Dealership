@@ -17,6 +17,10 @@ export function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
+/** Used when a caller supplies no `className`, so the link never renders unstyled. */
+const defaultActionClass =
+  "group inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--surface-card)] px-5 py-2.5 text-sm font-semibold text-[var(--text-primary)] shadow-[var(--elev-1)] ring-1 ring-inset ring-[var(--line)] transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:bg-[var(--surface-sunken)] hover:shadow-[var(--elev-2)] active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
+
 export function WhatsAppActionLink({
   className,
   children,
@@ -37,7 +41,7 @@ export function WhatsAppActionLink({
 
   const content = (
     <span className="inline-flex items-center gap-2">
-      <WhatsAppIcon className="h-5 w-5" />
+      <WhatsAppIcon className="h-5 w-5 shrink-0 transition-transform duration-[var(--dur-fast)] ease-[var(--ease-spring)] motion-safe:group-hover:scale-110" />
       {children ?? t("faqLabel")}
     </span>
   );
@@ -47,7 +51,7 @@ export function WhatsAppActionLink({
       <span
         role="link"
         aria-disabled="true"
-        className={`${className ?? ""} cursor-not-allowed opacity-70`}
+        className={`${className ?? defaultActionClass} cursor-not-allowed opacity-60 grayscale shadow-none`}
         aria-label={t("envDisabledHint")}
       >
         {content}
@@ -60,7 +64,7 @@ export function WhatsAppActionLink({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className={className}
+      className={className ?? defaultActionClass}
       aria-label={t("floatingLabel")}
     >
       {content}

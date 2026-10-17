@@ -1,5 +1,18 @@
 import { differenceInMilliseconds, format, parse } from "date-fns";
 import { z } from "zod";
+import {
+  isPickupDeliveryAllowedForDate,
+  SUNDAY_PICKUP_DELIVERY_ERROR_MESSAGE,
+} from "@/lib/booking/delivery-availability";
+import {
+  calculateCalendarRentalDays,
+  MAX_BILLABLE_RENTAL_DAYS,
+} from "@/lib/pricing/rental-duration";
+
+import {
+  BOOKABLE_STORED_CDW_OPTIONS,
+} from "@/lib/pricing/insurance-plans";
+import { isLicenseAllowedForEngine } from "@/lib/vehicles/engine-cc";
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_REGEX = /^\d{2}:\d{2}$/;
@@ -17,6 +30,7 @@ export const CDW_OPTIONS = [
 ] as const;
 export const HELMET_SIZES = ["S", "M", "L"] as const;
 export const DEPOSIT_METHODS = ["ONLINE", "IN_PERSON"] as const;
+export const PAYMENT_MODES = ["STRIPE", "ALREADY_PAID"] as const;
 
 const EMPTY_TO_NULL_TEXT = z.preprocess(
   (value) => {
@@ -179,26 +193,19 @@ export function combineDateAndTime(date: string, time: string): Date | null {
   return parsed;
 }
 
-const ALLOWED_LICENSE_BY_VEHICLE: Record<string, ReadonlySet<string> | null> = {
-  Scooter: new Set(["B", "AM"]),
-  Motorcycle: new Set(["A", "A1", "A2"]),
-  Bicycle: null,
-  ATV: null,
-};
-
 const ALLOWED_CDW_BY_VEHICLE: Record<(typeof VEHICLE_TYPES)[number], ReadonlySet<string>> = {
-  Scooter: new Set(["NO_CDW", "REDUCE_350_50CC", "FULL_COVERAGE_50CC_125CC"]),
-  Motorcycle: new Set(["NO_CDW", "REDUCE_500_125CC", "FULL_COVERAGE_50CC_125CC"]),
-  ATV: new Set(["NO_CDW", "REDUCE_800_ATV"]),
-  Bicycle: new Set(["NO_CDW"]),
+  Scooter: BOOKABLE_STORED_CDW_OPTIONS as ReadonlySet<string>,
+  Motorcycle: BOOKABLE_STORED_CDW_OPTIONS as ReadonlySet<string>,
+  ATV: BOOKABLE_STORED_CDW_OPTIONS as ReadonlySet<string>,
+  Bicycle: BOOKABLE_STORED_CDW_OPTIONS as ReadonlySet<string>,
 };
 
-function isLicenseAllowed(vehicleType: string, licenseCategory: string): boolean {
-  const allowedLicenses = ALLOWED_LICENSE_BY_VEHICLE[vehicleType];
-  if (allowedLicenses === null) {
-    return true;
-  }
-  return Boolean(allowedLicenses?.has(licenseCategory));
+function isLicenseAllowed(
+  vehicleType: string,
+  licenseCategory: string,
+  engineCc?: number | null,
+): boolean {
+  return isLicenseAllowedForEngine(vehicleType, licenseCategory, engineCc);
 }
 
 export const bookingSubmissionSchema = z
@@ -207,10 +214,16 @@ export const bookingSubmissionSchema = z
       .object({
         vehicleId: OPTIONAL_VEHICLE_ID,
         vehicleType: z.enum(VEHICLE_TYPES, { required_error: "Vehicle type is required" }),
+        engineCc: z.union([z.literal(50), z.literal(125)]).optional(),
         pickupDate: DATE_ONLY_SCHEMA,
         returnDate: DATE_ONLY_SCHEMA,
         pickupTime: TIME_ONLY_SCHEMA,
         returnTime: TIME_ONLY_SCHEMA,
+        selectedColor: z
+          .string()
+          .trim()
+          .optional()
+          .transform((value) => (value && value.length > 0 ? value : undefined)),
       })
       .strict(),
     vehicleId: OPTIONAL_VEHICLE_ID,
@@ -280,6 +293,14 @@ export const bookingSubmissionSchema = z
         depositMethod: z.enum(DEPOSIT_METHODS, { required_error: "Deposit method is required" }),
       })
       .strict(),
+    payment: z
+      .object({
+        mode: z.enum(PAYMENT_MODES).default("STRIPE"),
+        proofPath: EMPTY_TO_NULL_TEXT,
+      })
+      .strict()
+      .optional()
+      .default({ mode: "STRIPE", proofPath: null }),
     consent: z
       .object({
         termsAccepted: STRICT_BOOLEAN,
@@ -306,6 +327,14 @@ export const bookingSubmissionSchema = z
         code: z.ZodIssueCode.custom,
         path: ["vehicleId"],
         message: "Vehicle ID must match rental.vehicleId when both are provided",
+      });
+    }
+
+    if (payload.payment.mode === "ALREADY_PAID" && !payload.payment.proofPath) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["payment", "proofPath"],
+        message: "Payment proof is required when payment mode is Already paid",
       });
     }
 
@@ -340,11 +369,26 @@ export const bookingSubmissionSchema = z
       });
     }
 
-    if (diffHours > 24 * 7 * 4) {
+    const billableDays = calculateCalendarRentalDays(
+      payload.rental.pickupDate,
+      payload.rental.returnDate,
+    );
+    if (billableDays !== null && billableDays > MAX_BILLABLE_RENTAL_DAYS) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["rental", "returnDate"],
         message: "Maximum rental is 4 weeks",
+      });
+    }
+
+    if (
+      payload.delivery.pickupOption === "DELIVERY" &&
+      !isPickupDeliveryAllowedForDate(payload.rental.pickupDate)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["delivery", "pickupOption"],
+        message: SUNDAY_PICKUP_DELIVERY_ERROR_MESSAGE,
       });
     }
 
@@ -364,7 +408,7 @@ export const bookingSubmissionSchema = z
       });
     }
 
-    if (!isLicenseAllowed(payload.rental.vehicleType, payload.customer.licenseCategory)) {
+    if (!isLicenseAllowed(payload.rental.vehicleType, payload.customer.licenseCategory, payload.rental.engineCc)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["customer", "licenseCategory"],
@@ -457,7 +501,7 @@ export const bookingSubmissionSchema = z
         });
       } else if (
         additionalDriverLicenseCategory !== null &&
-        !isLicenseAllowed(payload.rental.vehicleType, additionalDriverLicenseCategory)
+        !isLicenseAllowed(payload.rental.vehicleType, additionalDriverLicenseCategory, payload.rental.engineCc)
       ) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
@@ -515,7 +559,7 @@ export const bookingSubmissionSchema = z
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["addons", "cdwOption"],
-        message: "Invalid CDW option for selected vehicle",
+        message: "Invalid insurance plan for selected vehicle",
       });
     }
 

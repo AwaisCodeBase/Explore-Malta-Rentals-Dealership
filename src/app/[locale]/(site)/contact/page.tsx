@@ -25,7 +25,7 @@ export default async function ContactPage({ params }: ContactPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
   return (
-    <main className="flex flex-1 flex-col bg-white pb-8 pt-[var(--site-header-offset)]">
+    <main className="flex flex-1 flex-col bg-[var(--background)] pt-[var(--site-header-offset)]">
       <ContactSection />
     </main>
   );

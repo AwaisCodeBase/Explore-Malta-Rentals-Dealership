@@ -5,6 +5,7 @@ import type { ReservationHoldStatus } from "@/features/booking-flow/lib/types";
 export type CreateReservationHoldPayload = {
   vehicleId: string;
   vehicleType?: string;
+  color?: string;
   pickupDate: string;
   pickupTime: string;
   returnDate: string;
@@ -148,6 +149,33 @@ export async function heartbeatReservationHold(
       message:
         (body && "message" in body && typeof body.message === "string" && body.message) ||
         "Unable to refresh reservation hold right now.",
+      holdStatus: body && "status" in body ? body.status : undefined,
+    };
+  }
+
+  return { ok: true, data: body };
+}
+
+/** Extends an active hold so the customer has ~15 minutes for review / terms / payment. */
+export async function extendReservationHoldForCheckout(
+  holdReference: string,
+): Promise<{ ok: true; data: HeartbeatHoldSuccess } | { ok: false; status: number; message: string; holdStatus?: ReservationHoldStatus }> {
+  const response = await fetch(
+    `/api/reservation-holds/${encodeURIComponent(holdReference)}/extend-checkout`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+  const body = (await parseJson(response)) as HeartbeatHoldSuccess | HoldFailure | null;
+
+  if (!response.ok || !body || body.success !== true) {
+    return {
+      ok: false,
+      status: response.status,
+      message:
+        (body && "message" in body && typeof body.message === "string" && body.message) ||
+        "Unable to extend reservation hold for checkout.",
       holdStatus: body && "status" in body ? body.status : undefined,
     };
   }

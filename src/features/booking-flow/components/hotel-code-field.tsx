@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -118,12 +118,15 @@ export function HotelCodeField() {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4">
-      <label htmlFor="booking-hotel-code" className="text-sm font-semibold text-slate-900">
+    <div className="surface-card p-4 sm:p-5">
+      <label
+        htmlFor="booking-hotel-code"
+        className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]"
+      >
         {t("label")}
       </label>
-      <p className="mt-1 text-xs text-slate-500">{t("description")}</p>
-      <div className="relative mt-3">
+      <p className="mt-1 text-xs leading-relaxed text-[var(--text-muted)]">{t("description")}</p>
+      <div className="relative mt-3 max-w-sm">
         <input
           id="booking-hotel-code"
           type="text"
@@ -133,22 +136,36 @@ export function HotelCodeField() {
           autoComplete="off"
           spellCheck={false}
           placeholder={t("placeholder")}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-10 text-sm uppercase tracking-wide text-slate-900 outline-none transition focus:border-[#3a7ca5]/40 focus:bg-white focus:ring-2 focus:ring-[#3a7ca5]/15"
+          aria-invalid={state.hotelCode.error ? true : undefined}
+          aria-describedby={state.hotelCode.error ? "booking-hotel-code-error" : undefined}
+          className={`min-h-12 w-full rounded-[var(--r-field)] border bg-[var(--surface-card)] px-3.5 py-2.5 pr-10 text-sm font-semibold uppercase tracking-[0.06em] text-[var(--text-primary)] shadow-[var(--elev-1)] outline-none transition duration-[var(--dur-fast)] placeholder:font-normal placeholder:tracking-normal placeholder:text-[var(--text-faint)] ${
+            state.hotelCode.error
+              ? "border-red-400 ring-2 ring-red-500/20 focus:border-red-500 focus:ring-red-500/25"
+              : "border-[var(--line)] hover:border-[var(--line-strong)] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25"
+          }`}
         />
         {isValidating ? (
           <Loader2
-            className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-slate-400"
+            className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin text-[var(--text-faint)]"
             aria-hidden
           />
         ) : null}
       </div>
       {state.hotelCode.error ? (
-        <p className="mt-2 text-sm text-rose-600" role="alert">
+        <p
+          id="booking-hotel-code-error"
+          className="mt-2 text-sm font-medium text-red-600"
+          role="alert"
+        >
           {state.hotelCode.error}
         </p>
       ) : null}
       {state.hotelCode.appliedCode && state.hotelCode.discountPercent != null ? (
-        <p className="mt-2 text-sm font-medium text-emerald-700" role="status">
+        <p
+          className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200"
+          role="status"
+        >
+          <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
           {t("applied", {
             percent: state.hotelCode.discountPercent,
             hotel: state.hotelCode.partnerName ?? "",

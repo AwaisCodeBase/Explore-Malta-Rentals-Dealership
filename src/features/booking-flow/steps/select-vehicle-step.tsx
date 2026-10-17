@@ -1,13 +1,31 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { StepShell } from "@/features/booking-flow/components/step-shell";
 import { useBookingFlow } from "@/features/booking-flow/context/booking-flow-context";
 import { formatVehicleTypeLabel } from "@/features/vehicles/data/vehicles";
 import { useVehicle, useVehicles } from "@/features/vehicles/lib/use-vehicles";
+
+/** Hairline ghost link used by the empty / error states. */
+const ghostLinkClass =
+  "mt-4 inline-flex min-h-11 items-center rounded-full border px-5 text-sm font-semibold transition duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
+
+function VehicleSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-[var(--r-card)] border border-[var(--line-subtle)] bg-[var(--surface-card)] shadow-[var(--elev-1)]">
+      <div className="skeleton h-48 sm:h-56" />
+      <div className="space-y-2.5 p-4">
+        <div className="skeleton h-5 w-2/3 rounded-md" />
+        <div className="skeleton h-3 w-full rounded-md" />
+        <div className="skeleton h-3 w-11/12 rounded-md" />
+      </div>
+    </div>
+  );
+}
 
 export function SelectVehicleStep() {
   const t = useTranslations("BookingSteps.selectVehicle");
@@ -35,12 +53,6 @@ export function SelectVehicleStep() {
   ]);
 
   const { vehicles, isLoading, error } = useVehicles({ rentalWindow });
-  const {
-    vehicle: slugVehicle,
-    isLoading: slugVehicleLoading,
-    error: slugVehicleError,
-  } = useVehicle(incomingSlug);
-  const vehicleError = getFieldError("rental.vehicleType");
 
   const selectedVehicle = useMemo(() => {
     if (!state.rental.vehicleId) {
@@ -49,11 +61,52 @@ export function SelectVehicleStep() {
     return vehicles.find((vehicle) => vehicle.id === state.rental.vehicleId) ?? null;
   }, [state.rental.vehicleId, vehicles]);
 
+  // Detail endpoint includes the full image gallery; list only returns the main image.
+  const detailSlug = incomingSlug || selectedVehicle?.slug || "";
+  const {
+    vehicle: slugVehicle,
+    isLoading: slugVehicleLoading,
+    error: slugVehicleError,
+  } = useVehicle(detailSlug);
+  const vehicleError = getFieldError("rental.vehicleType");
+
   const displayVehicle = selectedVehicle ?? slugVehicle;
 
-  const selectedVehicleImageSrc = displayVehicle
-    ? (displayVehicle.mainImageUrl ?? displayVehicle.images[0] ?? null)
-    : null;
+  const galleryImages = useMemo(() => {
+    if (!displayVehicle) {
+      return [] as string[];
+    }
+
+    const detailMatches =
+      slugVehicle &&
+      (slugVehicle.id === displayVehicle.id || slugVehicle.slug === displayVehicle.slug);
+
+    const fromDetail = detailMatches ? slugVehicle.images : [];
+    const fromList = displayVehicle.images;
+    const fallback = displayVehicle.mainImageUrl ? [displayVehicle.mainImageUrl] : [];
+    const source =
+      fromDetail.length > 0 ? fromDetail : fromList.length > 0 ? fromList : fallback;
+
+    return Array.from(new Set(source.filter(Boolean)));
+  }, [displayVehicle, slugVehicle]);
+
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+
+  useEffect(() => {
+    setActiveImageIdx(0);
+  }, [displayVehicle?.id, galleryImages]);
+
+  const showGalleryNav = galleryImages.length > 1;
+  const selectedVehicleImageSrc = galleryImages[activeImageIdx] ?? galleryImages[0] ?? null;
+
+  const goToPrevImage = useCallback(() => {
+    setActiveImageIdx((i) => (i === 0 ? galleryImages.length - 1 : i - 1));
+  }, [galleryImages.length]);
+
+  const goToNextImage = useCallback(() => {
+    setActiveImageIdx((i) => (i === galleryImages.length - 1 ? 0 : i + 1));
+  }, [galleryImages.length]);
+
   const selectedVehicleBrandModel = displayVehicle
     ? [displayVehicle.brand, displayVehicle.model].filter(Boolean).join(" ")
     : "";
@@ -87,7 +140,8 @@ export function SelectVehicleStep() {
       rentalId !== resolved.id ||
       slug !== resolved.slug ||
       state.rental.vehicleName !== resolved.name ||
-      state.rental.vehicleType !== resolved.apiVehicleType
+      state.rental.vehicleType !== resolved.apiVehicleType ||
+      state.rental.engineCc !== resolved.engineCc
     ) {
       updateSection("rental", {
         vehicleId: resolved.id,
@@ -95,6 +149,7 @@ export function SelectVehicleStep() {
         vehicleName: resolved.name,
         vehicleLicensePlate: "",
         vehicleType: resolved.apiVehicleType,
+        engineCc: resolved.engineCc,
       });
       if (!resolved.supportsStorageBox && getBookingValues().addons.storageBox) {
         updateSection("addons", { storageBox: false });
@@ -107,6 +162,7 @@ export function SelectVehicleStep() {
     state.rental.vehicleName,
     state.rental.vehicleSlug,
     state.rental.vehicleType,
+    state.rental.engineCc,
     updateSection,
     vehicles,
   ]);
@@ -122,7 +178,8 @@ export function SelectVehicleStep() {
       rentalId === slugVehicle.id &&
       slug === slugVehicle.slug &&
       state.rental.vehicleName === slugVehicle.name &&
-      state.rental.vehicleType === slugVehicle.apiVehicleType
+      state.rental.vehicleType === slugVehicle.apiVehicleType &&
+      state.rental.engineCc === slugVehicle.engineCc
     ) {
       return;
     }
@@ -133,6 +190,7 @@ export function SelectVehicleStep() {
       vehicleName: slugVehicle.name,
       vehicleLicensePlate: "",
       vehicleType: slugVehicle.apiVehicleType,
+      engineCc: slugVehicle.engineCc,
     });
     if (!slugVehicle.supportsStorageBox && getBookingValues().addons.storageBox) {
       updateSection("addons", { storageBox: false });
@@ -144,6 +202,7 @@ export function SelectVehicleStep() {
     state.rental.vehicleName,
     state.rental.vehicleSlug,
     state.rental.vehicleType,
+    state.rental.engineCc,
     updateSection,
   ]);
 
@@ -180,96 +239,124 @@ export function SelectVehicleStep() {
   return (
     <StepShell title={t("title")} description={t("description")}>
       {isLoading || slugVehicleLoading ? (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <div className="h-48 animate-pulse bg-slate-200/70 sm:h-56" />
-          <div className="space-y-2 p-4">
-            <div className="h-5 w-2/3 animate-pulse rounded bg-slate-200/70" />
-            <div className="h-3 w-full animate-pulse rounded bg-slate-200/60" />
-            <div className="h-3 w-11/12 animate-pulse rounded bg-slate-200/60" />
-          </div>
-        </div>
+        <VehicleSkeleton />
       ) : error ? (
-        <div className="rounded-lg border border-rose-200 bg-rose-50/80 p-4">
-          <p className="text-sm font-semibold text-rose-900">{t("loadErrorTitle")}</p>
-          <p className="mt-1 text-sm text-rose-800">{error}</p>
+        <div className="rounded-[var(--r-card)] border border-red-200 bg-red-50/70 p-4 sm:p-5">
+          <p className="text-sm font-semibold tracking-[-0.01em] text-red-900">
+            {t("loadErrorTitle")}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-red-800">{error}</p>
           <Link
             href="/vehicles"
-            className="mt-3 inline-flex rounded-full border border-rose-300 bg-white px-4 py-2 text-sm font-semibold text-rose-900 hover:bg-rose-100"
+            className={`${ghostLinkClass} border-red-300 bg-[var(--surface-card)] text-red-900 hover:bg-red-100`}
           >
             {t("browseFleet")}
           </Link>
         </div>
       ) : vehicles.length === 0 ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-4">
-          <p className="text-sm font-semibold text-slate-900">{t("emptyTitle")}</p>
-          <p className="mt-1 text-sm text-slate-700">{t("emptyBody")}</p>
+        <div className="rounded-[var(--r-card)] border border-[var(--line)] bg-[var(--surface-sunken)] p-4 sm:p-5">
+          <p className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+            {t("emptyTitle")}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)]">{t("emptyBody")}</p>
         </div>
       ) : needsVehicleFromFleet ? (
-        <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-4">
-          <p className="text-sm font-semibold text-slate-900">{t("noneSelectedTitle")}</p>
-          <p className="mt-1 text-sm text-slate-700">{t("noneSelectedBodyLong")}</p>
+        <div className="rounded-[var(--r-card)] border border-[var(--line)] bg-[var(--surface-sunken)] p-4 sm:p-5">
+          <p className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+            {t("noneSelectedTitle")}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--text-secondary)]">
+            {t("noneSelectedBodyLong")}
+          </p>
           <Link
             href="/vehicles"
-            className="mt-4 inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"
+            className={`${ghostLinkClass} border-[var(--line-strong)] bg-[var(--surface-card)] text-[var(--text-primary)] shadow-[var(--elev-1)] hover:shadow-[var(--elev-2)]`}
           >
             {t("browseFleet")}
           </Link>
         </div>
       ) : slugNotFound || staleVehicleId ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-4">
-          <p className="text-sm font-semibold text-amber-900">
+        <div className="rounded-[var(--r-card)] border border-amber-200 bg-amber-50/80 p-4 sm:p-5">
+          <p className="text-sm font-semibold tracking-[-0.01em] text-amber-900">
             {slugNotFound ? t("slugNotInList") : t("noLiveMatch")}
           </p>
-          <p className="mt-1 text-sm text-amber-800">{t("pickAnother")}</p>
+          <p className="mt-1 text-sm leading-relaxed text-amber-800">{t("pickAnother")}</p>
           <Link
             href="/vehicles"
-            className="mt-4 inline-flex rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100"
+            className={`${ghostLinkClass} border-amber-300 bg-[var(--surface-card)] text-amber-950 hover:bg-amber-100`}
           >
             {t("browseFleet")}
           </Link>
         </div>
       ) : displayVehicle ? (
-        <article className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_8px_32px_-16px_rgba(15,23,42,0.18)]">
+        <article className="overflow-hidden rounded-[var(--r-panel)] bg-[var(--surface-card)] shadow-[inset_0_0_0_1px_var(--line-subtle),var(--elev-3)]">
           {/* ── vehicle image ─────────────────────────────────────── */}
-          <div className="relative aspect-[16/9] w-full bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50">
+          <div className="relative aspect-[16/9] w-full bg-gradient-to-br from-[var(--surface-band)] via-[var(--surface-sunken)] to-[var(--surface-band)]">
             {selectedVehicleImageSrc ? (
               <>
                 <Image
+                  key={selectedVehicleImageSrc}
                   src={selectedVehicleImageSrc}
-                  alt={displayVehicle.name}
+                  alt={
+                    showGalleryNav
+                      ? `${displayVehicle.name} — photo ${activeImageIdx + 1} of ${galleryImages.length}`
+                      : displayVehicle.name
+                  }
                   fill
-                  className="object-contain p-6 drop-shadow-md transition-transform duration-500 hover:scale-[1.02]"
+                  className="object-contain p-6 drop-shadow-md transition-transform duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] hover:scale-[1.02]"
                   sizes="(max-width: 768px) 100vw, 42rem"
                   priority
                 />
                 {/* subtle radial glow under the vehicle */}
                 <div
                   aria-hidden
-                  className="pointer-events-none absolute bottom-0 left-1/2 h-1/3 w-2/3 -translate-x-1/2 rounded-full bg-slate-200/60 blur-2xl"
+                  className="pointer-events-none absolute bottom-0 left-1/2 h-1/3 w-2/3 -translate-x-1/2 rounded-full bg-[var(--ink-200)]/60 blur-2xl"
                 />
+
+                {showGalleryNav ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={goToPrevImage}
+                      aria-label="Previous photo"
+                      className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--surface-card)]/90 text-[var(--text-primary)] shadow-[var(--elev-2)] ring-1 ring-[var(--line)] backdrop-blur-sm transition duration-[var(--dur-fast)] hover:bg-[var(--surface-card)] hover:shadow-[var(--elev-3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:left-4 sm:h-11 sm:w-11"
+                    >
+                      <ChevronLeft className="h-5 w-5" aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={goToNextImage}
+                      aria-label="Next photo"
+                      className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--surface-card)]/90 text-[var(--text-primary)] shadow-[var(--elev-2)] ring-1 ring-[var(--line)] backdrop-blur-sm transition duration-[var(--dur-fast)] hover:bg-[var(--surface-card)] hover:shadow-[var(--elev-3)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:right-4 sm:h-11 sm:w-11"
+                    >
+                      <ChevronRight className="h-5 w-5" aria-hidden />
+                    </button>
+                    <span className="type-spec absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-[var(--surface-inverse)]/70 px-2.5 py-1 text-white backdrop-blur-sm">
+                      {activeImageIdx + 1} / {galleryImages.length}
+                    </span>
+                  </>
+                ) : null}
               </>
             ) : (
-              <div className="flex h-full items-center justify-center text-sm font-medium text-slate-400">
+              <div className="flex h-full items-center justify-center text-sm font-medium text-[var(--text-faint)]">
                 {t("imageComingSoon")}
               </div>
             )}
           </div>
 
           {/* ── vehicle info ──────────────────────────────────────── */}
-          <div className="border-t border-slate-100 px-5 py-4">
-            <p className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-orange)]">
-              {t("yourSelection")}
-            </p>
-            <h3 className="mt-1 text-lg font-bold tracking-[-0.02em] text-slate-950">
-              {displayVehicle.name}
-            </h3>
+          <div className="border-t border-[var(--line-subtle)] px-5 py-4 sm:px-6 sm:py-5">
+            <p className="type-eyebrow text-[var(--orange-600)]">{t("yourSelection")}</p>
+            <h3 className="type-h3 mt-1.5 text-[var(--text-primary)]">{displayVehicle.name}</h3>
             {selectedVehicleBrandModel ? (
-              <p className="mt-0.5 text-sm font-medium text-slate-600">{selectedVehicleBrandModel}</p>
+              <p className="mt-1 text-sm font-medium text-[var(--text-secondary)]">
+                {selectedVehicleBrandModel}
+              </p>
             ) : null}
-            <p className="mt-1 text-sm leading-relaxed text-slate-600">
+            <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
               {displayVehicle.shortDescription ?? t("noShortDescription")}
             </p>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="type-spec mt-3 text-[var(--text-muted)]">
               {formatVehicleTypeLabel(displayVehicle.apiVehicleType)}
               {" · "}
               {t("helmetsSummary", { count: displayVehicle.helmetIncludedCount })}
@@ -277,7 +364,7 @@ export function SelectVehicleStep() {
               {displayVehicle.supportsStorageBox ? t("storageYes") : t("storageNo")}
             </p>
             {holdIsOnSelectedVehicle ? (
-              <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+              <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
                 {t("reservedTemp")}
               </p>
@@ -285,16 +372,17 @@ export function SelectVehicleStep() {
           </div>
         </article>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <div className="h-48 animate-pulse bg-slate-200/70 sm:h-56" />
-          <div className="space-y-2 p-4">
-            <div className="h-5 w-2/3 animate-pulse rounded bg-slate-200/70" />
-            <div className="h-3 w-full animate-pulse rounded bg-slate-200/60" />
-          </div>
-        </div>
+        <VehicleSkeleton />
       )}
 
-      {vehicleError ? <p className="mt-3 text-sm text-red-600">{vehicleError}</p> : null}
+      {vehicleError ? (
+        <p
+          className="mt-3 rounded-[var(--r-field)] border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700"
+          role="alert"
+        >
+          {vehicleError}
+        </p>
+      ) : null}
     </StepShell>
   );
 }

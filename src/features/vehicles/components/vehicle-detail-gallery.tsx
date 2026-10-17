@@ -12,6 +12,20 @@ type VehicleDetailGalleryProps = Readonly<{
   images: readonly string[];
 }>;
 
+/* ─────────────────────────── shared styling ─────────────────── */
+
+/* Tonal plate: cut-out product shots read as objects on a surface, not floating. */
+const photoPlateClass =
+  "bg-[linear-gradient(155deg,var(--ink-50)_0%,var(--surface-sunken)_58%,var(--ink-100)_100%)]";
+
+/* Circular hairline control that fills on hover. */
+const arrowClass =
+  "absolute top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-card)]/90 text-[var(--ink-800)] shadow-[var(--elev-2)] backdrop-blur-md transition-[background-color,border-color,color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-card)] hover:text-[var(--ink-950)] hover:shadow-[var(--elev-3)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2";
+
+/* Same control on the dark lightbox backdrop. */
+const modalArrowClass =
+  "absolute top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md transition-[background-color,border-color,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:border-white/40 hover:bg-white/25 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-0";
+
 /* ─────────────────────────── modal ──────────────────────────── */
 
 function ModalGallery({
@@ -57,18 +71,18 @@ function ModalGallery({
       role="dialog"
       aria-modal
       aria-label={`${name} — full gallery`}
-      className="fixed inset-0 z-[200] flex flex-col bg-slate-950/95 backdrop-blur-sm"
+      className="grain fixed inset-0 z-[200] flex flex-col bg-[color-mix(in_srgb,var(--surface-inverse)_95%,transparent)] backdrop-blur-md"
     >
       {/* header */}
-      <div className="flex shrink-0 items-center justify-between px-4 py-3 text-white/70">
-        <span className="text-sm font-medium">
+      <div className="flex shrink-0 items-center justify-between border-b border-[var(--line-inverse)] px-4 py-3 text-white/70">
+        <span data-numeric className="type-spec">
           {name} — {current + 1} / {images.length}
         </span>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close gallery"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/20"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition-[background-color,border-color,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:border-white/40 hover:bg-white/25 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         >
           <X className="h-5 w-5" />
         </button>
@@ -87,7 +101,7 @@ function ModalGallery({
             priority
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-white/40">
+          <div className="type-spec flex h-full items-center justify-center text-white/40">
             Image unavailable
           </div>
         )}
@@ -98,7 +112,7 @@ function ModalGallery({
               type="button"
               onClick={prev}
               aria-label="Previous photo"
-              className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/25"
+              className={`${modalArrowClass} left-3`}
             >
               <ChevronLeft className="h-6 w-6" />
             </button>
@@ -106,7 +120,7 @@ function ModalGallery({
               type="button"
               onClick={next}
               aria-label="Next photo"
-              className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/25"
+              className={`${modalArrowClass} right-3`}
             >
               <ChevronRight className="h-6 w-6" />
             </button>
@@ -116,7 +130,7 @@ function ModalGallery({
 
       {/* thumbnail strip */}
       {images.length > 1 ? (
-        <div className="shrink-0 overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="shrink-0 overflow-x-auto border-t border-[var(--line-inverse)] px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="flex gap-2">
             {images.map((img, i) => (
               <button
@@ -125,10 +139,10 @@ function ModalGallery({
                 onClick={() => setCurrent(i)}
                 aria-label={`Photo ${i + 1}`}
                 className={[
-                  "relative h-14 w-20 shrink-0 overflow-hidden rounded-lg border-2 transition-opacity",
+                  "relative h-14 w-20 shrink-0 overflow-hidden rounded-[var(--r-field)] transition-[opacity,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-inverse)]",
                   i === current
-                    ? "border-white opacity-100"
-                    : "border-transparent opacity-40 hover:opacity-75",
+                    ? "opacity-100 shadow-[inset_0_0_0_2px_var(--orange-400)]"
+                    : "opacity-40 shadow-[inset_0_0_0_1px_var(--line-inverse)] hover:opacity-80 motion-safe:hover:-translate-y-0.5",
                 ].join(" ")}
               >
                 <Image
@@ -174,8 +188,10 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
   /* ── empty state ─────────────────────────────────────────── */
   if (safeImages.length === 0) {
     return (
-      <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-slate-100 sm:aspect-[21/9]">
-        <div className="flex h-full items-center justify-center text-sm font-medium text-slate-400">
+      <div
+        className={`relative aspect-[4/3] overflow-hidden rounded-[var(--r-panel)] shadow-[inset_0_0_0_1px_var(--line-subtle),var(--elev-2)] ${photoPlateClass}`}
+      >
+        <div className="type-spec flex h-full items-center justify-center text-[var(--text-faint)]">
           Images coming soon
         </div>
       </div>
@@ -190,17 +206,19 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
     <>
       {/* ════════════════════════════════════════════════════════
           MAIN IMAGE
-          Uses aspect-ratio to give Next.js <Image fill> a
-          calculable height — this is what was broken before.
+          Fills its column — aspect-ratio gives Next.js
+          <Image fill> a calculable height.
       ════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-2xl bg-slate-100">
+      <div
+        className={`relative overflow-hidden rounded-[var(--r-panel)] shadow-[inset_0_0_0_1px_var(--line-subtle),var(--elev-3)] ${photoPlateClass}`}
+      >
         {/* aspect-ratio wrapper — guarantees height is never 0 */}
-        <div className="relative aspect-[4/3] sm:aspect-[16/9]">
+        <div className="relative aspect-[4/3]">
           {/* skeleton — fades out once image loads */}
           <div
             aria-hidden
             className={[
-              "absolute inset-0 animate-pulse bg-slate-200 transition-opacity duration-500",
+              "skeleton absolute inset-0 transition-opacity duration-[var(--dur-slow)] ease-[var(--ease-out-expo)]",
               mainLoaded ? "opacity-0" : "opacity-100",
             ].join(" ")}
           />
@@ -210,10 +228,11 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
             src={mainSrc}
             alt={`${name} — main photo`}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 80vw, 60vw"
+            sizes="(max-width: 768px) 100vw, 55vw"
             className={[
-              "object-cover transition-all duration-500",
-              mainLoaded ? "opacity-100 scale-100" : "opacity-0 scale-[1.02]",
+              /* Crossfade only — no scale, so the subject never drifts between frames. */
+              "object-contain transition-opacity duration-[var(--dur-slow)] ease-[var(--ease-out-expo)]",
+              mainLoaded ? "opacity-100" : "opacity-0",
             ].join(" ")}
             priority
             onLoad={() => setMainLoaded(true)}
@@ -224,9 +243,9 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
             type="button"
             onClick={() => openModal(activeIdx)}
             aria-label="View full photo"
-            className="group absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 hover:opacity-100"
+            className="group absolute inset-0 flex items-center justify-center bg-[linear-gradient(to_top,rgb(10_20_32/0.30),transparent_45%)] opacity-0 transition-opacity duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--blue-500)]"
           >
-            <span className="flex items-center gap-2 rounded-full bg-black/50 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
+            <span className="type-spec flex items-center gap-2 rounded-full border border-white/25 bg-[var(--surface-inverse)]/60 px-4 py-2.5 text-white backdrop-blur-md">
               <ZoomIn className="h-4 w-4" aria-hidden />
               View full size
             </span>
@@ -241,7 +260,7 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
                   setActiveIdx((i) => (i === 0 ? safeImages.length - 1 : i - 1))
                 }
                 aria-label="Previous photo"
-                className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-slate-900 shadow-sm transition hover:bg-white sm:hidden"
+                className={`${arrowClass} left-3 sm:hidden`}
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -251,7 +270,7 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
                   setActiveIdx((i) => (i === safeImages.length - 1 ? 0 : i + 1))
                 }
                 aria-label="Next photo"
-                className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-slate-900 shadow-sm transition hover:bg-white sm:hidden"
+                className={`${arrowClass} right-3 sm:hidden`}
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -260,7 +279,10 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
 
           {/* photo counter badge */}
           {safeImages.length > 1 ? (
-            <span className="absolute bottom-3 right-3 rounded-full bg-black/55 px-2.5 py-0.5 text-xs font-medium text-white sm:hidden">
+            <span
+              data-numeric
+              className="type-spec absolute bottom-3 right-3 rounded-full border border-white/25 bg-[var(--surface-inverse)]/60 px-2.5 py-1.5 text-white backdrop-blur-md sm:hidden"
+            >
               {activeIdx + 1} / {safeImages.length}
             </span>
           ) : null}
@@ -269,7 +291,7 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
           <button
             type="button"
             onClick={() => openModal(activeIdx)}
-            className="absolute bottom-3 right-3 hidden items-center gap-1.5 rounded-full border border-white/30 bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-slate-800 shadow-lg backdrop-blur-sm transition hover:bg-white sm:flex"
+            className="type-spec absolute bottom-3 right-3 hidden items-center gap-1.5 rounded-full border border-white/60 bg-white/85 px-3.5 py-2 text-[var(--ink-800)] shadow-[var(--elev-2)] backdrop-blur-md transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:bg-white hover:shadow-[var(--elev-3)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2 sm:flex"
           >
             <Images className="h-3.5 w-3.5" aria-hidden />
             Show all photos
@@ -282,7 +304,7 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
           Always visible — clicking selects main image.
       ════════════════════════════════════════════════════════ */}
       {safeImages.length > 1 ? (
-        <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mt-3 flex gap-2.5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {thumbs.map((src, i) => (
             <button
               key={src || i}
@@ -291,10 +313,10 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
               aria-label={`Photo ${i + 1}`}
               aria-pressed={i === activeIdx}
               className={[
-                "relative h-16 w-24 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 sm:h-20 sm:w-28",
+                `relative h-16 w-24 shrink-0 overflow-hidden rounded-[var(--r-field)] transition-[opacity,box-shadow,transform] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2 sm:h-20 sm:w-28 ${photoPlateClass}`,
                 i === activeIdx
-                  ? "border-[var(--brand-orange)] opacity-100 shadow-md"
-                  : "border-transparent opacity-60 hover:opacity-90 hover:border-slate-200",
+                  ? "opacity-100 shadow-[inset_0_0_0_2px_var(--orange-400),var(--elev-2)]"
+                  : "opacity-65 shadow-[inset_0_0_0_1px_var(--line-subtle)] hover:opacity-100 hover:shadow-[inset_0_0_0_1px_var(--line),var(--elev-2)] motion-safe:hover:-translate-y-0.5",
               ].join(" ")}
             >
               <Image
@@ -313,9 +335,9 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
             <button
               type="button"
               onClick={() => openModal(thumbs.length)}
-              className="relative flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-900 text-white transition hover:bg-slate-800 sm:h-20 sm:w-28"
+              className="type-spec relative flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[var(--r-field)] bg-[var(--surface-inverse)] text-white transition-[background-color,box-shadow,transform] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:bg-[var(--ink-800)] hover:shadow-[var(--elev-3)] motion-safe:hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2 sm:h-20 sm:w-28"
             >
-              <span className="text-sm font-semibold">+{extraCount} more</span>
+              <span data-numeric>+{extraCount} more</span>
             </button>
           ) : null}
         </div>
@@ -331,10 +353,10 @@ export function VehicleDetailGallery({ name, images }: VehicleDetailGalleryProps
               onClick={() => setActiveIdx(i)}
               aria-label={`Go to photo ${i + 1}`}
               className={[
-                "h-1.5 rounded-full transition-all duration-200",
+                "h-1.5 rounded-full transition-[width,background-color] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2",
                 i === activeIdx
-                  ? "w-5 bg-[var(--brand-orange)]"
-                  : "w-1.5 bg-slate-300",
+                  ? "w-5 bg-[var(--orange-400)]"
+                  : "w-1.5 bg-[var(--ink-300)]",
               ].join(" ")}
             />
           ))}

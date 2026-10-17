@@ -571,6 +571,7 @@
     "minRental": "Minimum rental is 24 hours",
     "maxRental": "Maximum rental is 4 weeks",
     "pickupAddressDelivery": "Pickup address is required for delivery",
+    "deliveryUnavailableSunday": "Delivery is unavailable on Sundays. Please select Office Pickup.",
     "dropoffAddressRequired": "Drop-off address is required",
     "helmetSizesRequired": "Helmet sizes are required",
     "additionalDriverName": "Full name is required",
@@ -587,6 +588,9 @@
     "passportUploadDelivery": "Passport/ID upload required for delivery",
     "confirmDocumentsPickup": "Please confirm you will present documents at pickup",
     "depositMethodRequired": "Deposit method is required",
+    "paymentProofRequired": "Payment proof is required when selecting Already paid",
+    "colorRequired": "Please select a color to continue",
+    "pricingAcknowledgedRequired": "Please confirm you reviewed the estimated pricing summary",
     "reviewFields": "Please review the highlighted fields."
   },
   "PrivacyPage": {
@@ -715,6 +719,13 @@
       "title": "Rental Dates",
       "description": "Choose pickup and return dates and times for your rental window."
     },
+    "color": {
+      "title": "Choose a color",
+      "description": "Select the color you want for your rental. Only colors available for your dates are shown.",
+      "required": "Please select a color to continue",
+      "unavailable": "The selected color is no longer available. Please choose another color.",
+      "conflict": "That color was just reserved by another customer. Please choose another available color."
+    },
     "pickupDropoff": {
       "title": "Pickup & Drop-off",
       "description": "Choose whether you collect at the office or request delivery, and set return preferences."
@@ -756,15 +767,19 @@
   },
   "VehicleListing": {
     "showing": "Showing {count} vehicles",
-    "tripDatesHint": "Set your trip dates in the search bar, then click Search to load availability. After that, Book now will reserve the vehicle for those dates.",
+    "tripDatesHint": "Select your trip dates in the search bar, then click Search available vehicles. After that, Book now will open booking for that vehicle.",
     "loadErrorTitle": "Unable to load vehicles",
     "emptyTitle": "No vehicles available right now",
     "emptyBody": "Please check back shortly for newly listed rentals.",
     "noMatchTitle": "No exact match found",
-    "noMatchBody": "Try another type, transmission, seats, or color.",
-    "ratesBlurb": "Ballpark per-calendar-day amounts for motorcycles and scooters before extras, use these as a guide while you search.",
+    "noMatchBody": "Try another brand, type, transmission, seats, or color.",
+    "ratesBlurb": "Longer rentals unlock duration discounts before extras — use these as a guide while you search.",
     "ariaFilters": "Vehicle filters",
-    "ariaRates": "Indicative daily rates"
+    "ariaRates": "Indicative daily rates",
+    "group50": "50cc scooters",
+    "group125": "125cc bikes",
+    "groupOther": "Other vehicles",
+    "groupCount": "{count, plural, one {# vehicle} other {# vehicles}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "Vehicle search",
@@ -773,6 +788,9 @@
     "transmission": "Transmission",
     "seats": "Seats",
     "color": "Color",
+    "brand": "Brand",
+    "allBrands": "All brands",
+    "brandAria": "Vehicle brand",
     "typeAria": "Vehicle type",
     "transmissionAria": "Transmission",
     "seatsAria": "Seats",
@@ -792,17 +810,20 @@
     "anyColor": "Any color",
     "durationLine": "{count, plural, one {# day} other {# days}}",
     "pickupPrefix": "Pickup",
-    "indicativeLine": "Indicative motorcycles/scooters total ~€{tripEur} (€{dailyEur}/day × {count} {dayLabel}) · Final price depends on vehicle and add-ons.",
+    "durationDiscountLine": "{count} {dayLabel}: {percent}% duration discount applies · Final price depends on vehicle and add-ons.",
+    "durationDiscountLineMax": "Rent 7+ days and save up to {percent}% · Final price depends on vehicle and add-ons.",
     "hotelDelivery": "Need hotel delivery",
     "clearFilters": "Clear filters",
     "search": "Search"
   },
   "IndicativeRates": {
-    "cardTitle": "Indicative daily rates",
-    "cardSubtitle": "Motorcycles / scooters",
+    "cardTitle": "Duration discounts",
+    "cardSubtitle": "Longer rentals save more",
     "perDaySuffix": "/ day",
-    "beforeExtras": "Per calendar day, before extras",
-    "footnote": "Final price depends on vehicle, season, and availability — message us for a quote.",
+    "beforeExtras": "Applied to vehicle rental before extras",
+    "footnote": "Final price depends on vehicle base rate, season, and availability — message us for a quote.",
+    "noDiscount": "0% Discount",
+    "percentOff": "{percent}% Off",
     "rowOneDay": "1 day",
     "rowTwoDays": "2 days",
     "rowThreeTo21": "3 days – 3 weeks",
@@ -839,9 +860,14 @@
     "offPickup": " · Off-site pickup requested",
     "offDropoff": " · Different drop-off",
     "offSiteExtra": " · +€{amount} off-site",
-    "indicativeSummary": "Indicative motorcycles/scooters total ~€{tripEur} (€{dailyEur}/day × {days} {dayLabel}) · Final price depends on vehicle and add-ons.",
+    "durationDiscountSummary": "{days} {dayLabel}: {percent}% duration discount applies · Final price depends on vehicle and add-ons.",
+    "durationDiscountSummaryMax": "Rent 7+ days and save up to {percent}% · Final price depends on vehicle and add-ons.",
     "vehicleTypeLabel": "Vehicle type",
     "vehicleTypeAll": "All types",
+    "moreFilters": "More filters",
+    "fewerFilters": "Fewer filters",
+    "brandLabel": "Brand",
+    "brandAria": "Vehicle brand",
     "submitSearching": "Searching…",
     "submitIdle": "Search available vehicles"
   },
@@ -933,17 +959,21 @@
       "pickupAddress": "Pickup address:",
       "dropoffMethod": "Drop-off method:",
       "dropoffAddress": "Drop-off address:",
-      "cdwLine": "CDW selected: {label}",
+      "cdwLine": "Insurance selected: {label}",
+      "insuranceNotSelected": "Not selected yet",
       "addDriverLine": "Additional driver: {value}",
       "helmet1": "Helmet size 1:",
       "helmet2": "Helmet size 2:",
       "storageBox": "Storage box:",
       "section2": "Section 2 - Pricing Summary",
+      "baseDailyRate": "Base daily rate:",
+      "rentalDuration": "Rental duration:",
+      "durationDiscount": "Duration discount: {percent}% → {rate}/day",
       "rentalCost": "Rental Cost:",
       "hotelDiscount": "Hotel discount ({percent}% via {hotel}): -{amount}",
       "deliveryLine": "Delivery / Drop-off: {total} (pickup {pickup} + drop-off {dropoff}{discount})",
       "bundleDiscount": " - {amount} bundle discount",
-      "cdwCost": "CDW:",
+      "cdwCost": "Insurance:",
       "addDriverCost": "Additional Driver:",
       "storageCost": "Storage Box:",
       "subtotal": "Subtotal:",
@@ -956,7 +986,22 @@
       "securityDepositMethod": "Security deposit method",
       "depositMethod": "Deposit method",
       "payOnlineNow": "Pay online now",
-      "payInPersonPickup": "Pay in person at pickup",
+      "payInPersonPickup": "Pay at pickup",
+      "payAtPickupDescription": "Hand over the security deposit in person when collecting the vehicle.",
+      "payOnlineDescription": "Include the security deposit in your Stripe payment — fully refundable after the rental.",
+      "alreadyPaid": "Already paid",
+      "alreadyPaidDescription": "I already paid the full amount outside this website. Upload proof of payment.",
+      "alreadyPaidModalTitle": "Upload payment proof",
+      "alreadyPaidModalDescription": "Upload an image or PDF showing proof that this booking was already paid.",
+      "alreadyPaidUploadLabel": "Payment proof",
+      "alreadyPaidUploadHint": "Accepted formats: JPEG, PNG, or PDF (max 2 MB).",
+      "alreadyPaidModalCancel": "Cancel",
+      "alreadyPaidModalConfirm": "Confirm proof",
+      "alreadyPaidProofRequired": "Please upload payment proof to continue.",
+      "alreadyPaidProofAttached": "Proof attached: {name}",
+      "alreadyPaidSummaryLabel": "Already paid (no Stripe)",
+      "alreadyPaidNote": "Booking and security deposit are marked as paid. No online Stripe payment will be charged.",
+      "payNowOnlineStripe": "Pay now online (Stripe)",
       "paySecurityDepositOnline": "Pay security deposit online",
       "paySecurityDepositOnlineUnavailable": "Pay security deposit online — currently unavailable",
       "paySecurityDepositAtPickup": "Pay security deposit at pickup",
@@ -970,7 +1015,7 @@
       "totalDueOnline": "Total Due Online:",
       "dueLater": "Due at Pickup / Later:",
       "depositAtPickupNote": "Security deposit will be paid at pickup and is not part of the online payable amount.",
-      "depositOnlineNote": "Security deposit is included in the amount payable online.",
+      "depositOnlineNote": "Your security deposit will be charged with your booking and refunded after the vehicle is returned in good condition.",
       "reviewCheckbox": "I reviewed the summary above."
     },
     "pickupDropoff": {
@@ -979,6 +1024,7 @@
       "pickupLegend": "Pickup",
       "officePickup": "Collect from office in Pieta",
       "requestDelivery": "Request delivery",
+      "deliveryUnavailableSunday": "Delivery is unavailable on Sundays. Please select Office Pickup.",
       "pickupAddressLabel": "Pickup address (delivery)",
       "addressPlaceholder": "Street, building, area, postcode",
       "textOnlyNote": "Text address field only (no map in current doc version).",
@@ -1035,8 +1081,28 @@
       "cdwFull": "EUR 8/day - full coverage",
       "cdwAtv": "EUR 15/day - reduce to EUR 800 (ATV)",
       "cdwTitle": "Collision Damage Waiver (CDW)",
+      "insuranceTitle": "Insurance options",
+      "insuranceIntro": "Choose an insurance plan for your rental. You can continue without paid coverage by selecting No Insurance.",
+      "insuranceFree": "€0/day",
+      "insurancePerDay": "{amount}/day",
+      "insuranceTotalLine": "{days} rental days × {rate} = {total}",
+      "insuranceExclusionsNote": "Insurance does not cover negligence, alcohol/drug use, off-road misuse, lost keys, or tyre damage.",
+      "insurancePlan": {
+        "NO_INSURANCE": {
+          "name": "No Insurance",
+          "coverage": "Customers are fully liable. An excess of €800 applies in case of damage."
+        },
+        "BASIC": {
+          "name": "Basic Plan",
+          "coverage": "The company covers damage costs up to €500. The customer is responsible for the remaining excess."
+        },
+        "FULL_COVERAGE": {
+          "name": "Full Coverage",
+          "coverage": "All damages are fully covered by the insurance company. Zero customer liability."
+        }
+      },
       "cdwDefaultIntro": "By default you are liable for damages in such manner:",
-      "cdwExclusionsTitle": "CDW does not cover:",
+      "cdwExclusionsTitle": "Insurance does not cover:",
       "cdwEx1": "Liability EUR 500 (50cc)",
       "cdwEx2": "Liability EUR 800 (125cc)",
       "cdwEx3": "Exclusion note: negligence",
@@ -1059,6 +1125,14 @@
       "addDriverIdBody": "Delivery pickup requires photo upload. Office pickup requires in-person ID confirmation.",
       "addDriverOfficeConfirm": "I confirm the additional driver will show ID in person at pickup.",
       "storageBoxLabel": "Storage box (EUR 10 one-time)"
+    },
+    "insurancePrompt": {
+      "title": "Choose your insurance",
+      "description": "Please select an insurance option before continuing to payment. You may choose No Insurance if you prefer to decline paid coverage.",
+      "selectionRequired": "Please select an insurance option to continue.",
+      "confirmContinue": "Confirm and continue",
+      "cancel": "Cancel",
+      "dismiss": "Close insurance prompt"
     },
     "hotelCode": {
       "label": "Hotel Code (optional)",
@@ -1288,7 +1362,12 @@
         "title": "Delete vehicle permanently?",
         "description": "Are you sure you want to permanently delete this vehicle listing? This action cannot be undone.",
         "confirm": "Delete permanently",
-        "deleting": "Deleting…"
+        "deleting": "Deleting…",
+        "blockedReasons": {
+          "HAS_BOOKINGS": "This vehicle has {count, plural, one {# booking} other {# bookings}} linked to it. Remove or reassign them before deleting.",
+          "HAS_RESERVATION_HOLDS": "This vehicle has {count, plural, one {# active reservation hold} other {# active reservation holds}}. Wait for them to expire or convert before deleting.",
+          "HAS_AVAILABILITY_BLOCKS": "This vehicle has {count, plural, one {# availability block} other {# availability blocks}}. Remove them before deleting."
+        }
       },
       "vehicleTypes": {
         "Scooter": "Scooter",
@@ -1316,10 +1395,18 @@
         "name": "Vehicle name",
         "slug": "URL slug",
         "vehicleType": "Category",
+        "engineCc": "Engine size",
+        "engineCc50": "50cc",
+        "engineCc125": "125cc",
         "licensePlate": "License plate number",
         "licensePlatePlaceholder": "ABC-123 or MLT-452",
         "brand": "Brand",
         "model": "Model",
+        "color": "Color",
+        "colorNone": "No color specified",
+        "colorCustom": "Custom color…",
+        "colorCustomPlaceholder": "Enter color name",
+        "colorCustomApply": "Apply",
         "shortDescription": "Short description",
         "description": "Full description",
         "catalogStatus": "Catalog status",
@@ -1368,6 +1455,12 @@
         "cancelEdit": "Cancel edit",
         "licensePlate": "License plate",
         "licensePlatePlaceholder": "ABC-123",
+        "color": "Color",
+        "colorNone": "No color selected",
+        "colorCustom": "Custom color…",
+        "colorCustomPlaceholder": "Enter color name",
+        "colorCustomApply": "Apply",
+        "colorMissing": "Needs color",
         "status": "Unit status",
         "isActive": "Active unit",
         "notes": "Notes (optional)",
@@ -1387,6 +1480,7 @@
         },
         "table": {
           "licensePlate": "License plate",
+          "color": "Color",
           "status": "Status",
           "active": "Active",
           "notes": "Notes",
@@ -1409,6 +1503,7 @@
       "statusUpdateSuccess": "Booking status was updated.",
       "statusUpdateError": "Unable to update booking status. Please try again.",
       "status": {
+        "PENDING_PAYMENT": "Awaiting Payment",
         "CONFIRMED": "Confirmed",
         "VEHICLE_HANDED_OVER": "Vehicle Handed Over",
         "RETURNED": "Returned",
@@ -1449,6 +1544,7 @@
         "searchPlaceholder": "Name, email, phone, or reference…",
         "status": "Status",
         "allStatuses": "All statuses",
+        "pendingPayment": "Awaiting Payment",
         "confirmed": "Confirmed",
         "vehicleHandedOver": "Vehicle handed over",
         "returned": "Returned",
@@ -1493,6 +1589,7 @@
         "return": "Return",
         "status": "Status",
         "deposit": "Deposit",
+        "paymentStatus": "Payment status",
         "securityDepositMethod": "Security deposit method",
         "amountPayableOnline": "Amount payable online",
         "amountDueAtPickupLater": "Amount due at pickup / later",
@@ -1516,6 +1613,7 @@
         "destructiveTitle": "Confirm status change",
         "destructiveDescription": "You are about to change booking {reference} from {from} to {to}. This may affect availability and customer expectations.",
         "statusLabel": {
+          "PENDING_PAYMENT": "Awaiting Payment",
           "CONFIRMED": "Confirmed",
           "VEHICLE_HANDED_OVER": "Vehicle Handed Over",
           "RETURNED": "Returned",
@@ -1562,11 +1660,13 @@
           "licenseCategory": "License category",
           "licenseUpload": "Driving licence upload",
           "passportUpload": "Passport / ID upload",
+          "paymentProofUpload": "Payment proof",
           "willPresentLicenseAtPickup": "Will present licence at pickup",
           "willPresentIdAtPickup": "Will present ID at pickup",
           "notes": "Special notes / requests",
           "vehicleName": "Vehicle",
           "licensePlate": "License plate",
+          "vehicleColor": "Vehicle color",
           "vehicleType": "Vehicle type",
           "vehicleTypeSnapshot": "Vehicle type (snapshot)",
           "pickup": "Pickup date/time",
@@ -1679,7 +1779,7 @@
         "cancel": "Cancel",
         "confirm": "Confirm",
         "readOnlyCompleted": "This booking is completed. No further lifecycle actions are available.",
-        "readOnlyCancelled": "This booking was cancelled. No lifecycle actions are available.",
+        "readOnlyCancelled": "This booking was cancelled. Restore it if it was cancelled by mistake.",
         "guidelines": {
           "currentStage": "Current Stage",
           "whatToDoNext": "What to do next",
@@ -1691,9 +1791,14 @@
             "completed": "Completed"
           },
           "steps": {
+            "PENDING_PAYMENT": {
+              "title": "Awaiting payment — soft reservation",
+              "description": "The customer started checkout but Stripe has not confirmed payment yet. The vehicle is temporarily held for the checkout window. If payment is not completed, this booking is cancelled automatically and the vehicle is released.",
+              "nextStep": "Wait for payment to succeed, or cancel this booking to release the unit immediately."
+            },
             "CONFIRMED": {
               "title": "Confirmed: reservation active",
-              "description": "The booking is accepted and a physical unit is reserved internally. Payment and security deposit are still pending, confirmed does not mean the customer has paid or collected the vehicle.",
+              "description": "The booking is accepted and a physical unit is reserved. For online payments, money has already been confirmed by Stripe. Security deposit may still be collected at pickup depending on the customer's choice.",
               "nextStep": "When the customer arrives for pickup or the vehicle is delivered, record the handover. If the booking will not go ahead, cancel it to release the unit."
             },
             "VEHICLE_HANDED_OVER": {
@@ -1712,7 +1817,8 @@
             },
             "CANCELLED": {
               "title": "Cancelled — booking voided",
-              "description": "This booking was cancelled. The assigned unit was released for future bookings. Payment and deposit statuses reflect what was recorded at cancellation."
+              "description": "This booking was cancelled. The assigned unit was released for future bookings. Payment and deposit statuses reflect what was recorded at cancellation.",
+              "nextStep": "If this was cancelled by mistake, restore it to put the reservation back on the calendar. If a cancellation email was already sent, contact the customer."
             }
           },
           "actions": {
@@ -1731,6 +1837,10 @@
             "cancel": {
               "summary": "Cancel a confirmed booking that will not proceed.",
               "effects": "Sets booking to Cancelled and releases the reserved unit back to Available. Payment stays Pending unless already paid/refunded."
+            },
+            "restore": {
+              "summary": "Undo a cancellation and put the reservation back on the calendar.",
+              "effects": "Restores the previous booking status and reserves the original vehicle unit for the original dates. Payment status is left unchanged."
             }
           },
           "effectsLabel": "Result"
@@ -1739,7 +1849,8 @@
           "handOver": "Hand over the vehicle",
           "markReturned": "Mark vehicle returned",
           "complete": "Complete booking",
-          "cancel": "Cancel booking"
+          "cancel": "Cancel booking",
+          "restore": "Restore booking"
         },
         "handOver": {
           "title": "Hand over vehicle",
@@ -1776,7 +1887,27 @@
           "depositUnchanged": "Leave deposit status unchanged",
           "note": "Cancellation note",
           "dismiss": "Keep booking",
-          "confirm": "Cancel booking"
+          "continue": "Continue to email",
+          "back": "Back",
+          "confirm": "Cancel booking",
+          "emailTitle": "Review cancellation email",
+          "emailDescription": "This message will be sent to {email}. Edit it before confirming the cancellation.",
+          "emailRecipient": "Send to",
+          "emailSubject": "Subject",
+          "emailBody": "Email message",
+          "confirmAndSend": "Cancel booking and send email",
+          "emailFailed": "The booking was cancelled, but the customer email could not be sent. Please contact the customer directly."
+        },
+        "restoreDialog": {
+          "title": "Restore booking",
+          "description": "Restore booking {reference} to {status}. The original vehicle unit will be reserved again for the original dates.",
+          "emailWarning": "If a cancellation email was already sent, contact the customer to confirm the booking is still active.",
+          "note": "Note (optional)",
+          "confirm": "Restore booking",
+          "status": {
+            "CONFIRMED": "Confirmed",
+            "PENDING_PAYMENT": "Awaiting payment"
+          }
         },
         "paymentMethod": {
           "CASH": "Cash",
@@ -2080,6 +2211,7 @@
         "inactiveHotel": "inactive",
         "status": "Status",
         "allStatuses": "All statuses",
+        "pendingPayment": "Awaiting Payment",
         "confirmed": "Confirmed",
         "vehicleHandedOver": "Vehicle handed over",
         "returned": "Returned",
@@ -2189,8 +2321,12 @@
         "PARTIALLY_PAID": "Partially paid"
       },
       "bookingStatus": {
+        "PENDING_PAYMENT": "Awaiting Payment",
         "PENDING": "Pending",
         "CONFIRMED": "Confirmed",
+        "VEHICLE_HANDED_OVER": "Vehicle Handed Over",
+        "RETURNED": "Returned",
+        "COMPLETED": "Completed",
         "CANCELLED": "Cancelled",
         "FAILED": "Failed"
       },

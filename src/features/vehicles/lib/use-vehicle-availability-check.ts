@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { ApiVehicleType } from "@/features/vehicles/data/vehicles";
+import type { AvailableColorDto } from "@/lib/vehicle-units/types";
 
 /* ─── state shape ────────────────────────────────────────────── */
 
@@ -10,6 +11,7 @@ type AvailabilityReady = {
   isAvailable: boolean;
   availabilityStatus: "available" | "reserved_temporarily" | "unavailable";
   message: string;
+  availableColors: readonly AvailableColorDto[];
 };
 
 export type VehicleAvailabilityState =
@@ -90,11 +92,24 @@ export function useVehicleAvailabilityCheck(
         const data = await res.json();
         if (cancelled) return;
 
+        const rawColors = Array.isArray((data as { availableColors?: unknown }).availableColors)
+          ? (data as { availableColors: unknown[] }).availableColors
+          : [];
+        const availableColors = rawColors.filter(
+          (item): item is AvailableColorDto =>
+            Boolean(item) &&
+            typeof item === "object" &&
+            typeof (item as AvailableColorDto).value === "string" &&
+            typeof (item as AvailableColorDto).label === "string" &&
+            typeof (item as AvailableColorDto).availableUnitCount === "number",
+        );
+
         setAvailability({
           kind: "ready",
           isAvailable: Boolean(data.isAvailable),
           availabilityStatus: data.availabilityStatus ?? (data.isAvailable ? "available" : "unavailable"),
           message: data.message ?? "",
+          availableColors,
         });
       } catch (err) {
         if (cancelled || (err instanceof DOMException && err.name === "AbortError")) return;

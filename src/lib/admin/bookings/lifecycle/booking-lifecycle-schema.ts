@@ -57,9 +57,16 @@ export const cancelBookingSchema = z.object({
   depositDeductionAmount: z.coerce.number().min(0).optional(),
   depositDeductionReason: z.string().trim().max(500).optional(),
   note: optionalNoteSchema,
+  emailSubject: z.string().trim().min(1).max(200),
+  emailBody: z.string().trim().min(1).max(8000),
+});
+
+export const restoreCancelledBookingSchema = z.object({
+  note: optionalNoteSchema,
 });
 
 export type HandOverVehicleInput = z.infer<typeof handOverVehicleSchema>;
 export type MarkVehicleReturnedInput = z.infer<typeof markVehicleReturnedSchema>;
 export type CompleteBookingInput = z.infer<typeof completeBookingSchema>;
 export type CancelBookingInput = z.infer<typeof cancelBookingSchema>;
+export type RestoreCancelledBookingInput = z.infer<typeof restoreCancelledBookingSchema>;

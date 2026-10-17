@@ -1,12 +1,27 @@
 import type { VehicleType } from "@/generated/prisma/client";
 import { calculateHotelDiscount } from "@/lib/hotel-codes/calculate-hotel-discount";
+import { calculateVehicleRentalPricing } from "@/lib/pricing/duration-pricing";
+import type { PricingTierKey } from "@/lib/pricing/pricing-tiers";
 import {
-  calculateVehicleRentalPricing,
-  type DurationPricingRuleDto,
-} from "@/lib/pricing/duration-pricing";
+  calculateInsuranceTotal,
+  INSURANCE_PLANS,
+  isInsurancePlanCode,
+  type InsurancePlanCode,
+  type InsurancePlanSelection,
+} from "@/lib/pricing/insurance-plans";
 import { calculateRentalDuration } from "@/lib/pricing/rental-duration";
 
 export { calculateRentalDuration, type RentalDurationBreakdown } from "@/lib/pricing/rental-duration";
+export {
+  INSURANCE_PLANS,
+  INSURANCE_PLAN_CODES,
+  calculateInsuranceTotal,
+  getInsuranceDailyRate,
+  isInsurancePlanCode,
+  mapStoredCdwToInsurancePlan,
+  type InsurancePlanCode,
+  type InsurancePlanSelection,
+} from "@/lib/pricing/insurance-plans";
 
 export type PricingVehicleCategory = "motorbike" | "bicycle" | "atv";
 export type PricingCdwOption =
@@ -17,6 +32,14 @@ export type PricingCdwOption =
   | "cdw_atv_reduced_800";
 
 type LegacyCdwOption = "none" | "scooter_50" | "scooter_125" | "scooter_full" | "atv_full";
+
+/** Accepted client/API values for CDW / insurance selection in pricing. */
+export type PricingCdwInput =
+  | PricingCdwOption
+  | LegacyCdwOption
+  | InsurancePlanCode
+  | InsurancePlanSelection
+  | "";
 
 export type BookingPricingInput = Readonly<{
   rental: Readonly<{
@@ -38,7 +61,7 @@ export type BookingPricingInput = Readonly<{
     dropoffAddress?: string;
   }>;
   addons: Readonly<{
-    cdwOption?: PricingCdwOption | LegacyCdwOption | "";
+    cdwOption?: PricingCdwInput;
     additionalDriver: boolean;
     storageBox: boolean;
     helmetSize1?: string;
@@ -53,7 +76,6 @@ export type BookingPricingInput = Readonly<{
   vehiclePricing: Readonly<{
     baseDailyRate: number;
     vehicleType: VehicleType;
-    durationRules: readonly DurationPricingRuleDto[];
     supportsStorageBox?: boolean;
   }>;
   hotelDiscount?: Readonly<{
@@ -86,8 +108,13 @@ export type BookingPriceBreakdown = Readonly<{
   actualDurationHours: number;
   rentalCost: number;
   baseDailyRate: number;
+  tierKey: PricingTierKey;
+  tierRange: string;
   durationDiscountPercent: number;
+  discountAmountPerDay: number;
   appliedDailyRate: number;
+  undiscountedRentalSubtotal: number;
+  totalDiscountAmount: number;
   sundayDaysCharged: number;
   deliveryFee: number;
   dropoffFee: number;
@@ -120,10 +147,14 @@ export const pricingConfig = {
     amount: 250,
   },
   cdwPerDay: {
-    no_cdw: 0,
-    cdw_50cc_reduced_350: 3,
-    cdw_125cc_reduced_500: 3,
-    cdw_full_50cc_125cc: 8,
+    no_cdw: INSURANCE_PLANS.NO_INSURANCE.dailyRate,
+    /** Historical 50cc reduced package — same daily rate as Basic. */
+    cdw_50cc_reduced_350: INSURANCE_PLANS.BASIC.dailyRate,
+    /** Canonical Basic Plan storage mapping (€3/day). */
+    cdw_125cc_reduced_500: INSURANCE_PLANS.BASIC.dailyRate,
+    /** Canonical Full Coverage storage mapping (€8/day). */
+    cdw_full_50cc_125cc: INSURANCE_PLANS.FULL_COVERAGE.dailyRate,
+    /** Historical ATV package — kept for snapshot readability of old bookings. */
     cdw_atv_reduced_800: 15,
   } as const,
 } as const;
@@ -154,23 +185,31 @@ export function normalizeVehicleCategory(type: string): PricingVehicleCategory |
 
 export function calculateVehicleRentalCost(
   baseDailyRate: number,
-  vehicleType: VehicleType,
   rentalDays: number,
-  durationRules: readonly DurationPricingRuleDto[],
 ): {
   rentalCost: number;
   baseDailyRate: number;
+  tierKey: PricingTierKey;
+  tierRange: string;
   durationDiscountPercent: number;
+  discountAmountPerDay: number;
   appliedDailyRate: number;
+  undiscountedRentalSubtotal: number;
+  totalDiscountAmount: number;
   sundayDaysCharged: number;
 } {
-  const pricing = calculateVehicleRentalPricing(baseDailyRate, vehicleType, rentalDays, durationRules);
+  const pricing = calculateVehicleRentalPricing(baseDailyRate, rentalDays);
   if (!pricing) {
     return {
       rentalCost: 0,
       baseDailyRate: 0,
+      tierKey: "TIER_1",
+      tierRange: "",
       durationDiscountPercent: 0,
+      discountAmountPerDay: 0,
       appliedDailyRate: 0,
+      undiscountedRentalSubtotal: 0,
+      totalDiscountAmount: 0,
       sundayDaysCharged: 0,
     };
   }
@@ -178,8 +217,13 @@ export function calculateVehicleRentalCost(
   return {
     rentalCost: pricing.rentalSubtotal,
     baseDailyRate: pricing.baseDailyRate,
+    tierKey: pricing.tierKey,
+    tierRange: pricing.tierRange,
     durationDiscountPercent: pricing.durationDiscountPercent,
+    discountAmountPerDay: pricing.discountAmountPerDay,
     appliedDailyRate: pricing.appliedDailyRate,
+    undiscountedRentalSubtotal: pricing.undiscountedRentalSubtotal,
+    totalDiscountAmount: pricing.totalDiscountAmount,
     sundayDaysCharged: 0,
   };
 }
@@ -201,7 +245,25 @@ export function calculateDeliveryFees(
   };
 }
 
-function normalizeCdwOption(option?: PricingCdwOption | LegacyCdwOption | ""): PricingCdwOption {
+export function mapInsurancePlanToPricingCdw(plan: InsurancePlanCode): PricingCdwOption {
+  switch (plan) {
+    case "BASIC":
+      return "cdw_125cc_reduced_500";
+    case "FULL_COVERAGE":
+      return "cdw_full_50cc_125cc";
+    case "NO_INSURANCE":
+    default:
+      return "no_cdw";
+  }
+}
+
+function normalizeCdwOption(option?: PricingCdwInput): PricingCdwOption {
+  if (option === null || option === undefined || option === "") {
+    return "no_cdw";
+  }
+  if (isInsurancePlanCode(option)) {
+    return mapInsurancePlanToPricingCdw(option);
+  }
   switch (option) {
     case "cdw_50cc_reduced_350":
     case "cdw_125cc_reduced_500":
@@ -217,50 +279,33 @@ function normalizeCdwOption(option?: PricingCdwOption | LegacyCdwOption | ""): P
       return "cdw_full_50cc_125cc";
     case "atv_full":
       return "cdw_atv_reduced_800";
+    case "none":
+      return "no_cdw";
     default:
       return "no_cdw";
   }
 }
 
-function resolveAllowedCdwOptions(
-  vehicleCategory: PricingVehicleCategory,
-  vehicleHint: string,
-): readonly PricingCdwOption[] {
-  if (vehicleCategory === "bicycle") {
-    return ["no_cdw"];
-  }
-  if (vehicleCategory === "atv") {
-    return ["no_cdw", "cdw_atv_reduced_800"];
-  }
-
-  const hint = vehicleHint.toLowerCase();
-  if (hint.includes("50cc")) {
-    return ["no_cdw", "cdw_50cc_reduced_350", "cdw_full_50cc_125cc"];
-  }
-  if (hint.includes("125cc")) {
-    return ["no_cdw", "cdw_125cc_reduced_500", "cdw_full_50cc_125cc"];
-  }
-
-  return [
-    "no_cdw",
-    "cdw_50cc_reduced_350",
-    "cdw_125cc_reduced_500",
-    "cdw_full_50cc_125cc",
-  ];
-}
-
 export function calculateCdwCost(
   rentalDays: number,
-  vehicleCategory: PricingVehicleCategory,
-  vehicleHint: string,
-  selectedOption?: PricingCdwOption | LegacyCdwOption | "",
+  _vehicleCategory: PricingVehicleCategory,
+  _vehicleHint: string,
+  selectedOption?: PricingCdwInput,
 ): CdwBreakdown {
   const normalizedOption = normalizeCdwOption(selectedOption);
-  const allowedOptions = resolveAllowedCdwOptions(vehicleCategory, vehicleHint);
-  const safeOption = allowedOptions.includes(normalizedOption) ? normalizedOption : "no_cdw";
-  const dailyRate = pricingConfig.cdwPerDay[safeOption];
+
+  if (isInsurancePlanCode(selectedOption)) {
+    const insurance = calculateInsuranceTotal(selectedOption, rentalDays);
+    return {
+      selectedOption: mapInsurancePlanToPricingCdw(selectedOption),
+      dailyRate: insurance.dailyRate,
+      total: insurance.total,
+    };
+  }
+
+  const dailyRate = pricingConfig.cdwPerDay[normalizedOption];
   return {
-    selectedOption: safeOption,
+    selectedOption: normalizedOption,
     dailyRate,
     total: dailyRate * rentalDays,
   };
@@ -270,22 +315,23 @@ export function formatEur(amount: number): string {
   return new Intl.NumberFormat("en-MT", {
     style: "currency",
     currency: "EUR",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(amount);
 }
 
 export function getCdwLabel(option: PricingCdwOption): string {
   switch (option) {
-    case "cdw_50cc_reduced_350":
-      return "50cc reduced liability (EUR 350)";
     case "cdw_125cc_reduced_500":
-      return "125cc reduced liability (EUR 500)";
+      return INSURANCE_PLANS.BASIC.label;
     case "cdw_full_50cc_125cc":
-      return "Full coverage (50cc/125cc)";
+      return INSURANCE_PLANS.FULL_COVERAGE.label;
+    case "cdw_50cc_reduced_350":
+      return "Basic Plan (historical 50cc package)";
     case "cdw_atv_reduced_800":
       return "ATV reduced liability (EUR 800)";
     default:
-      return "No CDW";
+      return INSURANCE_PLANS.NO_INSURANCE.label;
   }
 }
 
@@ -307,9 +353,7 @@ export function calculateBookingPrice(input: BookingPricingInput): BookingPriceB
 
   const rentalPricing = calculateVehicleRentalCost(
     input.vehiclePricing.baseDailyRate,
-    input.vehiclePricing.vehicleType,
     duration.billableDays,
-    input.vehiclePricing.durationRules,
   );
   if (rentalPricing.rentalCost <= 0) {
     return null;
@@ -318,8 +362,13 @@ export function calculateBookingPrice(input: BookingPricingInput): BookingPriceB
   const {
     rentalCost,
     baseDailyRate,
+    tierKey,
+    tierRange,
     durationDiscountPercent,
+    discountAmountPerDay,
     appliedDailyRate,
+    undiscountedRentalSubtotal,
+    totalDiscountAmount,
     sundayDaysCharged,
   } = rentalPricing;
   const deliveryBreakdown = calculateDeliveryFees(
@@ -374,7 +423,7 @@ export function calculateBookingPrice(input: BookingPricingInput): BookingPriceB
         ]
       : []),
     { key: "delivery_dropoff", label: "Delivery / Drop-off", amount: deliveryBreakdown.deliveryTotal },
-    { key: "cdw", label: "CDW", amount: cdw.total },
+    { key: "cdw", label: "Insurance", amount: cdw.total },
     { key: "additional_driver", label: "Additional Driver", amount: additionalDriverCost },
     { key: "storage_box", label: "Storage Box", amount: storageBoxCost },
   ];
@@ -385,8 +434,13 @@ export function calculateBookingPrice(input: BookingPricingInput): BookingPriceB
     actualDurationHours: duration.actualDurationHours,
     rentalCost,
     baseDailyRate,
+    tierKey,
+    tierRange,
     durationDiscountPercent,
+    discountAmountPerDay,
     appliedDailyRate,
+    undiscountedRentalSubtotal,
+    totalDiscountAmount,
     sundayDaysCharged,
     deliveryFee: deliveryBreakdown.deliveryFee,
     dropoffFee: deliveryBreakdown.dropoffFee,

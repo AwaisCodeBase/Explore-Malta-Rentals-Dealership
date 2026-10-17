@@ -35,12 +35,18 @@ function vehicleLabel(vehicleType: Booking["vehicleType"]): string {
 
 function cdwLabel(option: Booking["cdwOption"]): string {
   switch (option) {
-    case "NO_CDW":                return "No CDW";
-    case "REDUCE_350_50CC":       return "Reduced excess — 50cc (€350)";
-    case "REDUCE_500_125CC":      return "Reduced excess — 125cc (€500)";
-    case "FULL_COVERAGE_50CC_125CC": return "Full coverage (50cc / 125cc)";
-    case "REDUCE_800_ATV":        return "Reduced excess — ATV (€800)";
-    default:                      return option;
+    case "NO_CDW":
+      return "No Insurance";
+    case "REDUCE_350_50CC":
+      return "Basic Plan (historical 50cc package)";
+    case "REDUCE_500_125CC":
+      return "Basic Plan";
+    case "FULL_COVERAGE_50CC_125CC":
+      return "Full Coverage";
+    case "REDUCE_800_ATV":
+      return "ATV reduced liability (EUR 800)";
+    default:
+      return option;
   }
 }
 

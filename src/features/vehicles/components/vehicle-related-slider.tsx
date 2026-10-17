@@ -11,6 +11,14 @@ type VehicleRelatedSliderProps = Readonly<{
   currentSlug: string;
 }>;
 
+/* Circular hairline control that fills on hover — same idiom as the gallery arrows. */
+const controlClass =
+  "flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-card)] text-[var(--ink-700)] shadow-[var(--elev-1)] transition-[background-color,border-color,color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink-950)] hover:shadow-[var(--elev-2)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2";
+
+/* Photo plate matches VehicleCard so related slides read as the same object. */
+const slidePhotoClass =
+  "relative aspect-[4/3] overflow-hidden bg-[linear-gradient(155deg,var(--ink-50)_0%,var(--surface-sunken)_58%,var(--ink-100)_100%)]";
+
 export function VehicleRelatedSlider({
   vehicles,
   currentSlug,
@@ -28,20 +36,21 @@ export function VehicleRelatedSlider({
   if (related.length === 0) return null;
 
   return (
-    <section aria-label="Similar vehicles" className="mt-16 border-t border-slate-200/70 pt-12">
-      <div className="mb-6 flex items-center justify-between gap-4">
+    <section aria-label="Similar vehicles" className="mt-16">
+      <hr className="rule-fade" />
+      <div className="mb-6 mt-12 flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold tracking-[-0.025em] text-slate-950">
-            Similar vehicles
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">Other rides you might like</p>
+          <h2 className="type-h3 text-[var(--ink-950)]">Similar vehicles</h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">
+            Other rides you might like
+          </p>
         </div>
         <div className="flex shrink-0 gap-2">
           <button
             type="button"
             onClick={() => scroll("left")}
             aria-label="Scroll left"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 hover:shadow-md"
+            className={controlClass}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -49,7 +58,7 @@ export function VehicleRelatedSlider({
             type="button"
             onClick={() => scroll("right")}
             aria-label="Scroll right"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 hover:shadow-md"
+            className={controlClass}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -67,40 +76,53 @@ export function VehicleRelatedSlider({
             <Link
               key={vehicle.slug}
               href={`/vehicles/${vehicle.slug}`}
-              className="group shrink-0 w-[min(72vw,16rem)] snap-start overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_16px_40px_-28px_rgba(15,23,42,0.3)] transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_20px_48px_-24px_rgba(15,23,42,0.35)]"
+              className="surface-card lift group w-[min(72vw,16rem)] shrink-0 snap-start overflow-hidden"
             >
-              <div className="relative aspect-[4/3] bg-slate-100">
+              <div className={slidePhotoClass}>
                 {img ? (
                   <Image
                     src={img}
                     alt={vehicle.name}
                     fill
                     sizes="17rem"
-                    className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                    className="object-cover transition-transform duration-[var(--dur-slower)] ease-[var(--ease-out-expo)] will-change-transform motion-safe:group-hover:scale-[1.06]"
                     loading="lazy"
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-xs text-slate-400">
+                  <div className="type-spec flex h-full items-center justify-center text-[var(--text-faint)]">
                     Image soon
                   </div>
                 )}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                <span className="absolute left-2.5 top-2.5 rounded-full bg-white/92 px-2.5 py-0.5 text-[0.65rem] font-semibold text-slate-800">
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-[linear-gradient(to_top,rgb(10_20_32/0.28),transparent)]"
+                />
+                <span className="type-spec absolute left-3 top-3 inline-flex items-center rounded-full border border-white/60 bg-white/85 px-2.5 py-1.5 text-[var(--ink-800)] shadow-sm backdrop-blur-md">
                   {typeLabel}
                 </span>
               </div>
-              <div className="p-3.5">
-                <h3 className="text-sm font-semibold leading-tight text-slate-900 group-hover:text-[var(--brand-blue)]">
+              <div className="p-4">
+                <h3 className="text-sm font-semibold leading-snug tracking-[-0.02em] text-[var(--ink-950)] transition-colors duration-[var(--dur-fast)] ease-[var(--ease-standard)] group-hover:text-[var(--blue-600)]">
                   {vehicle.name}
                 </h3>
-                <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">
+                <p className="mt-1 line-clamp-1 text-xs leading-relaxed text-[var(--text-secondary)]">
                   {vehicle.shortDescription ?? vehicle.tagline}
                 </p>
-                <p className="mt-2.5 text-sm font-bold text-slate-950">
+                <p
+                  data-numeric
+                  className="mt-3 text-[0.9375rem] font-bold leading-none tracking-[-0.03em] text-[var(--ink-950)]"
+                >
                   {vehicle.pricePerDay > 0 ? (
-                    <>From €{vehicle.pricePerDay}<span className="text-xs font-normal text-slate-500">/day</span></>
+                    <>
+                      From €{vehicle.pricePerDay}
+                      <span className="ml-0.5 text-xs font-medium tracking-normal text-[var(--text-muted)]">
+                        /day
+                      </span>
+                    </>
                   ) : (
-                    <span className="text-xs font-medium text-slate-500">Price on request</span>
+                    <span className="text-xs font-semibold tracking-normal text-[var(--text-muted)]">
+                      Price on request
+                    </span>
                   )}
                 </p>
               </div>

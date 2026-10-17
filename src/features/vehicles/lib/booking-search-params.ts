@@ -37,23 +37,40 @@ export function parseVehicleTypeSearchParam(
 const COLOR_URL: Record<VehicleColor, string> = {
   Black: "black",
   White: "white",
-  Gray: "gray",
+  Grey: "grey",
   Red: "red",
   Blue: "blue",
   Silver: "silver",
   Orange: "orange",
+  Green: "green",
+  Cream: "cream",
 };
 
 const URL_TO_COLOR: Record<string, VehicleColor | "All"> = {
   all: "All",
   black: "Black",
   white: "White",
-  gray: "Gray",
+  grey: "Grey",
+  gray: "Grey",
   red: "Red",
   blue: "Blue",
   silver: "Silver",
   orange: "Orange",
+  green: "Green",
+  cream: "Cream",
 };
+
+export function parseBrandSearchParam(raw: string | null): string | "All" {
+  if (!raw) return "All";
+  const decoded = decodeURIComponent(raw.trim());
+  if (!decoded || decoded.toLowerCase() === "all") return "All";
+  return decoded;
+}
+
+export function brandToUrlParam(value: string | "All"): string {
+  if (value === "All") return "all";
+  return encodeURIComponent(value.trim());
+}
 
 export function parseColorSearchParam(
   raw: string | null,

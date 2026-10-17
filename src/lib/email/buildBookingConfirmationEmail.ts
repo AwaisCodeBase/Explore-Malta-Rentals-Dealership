@@ -52,15 +52,15 @@ function depositMethodLabel(method: Booking["depositMethod"]): string {
 function cdwLabel(option: Booking["cdwOption"]): string {
   switch (option) {
     case "NO_CDW":
-      return "No CDW / reduction package selected";
+      return "No Insurance";
     case "REDUCE_350_50CC":
-      return "Reduced excess — 50cc (€350 excess)";
+      return "Basic Plan (historical 50cc package)";
     case "REDUCE_500_125CC":
-      return "Reduced excess — 125cc (€500 excess)";
+      return "Basic Plan";
     case "FULL_COVERAGE_50CC_125CC":
-      return "Full CDW coverage (50cc / 125cc)";
+      return "Full Coverage";
     case "REDUCE_800_ATV":
-      return "Reduced excess — ATV (€800 excess)";
+      return "ATV reduced liability (EUR 800)";
     default:
       return option;
   }

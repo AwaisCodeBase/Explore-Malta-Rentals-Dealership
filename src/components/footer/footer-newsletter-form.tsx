@@ -24,7 +24,7 @@ export function FooterNewsletterForm() {
       <label htmlFor={id} className="sr-only">
         {t("newsletterSrOnly")}
       </label>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-stretch">
         <input
           id={id}
           name="email"
@@ -35,17 +35,24 @@ export function FooterNewsletterForm() {
           required
           suppressHydrationWarning
           className={joinClasses(
-            "min-h-11 w-full flex-1 rounded-xl border border-white/15 bg-white/[0.06] px-3.5 py-2 text-sm text-white placeholder:text-white/35",
-            "transition-[border-color,background-color,box-shadow] duration-200",
-            "focus-visible:border-[var(--brand-orange)]/60 focus-visible:bg-white/[0.09] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]/40",
+            "min-h-12 w-full flex-1 rounded-[var(--r-field)] bg-white/[0.05] px-4 py-2.5 text-sm text-white placeholder:text-[var(--ink-500)]",
+            "shadow-[inset_0_0_0_1px_var(--line-inverse)] outline-none",
+            "transition-[background-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-standard)]",
+            "hover:bg-white/[0.08]",
+            "focus:bg-white/[0.09] focus:shadow-[inset_0_0_0_1px_rgb(255_255_255_/_0.28),0_0_0_3px_color-mix(in_srgb,var(--orange-400)_32%,transparent)]",
+            "focus-visible:outline-none",
           )}
         />
         <button
           type="submit"
+          suppressHydrationWarning
           className={joinClasses(
-            "inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl px-5 text-sm font-semibold tracking-[-0.02em] text-slate-950 transition-all duration-200",
-            "bg-[var(--brand-orange)] hover:bg-[var(--brand-orange-strong)]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a1628]",
+            "inline-flex min-h-12 shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-field)] px-5 text-sm font-semibold tracking-[-0.02em]",
+            "bg-[var(--orange-400)] text-[var(--ink-950)] shadow-[var(--elev-orange)]",
+            "transition-[transform,box-shadow,background-color] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] motion-reduce:transition-none",
+            "hover:bg-[var(--orange-500)] hover:shadow-[var(--elev-orange-lift)] motion-safe:hover:-translate-y-0.5",
+            "active:translate-y-0 active:bg-[var(--orange-600)] active:shadow-[var(--elev-orange)]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-400)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ink-950)]",
           )}
         >
           {t("newsletterSubmit")}
@@ -55,11 +62,13 @@ export function FooterNewsletterForm() {
         {submitted ? t("newsletterSuccess") : ""}
       </p>
       {submitted ? (
-        <p className="mt-2 text-xs text-[var(--brand-orange)]" role="status">
+        <p className="mt-3 text-xs leading-[1.6] text-[var(--orange-300)]" role="status">
           {t("newsletterSuccessLong")}
         </p>
       ) : (
-        <p className="mt-2 text-xs text-white/45">{t("newsletterFinePrint")}</p>
+        <p className="mt-3 text-xs leading-[1.6] text-[var(--ink-500)]">
+          {t("newsletterFinePrint")}
+        </p>
       )}
     </form>
   );

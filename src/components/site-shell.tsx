@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 /** Primary white surfaces (navbar, booking panel) — keep in sync. */
-export const SITE_SURFACE_RADIUS = "rounded-lg sm:rounded-xl";
+export const SITE_SURFACE_RADIUS = "rounded-[var(--r-card)] sm:rounded-[var(--r-panel)]";
 
 /** Compact navbar controls — slightly tighter than the bar itself (`rounded-md`). */
 export const SITE_NAV_CONTROL_RADIUS = "rounded-sm";

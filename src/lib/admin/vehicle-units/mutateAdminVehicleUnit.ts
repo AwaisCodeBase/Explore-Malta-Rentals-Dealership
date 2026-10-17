@@ -1,8 +1,12 @@
 import { Prisma } from "@/generated/prisma/client";
 
 import type { AdminVehicleUnitDto } from "@/lib/admin/vehicle-units/types";
-import type { AdminVehicleUnitWriteInput } from "@/lib/admin/vehicle-units/vehicle-unit-schema";
+import type {
+  AdminVehicleUnitCreateInput,
+  AdminVehicleUnitUpdateInput,
+} from "@/lib/admin/vehicle-units/vehicle-unit-schema";
 import { BLOCKING_BOOKING_STATUSES } from "@/lib/availability/types";
+import { vehicleUnitDeleteRelationCountSelect } from "@/lib/admin/vehicles/vehicle-delete-errors";
 import { prisma } from "@/lib/prisma";
 
 export class DuplicateVehicleUnitLicensePlateError extends Error {
@@ -40,6 +44,7 @@ const unitSelect = {
   id: true,
   vehicleId: true,
   licensePlate: true,
+  color: true,
   status: true,
   isActive: true,
   notes: true,
@@ -57,7 +62,7 @@ async function ensureVehicleExists(vehicleId: string): Promise<boolean> {
 
 async function assertUnitNotBlockingStatusChange(
   unitId: string,
-  input: AdminVehicleUnitWriteInput,
+  input: AdminVehicleUnitCreateInput | AdminVehicleUnitUpdateInput,
 ): Promise<void> {
   const becomingUnavailable =
     !input.isActive ||
@@ -83,7 +88,7 @@ async function assertUnitNotBlockingStatusChange(
 
 export async function createAdminVehicleUnit(
   vehicleId: string,
-  input: AdminVehicleUnitWriteInput,
+  input: AdminVehicleUnitCreateInput,
 ): Promise<AdminVehicleUnitDto | null> {
   if (!(await ensureVehicleExists(vehicleId))) {
     return null;
@@ -94,6 +99,7 @@ export async function createAdminVehicleUnit(
       data: {
         vehicleId,
         licensePlate: input.licensePlate,
+        color: input.color,
         status: input.status,
         isActive: input.isActive,
         notes: input.notes ?? null,
@@ -117,7 +123,7 @@ export async function createAdminVehicleUnit(
 export async function updateAdminVehicleUnit(
   vehicleId: string,
   unitId: string,
-  input: AdminVehicleUnitWriteInput,
+  input: AdminVehicleUnitUpdateInput,
 ): Promise<AdminVehicleUnitDto | null> {
   const existing = await prisma.vehicleUnit.findFirst({
     where: { id: unitId, vehicleId },
@@ -135,6 +141,7 @@ export async function updateAdminVehicleUnit(
       where: { id: unitId },
       data: {
         licensePlate: input.licensePlate,
+        ...(input.color !== undefined ? { color: input.color } : {}),
         status: input.status,
         isActive: input.isActive,
         notes: input.notes ?? null,
@@ -163,28 +170,32 @@ export async function deleteAdminVehicleUnit(
   vehicleId: string,
   unitId: string,
 ): Promise<DeleteAdminVehicleUnitResult> {
-  const existing = await prisma.vehicleUnit.findFirst({
-    where: { id: unitId, vehicleId },
-    select: {
-      id: true,
-      _count: {
-        select: {
-          bookings: true,
-          reservationHolds: true,
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.vehicleUnit.findFirst({
+      where: { id: unitId, vehicleId },
+      select: {
+        id: true,
+        _count: {
+          select: vehicleUnitDeleteRelationCountSelect(),
         },
       },
-    },
+    });
+
+    if (!existing) {
+      return { ok: false, reason: "not_found" };
+    }
+
+    if (existing._count.bookings > 0 || existing._count.reservationHolds > 0) {
+      return { ok: false, reason: "has_related_records" };
+    }
+
+    await tx.booking.updateMany({
+      where: { vehicleUnitId: unitId, status: "CANCELLED" },
+      data: { vehicleUnitId: null },
+    });
+
+    await tx.vehicleUnit.delete({ where: { id: unitId } });
+
+    return { ok: true };
   });
-
-  if (!existing) {
-    return { ok: false, reason: "not_found" };
-  }
-
-  if (existing._count.bookings > 0 || existing._count.reservationHolds > 0) {
-    return { ok: false, reason: "has_related_records" };
-  }
-
-  await prisma.vehicleUnit.delete({ where: { id: unitId } });
-
-  return { ok: true };
 }

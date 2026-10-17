@@ -4,11 +4,11 @@ import type { ReactNode } from "react";
 export function BrandBlueUnderlinedText({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <span className="relative inline-block">
-      <span className="text-slate-950">{children}</span>
+      <span className="text-[var(--text-primary)]">{children}</span>
       <svg
         viewBox="0 0 132 16"
         aria-hidden
-        className="pointer-events-none absolute -bottom-1 left-[-2%] h-[0.45em] w-[104%] max-w-none overflow-visible text-[var(--brand-orange)] sm:-bottom-1.5 sm:h-[0.5em]"
+        className="pointer-events-none absolute -bottom-1 left-[-2%] h-[0.45em] w-[104%] max-w-none overflow-visible text-orange-400 sm:-bottom-1.5 sm:h-[0.5em]"
         preserveAspectRatio="none"
       >
         <path

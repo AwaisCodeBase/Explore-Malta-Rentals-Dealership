@@ -37,6 +37,7 @@ function parseOptionalInt(value: string | undefined): number | undefined {
 
 function parseBookingStatus(value: string | undefined): BookingStatus | undefined {
   if (
+    value === "PENDING_PAYMENT" ||
     value === "CONFIRMED" ||
     value === "VEHICLE_HANDED_OVER" ||
     value === "RETURNED" ||

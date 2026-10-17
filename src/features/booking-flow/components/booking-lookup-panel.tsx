@@ -1,9 +1,14 @@
 "use client";
 
 import { type FormEvent, useEffect, useState } from "react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { lookupBooking } from "@/features/booking-flow/lib/lookup-booking-api";
 import type { PublicBookingSummary } from "@/lib/booking/lookupPublicBooking";
+
+/** Single field style shared by the lookup inputs. */
+const lookupFieldClass =
+  "mt-1.5 min-h-12 w-full rounded-[var(--r-field)] border border-[var(--line)] bg-[var(--surface-card)] px-3.5 py-2.5 text-sm font-normal text-[var(--text-primary)] shadow-[var(--elev-1)] outline-none transition duration-[var(--dur-fast)] placeholder:text-[var(--text-faint)] hover:border-[var(--line-strong)] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25";
 
 type BookingLookupPanelProps = {
   initialReference?: string;
@@ -46,23 +51,39 @@ function BookingSummaryCard({
   const t = useTranslations("BookingPage.lookup");
 
   return (
-    <div className="mt-5 rounded-xl border border-emerald-200/80 bg-emerald-50/40 px-4 py-4 text-sm text-slate-800">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t("referenceLabel")}</p>
-      <p className="mt-1 font-mono text-base font-bold tracking-tight text-[var(--brand-blue)]">
-        {summary.bookingReference}
-      </p>
-      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{t("statusLabel")}</p>
-      <p className="mt-1 font-medium text-slate-900">{bookingStatusLabel(summary.status, t)}</p>
-      {summary.vehicleName ? (
-        <>
-          <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{t("vehicleLabel")}</p>
-          <p className="mt-1 font-medium text-slate-900">{summary.vehicleName}</p>
-        </>
-      ) : null}
-      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{t("pickupLabel")}</p>
-      <p className="mt-1 text-slate-800">{formatIsoDateTime(summary.pickupDateTime, format)}</p>
-      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{t("returnLabel")}</p>
-      <p className="mt-1 text-slate-800">{formatIsoDateTime(summary.returnDateTime, format)}</p>
+    <div className="mt-5 overflow-hidden rounded-[var(--r-card)] border border-emerald-200/80 bg-emerald-50/40 text-sm text-[var(--text-primary)] shadow-[var(--elev-1)]">
+      <div className="border-b border-emerald-200/70 bg-[var(--surface-card)]/70 px-4 py-3.5">
+        <p className="type-spec text-[var(--text-muted)]">{t("referenceLabel")}</p>
+        <p className="mt-1 font-mono text-lg font-bold tracking-tight tabular-nums text-blue-700">
+          {summary.bookingReference}
+        </p>
+      </div>
+      <dl className="divide-y divide-emerald-200/60">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-2.5">
+          <dt className="text-[var(--text-secondary)]">{t("statusLabel")}</dt>
+          <dd className="font-semibold text-[var(--text-primary)]">
+            {bookingStatusLabel(summary.status, t)}
+          </dd>
+        </div>
+        {summary.vehicleName ? (
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-2.5">
+            <dt className="text-[var(--text-secondary)]">{t("vehicleLabel")}</dt>
+            <dd className="font-semibold text-[var(--text-primary)]">{summary.vehicleName}</dd>
+          </div>
+        ) : null}
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-2.5">
+          <dt className="text-[var(--text-secondary)]">{t("pickupLabel")}</dt>
+          <dd className="font-medium tabular-nums text-[var(--text-primary)]">
+            {formatIsoDateTime(summary.pickupDateTime, format)}
+          </dd>
+        </div>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-2.5">
+          <dt className="text-[var(--text-secondary)]">{t("returnLabel")}</dt>
+          <dd className="font-medium tabular-nums text-[var(--text-primary)]">
+            {formatIsoDateTime(summary.returnDateTime, format)}
+          </dd>
+        </div>
+      </dl>
     </div>
   );
 }
@@ -137,23 +158,31 @@ export function BookingLookupPanel({
   return (
     <section
       aria-labelledby="booking-lookup-heading"
-      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+      className="surface-panel p-5 sm:p-6"
     >
       {showSubmittedBanner ? (
-        <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-950">
-          <p className="font-semibold">{t("submittedTitle")}</p>
-          <p className="mt-1 text-emerald-900/90">{t("submittedBody")}</p>
+        <div className="mb-5 flex items-start gap-3 rounded-[var(--r-card)] border border-emerald-200 bg-emerald-50/70 px-4 py-3.5 text-sm text-emerald-950">
+          <span
+            className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+            aria-hidden
+          >
+            <CheckCircle2 className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-semibold tracking-[-0.01em]">{t("submittedTitle")}</p>
+            <p className="mt-0.5 text-emerald-900/90">{t("submittedBody")}</p>
+          </div>
         </div>
       ) : null}
 
-      <h2 id="booking-lookup-heading" className="text-lg font-bold text-slate-900">
+      <h2 id="booking-lookup-heading" className="type-h3 text-[var(--text-primary)]">
         {t("title")}
       </h2>
-      <p className="mt-1 text-sm text-slate-600">{t("lead")}</p>
+      <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">{t("lead")}</p>
 
-      <form onSubmit={onSubmit} className="mt-4 space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-sm font-medium text-slate-700">
+      <form onSubmit={onSubmit} className="mt-5 space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
             {t("referenceLabelShort")}
             <input
               type="text"
@@ -161,11 +190,11 @@ export function BookingLookupPanel({
               value={reference}
               onChange={(e) => setReference(e.target.value)}
               autoComplete="off"
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-[var(--brand-blue)] focus:ring-2 focus:ring-[var(--brand-blue)]/20"
+              className={`${lookupFieldClass} font-mono uppercase tabular-nums`}
               placeholder={t("referencePlaceholder")}
             />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="block text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
             {t("emailLabel")}
             <input
               type="email"
@@ -173,7 +202,7 @@ export function BookingLookupPanel({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-[var(--brand-blue)] focus:ring-2 focus:ring-[var(--brand-blue)]/20"
+              className={lookupFieldClass}
               placeholder={t("emailPlaceholder")}
               suppressHydrationWarning
             />
@@ -182,13 +211,27 @@ export function BookingLookupPanel({
         <button
           type="submit"
           disabled={loading || !reference.trim() || !email.trim()}
-          className="inline-flex min-h-10 items-center justify-center rounded-full bg-[var(--brand-blue)] px-5 text-sm font-semibold text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-blue-500 px-6 text-sm font-semibold text-white shadow-[var(--elev-3)] transition duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-[var(--elev-4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-[var(--ink-200)] disabled:text-[var(--text-faint)] disabled:shadow-none"
         >
-          {loading ? t("loading") : t("submit")}
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              {t("loading")}
+            </>
+          ) : (
+            t("submit")
+          )}
         </button>
       </form>
 
-      {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <p
+          role="alert"
+          className="mt-4 rounded-[var(--r-field)] border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700"
+        >
+          {error}
+        </p>
+      ) : null}
       {summary ? <BookingSummaryCard summary={summary} format={format} /> : null}
     </section>
   );

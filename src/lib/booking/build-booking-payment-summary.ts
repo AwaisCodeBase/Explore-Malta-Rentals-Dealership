@@ -37,13 +37,21 @@ export function buildBookingPaymentSummary(
   const depositMethod = normalizeDepositMethod(input.depositMethod);
   const securityDepositDueAtPickup = depositMethod === "IN_PERSON";
 
+  const amountPayableOnline = depositMethod === "ONLINE"
+    ? roundMoney(bookingChargesTotal + securityDeposit)
+    : bookingChargesTotal;
+
+  const amountDueAtPickupLater = depositMethod === "IN_PERSON"
+    ? securityDeposit
+    : 0;
+
   return {
     bookingChargesTotal,
     securityDeposit,
     securityDepositDueAtPickup,
-    amountPayableOnline: null,
-    amountDueAtPickupLater: totalCustomerLiability,
+    amountPayableOnline,
+    amountDueAtPickupLater,
     totalCustomerLiability,
-    onlinePaymentEnabled: false,
+    onlinePaymentEnabled: true,
   };
 }

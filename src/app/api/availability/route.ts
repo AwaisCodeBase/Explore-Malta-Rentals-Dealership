@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 import { checkVehicleAvailability, checkVehicleTypeAvailability } from "@/lib/availability";
 import { combineDateAndTime } from "@/lib/booking/bookingSubmissionSchema";
+import { parseVehicleColorValue } from "@/features/vehicles/lib/vehicle-color";
+import { getAvailableColorsForVehicle } from "@/lib/vehicle-units";
 
 const vehicleTypes = new Set<string>(Object.values(VehicleType));
 
@@ -37,6 +39,8 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const vehicleId = normalizeQueryValue(url.searchParams.get("vehicleId"));
   const vehicleTypeRaw = normalizeQueryValue(url.searchParams.get("vehicleType"));
+  const colorRaw = normalizeQueryValue(url.searchParams.get("color"));
+  const sessionKey = normalizeQueryValue(url.searchParams.get("sessionKey"));
   const range = parseAvailabilityRange(url);
 
   if (!range) {
@@ -71,11 +75,31 @@ export async function GET(request: Request) {
 
   try {
     if (vehicleId) {
+      const parsedColor = colorRaw ? parseVehicleColorValue(colorRaw) : undefined;
+      if (colorRaw && !parsedColor) {
+        return NextResponse.json(
+          {
+            success: false as const,
+            message: "Invalid color",
+          },
+          { status: 400 },
+        );
+      }
+
       const result = await checkVehicleAvailability({
         vehicleId,
         requestedStart: range.requestedStart,
         requestedEnd: range.requestedEnd,
         vehicleType: vehicleTypeRaw ? (vehicleTypeRaw as VehicleType) : undefined,
+        color: parsedColor ?? undefined,
+        excludeSessionKey: sessionKey ?? undefined,
+      });
+
+      const availableColors = await getAvailableColorsForVehicle({
+        vehicleId,
+        requestedStart: range.requestedStart,
+        requestedEnd: range.requestedEnd,
+        excludeSessionKey: sessionKey ?? undefined,
       });
 
       const availabilityStatus = result.isAvailable
@@ -90,6 +114,7 @@ export async function GET(request: Request) {
         success: true as const,
         isAvailable: result.isAvailable,
         availabilityStatus,
+        availableColors,
         message: result.reason ?? (result.isAvailable ? "Available" : "Selected vehicle is not available"),
       });
     }

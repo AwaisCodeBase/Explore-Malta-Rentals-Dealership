@@ -4,7 +4,7 @@ import { BookingSummaryStep } from "@/features/booking-flow/steps/booking-summar
 
 export function ReviewConfirmStep() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <BookingSummaryStep />
     </div>
   );

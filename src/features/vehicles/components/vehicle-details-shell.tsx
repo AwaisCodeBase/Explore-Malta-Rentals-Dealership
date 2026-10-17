@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   CalendarRange,
   CheckCircle2,
@@ -21,14 +21,15 @@ import {
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Container } from "@/components/ui/container";
+import { Reveal } from "@/components/motion/reveal";
 import { VehicleDetailGallery } from "@/features/vehicles/components/vehicle-detail-gallery";
 import { VehicleRelatedSlider } from "@/features/vehicles/components/vehicle-related-slider";
 import { formatVehicleTypeLabel, type Vehicle } from "@/features/vehicles/data/vehicles";
-import { useDurationPricingRules } from "@/features/pricing/lib/use-duration-pricing-rules";
 import { useVehicle, useVehicles } from "@/features/vehicles/lib/use-vehicles";
 import {
   buildDurationPricingPreview,
   calculateVehicleRentalPricing,
+  roundPricingAmount,
 } from "@/lib/pricing/duration-pricing";
 import { getBillableRentalDays } from "@/lib/pricing/rental-duration";
 import { BOOKING_TIME_SLOTS } from "@/features/booking/lib/time-slots";
@@ -38,6 +39,7 @@ import {
   holdBlockedMessageForTrip,
 } from "@/features/vehicles/lib/use-vehicle-availability-check";
 import { BookNowButton } from "@/features/vehicles/components/book-now-button";
+import { colorsMatch } from "@/features/vehicles/lib/vehicle-color";
 
 /* ─────────────────────────── helpers ─────────────────────────── */
 
@@ -45,9 +47,16 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function formatTierRateEur(value: number): string {
+  return roundPricingAmount(value).toFixed(2).replace(/\.00$/, "");
+}
+
 function isTripCommitted(pd: string, rd: string): boolean {
   return Boolean(pd && rd && rd > pd);
 }
+
+/** Every block heading on the detail page shares the display face and spacing. */
+const sectionHeadingClass = "type-h3 text-[var(--ink-950)]";
 
 /* ─────────────────────────── sub-components ──────────────────── */
 
@@ -81,18 +90,21 @@ function KeyInfoBar({ vehicle }: { vehicle: Vehicle }) {
   ];
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <div className="flex min-w-max divide-x divide-slate-100">
+    <div className="surface-card overflow-hidden">
+      <div className="grid grid-cols-2 gap-px bg-[var(--line-subtle)]">
         {specs.map((s) => (
           <div
             key={s.label}
-            className="flex flex-col items-center gap-1.5 px-5 py-4 text-center"
+            className="flex flex-col items-center gap-1.5 bg-[var(--surface-card)] px-3 py-4 text-center last:col-span-2"
           >
-            <span className="text-slate-500">{s.icon}</span>
-            <span className="text-[0.65rem] font-semibold uppercase tracking-widest text-slate-400 whitespace-nowrap">
-              {s.label}
+            <span className="text-[var(--blue-500)]">{s.icon}</span>
+            <span className="type-spec text-[var(--text-faint)]">{s.label}</span>
+            <span
+              data-numeric
+              className="text-sm font-semibold text-[var(--ink-950)]"
+            >
+              {s.value}
             </span>
-            <span className="text-sm font-semibold text-slate-900 whitespace-nowrap">{s.value}</span>
           </div>
         ))}
       </div>
@@ -108,7 +120,7 @@ function ExpandableDescription({ text }: { text: string }) {
     <div>
       <p
         className={[
-          "text-base leading-relaxed text-slate-600",
+          "text-base leading-relaxed text-[var(--text-secondary)]",
           !expanded && short ? "line-clamp-4" : "",
         ].join(" ")}
       >
@@ -118,11 +130,14 @@ function ExpandableDescription({ text }: { text: string }) {
         <button
           type="button"
           onClick={() => setExpanded((e) => !e)}
-          className="mt-3 flex items-center gap-1 text-sm font-semibold text-[var(--brand-blue)] hover:underline"
+          className="mt-3 flex items-center gap-1.5 text-sm font-semibold text-[var(--blue-600)] underline-offset-4 transition-colors duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:text-[var(--blue-700)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2"
         >
           {expanded ? "Show less" : "Read more"}
           <ChevronDown
-            className={["h-4 w-4 transition-transform duration-200", expanded ? "rotate-180" : ""].join(" ")}
+            className={[
+              "h-4 w-4 transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)]",
+              expanded ? "rotate-180" : "",
+            ].join(" ")}
             aria-hidden
           />
         </button>
@@ -145,9 +160,12 @@ function FeaturesList({ vehicle }: { vehicle: Vehicle }) {
   ].filter(Boolean) as string[];
 
   return (
-    <ul className="grid gap-3 sm:grid-cols-2">
+    <ul className="grid gap-x-6 sm:grid-cols-2">
       {items.map((item) => (
-        <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
+        <li
+          key={item}
+          className="flex items-start gap-2.5 border-b border-[var(--line-subtle)] py-2.5 text-sm leading-relaxed text-[var(--ink-800)]"
+        >
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
           {item}
         </li>
@@ -159,17 +177,17 @@ function FeaturesList({ vehicle }: { vehicle: Vehicle }) {
 function LocationSection({ location }: { location: string }) {
   return (
     <div className="space-y-3">
-      <div className="flex items-start gap-2.5 text-sm text-slate-700">
-        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-orange)]" aria-hidden />
+      <div className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--ink-800)]">
+        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--orange-500)]" aria-hidden />
         <span>
           Pickup & return at{" "}
-          <span className="font-semibold text-slate-900">{location}</span> — Explore Malta Rentals, Pietà
+          <span className="font-semibold text-[var(--ink-950)]">{location}</span> — Explore Malta Rentals, Pietà
         </span>
       </div>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs leading-relaxed text-[var(--text-muted)]">
         Hotel delivery and custom drop-off available on request — ask us on WhatsApp.
       </p>
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100 aspect-[16/6]">
+      <div className="aspect-[16/6] overflow-hidden rounded-[var(--r-card)] bg-[var(--surface-sunken)] shadow-[inset_0_0_0_1px_var(--line-subtle),var(--elev-2)]">
         <iframe
           title={`Map showing ${location}`}
           src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12971.66892988892!2d14.487860399999999!3d35.896389!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x130e4541df9b1f5b%3A0x88e68b52e93fdc6b!2sPiet%C3%A0%2C%20Malta!5e0!3m2!1sen!2smt!4v1700000000000"
@@ -183,26 +201,30 @@ function LocationSection({ location }: { location: string }) {
   );
 }
 
+/* Hairline-separated rows keep the four policies on one baseline grid. */
+const policyCellClass = "border-b border-[var(--line-subtle)] py-4";
+const policyBodyClass = "mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]";
+
 function PoliciesSection({ vehicle }: { vehicle: Vehicle }) {
   const isBike = vehicle.type !== "Bicycle";
   return (
-    <dl className="grid gap-5 sm:grid-cols-2">
-      <div>
-        <dt className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+    <dl className="grid gap-x-8 sm:grid-cols-2">
+      <div className={policyCellClass}>
+        <dt className="flex items-center gap-2 text-sm font-semibold text-[var(--ink-950)]">
           <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
           Cancellation
         </dt>
-        <dd className="mt-1.5 text-sm leading-relaxed text-slate-600">
+        <dd className={policyBodyClass}>
           No payment charged online during initial reservation. Availability confirmed after review.
           Contact support early for changes.
         </dd>
       </div>
-      <div>
-        <dt className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          <BadgeCheck className="h-4 w-4 text-[var(--brand-blue)]" aria-hidden />
+      <div className={policyCellClass}>
+        <dt className="flex items-center gap-2 text-sm font-semibold text-[var(--ink-950)]">
+          <BadgeCheck className="h-4 w-4 text-[var(--blue-500)]" aria-hidden />
           Licence requirement
         </dt>
-        <dd className="mt-1.5 text-sm leading-relaxed text-slate-600">
+        <dd className={policyBodyClass}>
           {isBike
             ? vehicle.engine === "50cc"
               ? "Category B (standard car licence) typically accepted for 50cc — confirm at booking."
@@ -210,23 +232,23 @@ function PoliciesSection({ vehicle }: { vehicle: Vehicle }) {
             : "No licence required for bicycle rental — must follow local road rules."}
         </dd>
       </div>
-      <div>
-        <dt className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          <Lock className="h-4 w-4 text-slate-500" aria-hidden />
+      <div className={policyCellClass}>
+        <dt className="flex items-center gap-2 text-sm font-semibold text-[var(--ink-950)]">
+          <Lock className="h-4 w-4 text-[var(--text-muted)]" aria-hidden />
           Security deposit
         </dt>
-        <dd className="mt-1.5 text-sm leading-relaxed text-slate-600">
+        <dd className={policyBodyClass}>
           {vehicle.securityDepositEUR != null
             ? `EUR ${vehicle.securityDepositEUR} refundable deposit required at handover.`
             : "Deposit amount confirmed when booking is reviewed."}
         </dd>
       </div>
-      <div>
-        <dt className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-          <Shield className="h-4 w-4 text-slate-500" aria-hidden />
+      <div className={policyCellClass}>
+        <dt className="flex items-center gap-2 text-sm font-semibold text-[var(--ink-950)]">
+          <Shield className="h-4 w-4 text-[var(--text-muted)]" aria-hidden />
           Documents at pickup
         </dt>
-        <dd className="mt-1.5 text-sm leading-relaxed text-slate-600">
+        <dd className={policyBodyClass}>
           Valid driving licence + government-issued ID or passport required at handover.
         </dd>
       </div>
@@ -257,7 +279,6 @@ function BookingSidebar({
   initialPickupTime,
   initialReturnTime,
 }: BookingSidebarProps) {
-  const { rules: durationRules } = useDurationPricingRules();
   const minDate = todayISO();
   const defaultTime = BOOKING_TIME_SLOTS[0] ?? "09:30";
   const [pickupDate, setPickupDate] = useState(initialPickupDate);
@@ -265,6 +286,8 @@ function BookingSidebar({
   const [pickupTime, setPickupTime] = useState(initialPickupTime || defaultTime);
   const [returnTime, setReturnTime] = useState(initialReturnTime || defaultTime);
   const [showDateWarning, setShowDateWarning] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [showColorWarning, setShowColorWarning] = useState(false);
 
   /* When dates arrive from the URL they're already committed — skip the picker */
   const datesFromUrl = isTripCommitted(initialPickupDate, initialReturnDate);
@@ -286,6 +309,26 @@ function BookingSidebar({
 
   const allowHold = tripCommitted && vehicleIsBookableForTrip(availability);
   const holdBlocked = holdBlockedMessageForTrip(tripCommitted, availability);
+  const unitColors = vehicle.availableColors ?? [];
+  const availableColors =
+    availability.kind === "ready" ? availability.availableColors : unitColors;
+
+  useEffect(() => {
+    if (!selectedColor || availability.kind !== "ready") {
+      return;
+    }
+    // Once trip availability is known, drop a color that is not free for those dates.
+    if (availability.availableColors.length === 0) {
+      setSelectedColor(null);
+      return;
+    }
+    const stillAvailable = availability.availableColors.some((option) =>
+      colorsMatch(option.label, selectedColor),
+    );
+    if (!stillAvailable) {
+      setSelectedColor(null);
+    }
+  }, [availability, selectedColor]);
 
   const bookingHref = useMemo(() => {
     const p = new URLSearchParams();
@@ -298,80 +341,84 @@ function BookingSidebar({
   }, [pickupDate, returnDate, pickupTime, returnTime]);
 
   const durationPreview = useMemo(
-    () => buildDurationPricingPreview(vehicle.baseDailyRate, vehicle.apiVehicleType, durationRules),
-    [durationRules, vehicle.apiVehicleType, vehicle.baseDailyRate],
+    () => buildDurationPricingPreview(vehicle.baseDailyRate),
+    [vehicle.baseDailyRate],
   );
 
   const estimatedPricing =
-    vehicle.baseDailyRate > 0 && days > 0 && durationRules.length > 0
-      ? calculateVehicleRentalPricing(
-          vehicle.baseDailyRate,
-          vehicle.apiVehicleType,
-          days,
-          durationRules,
-        )
+    vehicle.baseDailyRate > 0 && days > 0
+      ? calculateVehicleRentalPricing(vehicle.baseDailyRate, days)
       : null;
   const estimatedTotal = estimatedPricing?.rentalSubtotal ?? null;
   const estimatedTierDailyRate = estimatedPricing?.appliedDailyRate ?? null;
 
   const dateInputClass = (hasWarning: boolean) =>
     [
-      "mt-1.5 block w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:outline-none focus:ring-2",
+      "mt-1.5 block w-full rounded-[var(--r-field)] border bg-[var(--surface-card)] px-3 py-2.5 text-sm text-[var(--ink-900)] transition-[border-color,box-shadow] duration-[var(--dur-fast)] ease-[var(--ease-standard)] focus:outline-none focus:ring-2",
       hasWarning
-        ? "border-rose-400 focus:border-rose-400/50 focus:ring-rose-400/20"
-        : "border-slate-200 focus:border-[var(--brand-blue)]/50 focus:ring-[var(--brand-blue)]/20",
+        ? "border-rose-400 focus:border-rose-400 focus:ring-rose-400/30"
+        : "border-[var(--line)] hover:border-[var(--line-strong)] focus:border-[var(--blue-500)] focus:ring-[var(--blue-500)]/30",
     ].join(" ");
   const timeSelectClass =
-    "mt-1.5 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-[var(--brand-blue)]/50 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue)]/20";
-  const labelClass = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+    "mt-1.5 block w-full rounded-[var(--r-field)] border border-[var(--line)] bg-[var(--surface-card)] px-3 py-2.5 text-sm text-[var(--ink-900)] transition-[border-color,box-shadow] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:border-[var(--line-strong)] focus:border-[var(--blue-500)] focus:outline-none focus:ring-2 focus:ring-[var(--blue-500)]/30";
+  const labelClass = "type-spec text-[var(--text-muted)]";
 
   return (
-    <aside className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.38)] sm:p-5 md:sticky md:top-[calc(env(safe-area-inset-top)+4rem)]">
+    <aside className="surface-panel p-5 sm:p-6 md:sticky md:top-[calc(var(--site-header-offset)+1rem)]">
       {/* price */}
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
           {vehicle.baseDailyRate > 0 ? (
-            <p className="text-2xl font-bold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+            <p
+              data-numeric
+              className="type-h2 text-[var(--ink-950)]"
+            >
               From €{vehicle.baseDailyRate}
-              <span className="ml-1 text-base font-medium text-slate-500">/ day</span>
+              <span className="ml-1.5 text-base font-medium tracking-[-0.01em] text-[var(--text-muted)]">
+                / day
+              </span>
             </p>
           ) : (
-            <p className="text-lg font-semibold text-slate-700">Price on request</p>
+            <p className="type-h3 text-[var(--text-secondary)]">Price on request</p>
           )}
           {durationPreview.length > 0 ? (
-            <ul className="mt-3 space-y-1 text-xs text-slate-600">
+            <ul className="mt-4 divide-y divide-[var(--line-subtle)] border-y border-[var(--line-subtle)]">
               {durationPreview.map((row) => (
-                <li key={`${row.minDays}-${row.maxDays ?? "plus"}`}>
-                  {row.label}: {row.discountPercent}% off → €{row.appliedDailyRate}/day
+                <li
+                  key={`${row.minDays}-${row.maxDays ?? "plus"}`}
+                  data-numeric
+                  className="py-1.5 text-xs leading-relaxed text-[var(--text-secondary)]"
+                >
+                  {row.label}: {row.discountPercent}% off → €{formatTierRateEur(row.appliedDailyRate)}/day
                 </li>
               ))}
             </ul>
           ) : null}
           {vehicle.securityDepositEUR != null ? (
-            <p className="mt-0.5 text-xs text-slate-500">
+            <p data-numeric className="mt-2 text-xs text-[var(--text-muted)]">
               + EUR {vehicle.securityDepositEUR} deposit (refundable)
             </p>
           ) : null}
         </div>
-        <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+        <span className="type-spec shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-emerald-800">
           Free cancellation
         </span>
       </div>
 
-      <hr className="my-4 border-slate-100" />
+      <hr className="rule-fade my-5" />
 
       {/* trip fields */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
-            <CalendarRange className="h-4 w-4 text-slate-500" aria-hidden />
+          <p className="flex items-center gap-2 text-sm font-semibold text-[var(--ink-950)]">
+            <CalendarRange className="h-4 w-4 text-[var(--text-muted)]" aria-hidden />
             {showDatePicker ? "Select your trip" : "Your trip"}
           </p>
           {!showDatePicker && (
             <button
               type="button"
               onClick={() => setShowDatePicker(true)}
-              className="text-xs font-semibold text-[var(--brand-blue)] hover:underline"
+              className="text-xs font-semibold text-[var(--blue-600)] underline-offset-4 transition-colors duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:text-[var(--blue-700)] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2"
             >
               Change dates
             </button>
@@ -413,7 +460,7 @@ function BookingSidebar({
               </div>
             </div>
             {showDateWarning && (
-              <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-rose-600" role="alert">
+              <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-rose-600" role="alert">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
                   <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                 </svg>
@@ -450,17 +497,21 @@ function BookingSidebar({
             </div>
           </>
         ) : (
-          <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-slate-400">Pickup</p>
-                <p className="mt-0.5 font-semibold text-slate-900">{formatDateDisplay(pickupDate)}</p>
-                <p className="text-xs text-slate-500">{pickupTime}</p>
+          <div className="rounded-[var(--r-card)] bg-[var(--surface-sunken)] px-4 py-3.5 text-sm shadow-[inset_0_0_0_1px_var(--line-subtle)]">
+            <div className="grid grid-cols-2 divide-x divide-[var(--line-subtle)]">
+              <div className="pr-3">
+                <p className="type-spec text-[var(--text-faint)]">Pickup</p>
+                <p data-numeric className="mt-1 font-semibold text-[var(--ink-950)]">
+                  {formatDateDisplay(pickupDate)}
+                </p>
+                <p data-numeric className="text-xs text-[var(--text-muted)]">{pickupTime}</p>
               </div>
-              <div>
-                <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-slate-400">Return</p>
-                <p className="mt-0.5 font-semibold text-slate-900">{formatDateDisplay(returnDate)}</p>
-                <p className="text-xs text-slate-500">{returnTime}</p>
+              <div className="pl-3">
+                <p className="type-spec text-[var(--text-faint)]">Return</p>
+                <p data-numeric className="mt-1 font-semibold text-[var(--ink-950)]">
+                  {formatDateDisplay(returnDate)}
+                </p>
+                <p data-numeric className="text-xs text-[var(--text-muted)]">{returnTime}</p>
               </div>
             </div>
           </div>
@@ -471,16 +522,16 @@ function BookingSidebar({
       {tripCommitted ? (
         <div
           className={[
-            "mt-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-all",
+            "mt-3 rounded-[var(--r-field)] px-3.5 py-2.5 text-xs font-medium leading-relaxed shadow-[inset_0_0_0_1px_var(--line-subtle)] transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)]",
             availability.kind === "loading"
-              ? "bg-slate-50 text-slate-500"
+              ? "bg-[var(--surface-sunken)] text-[var(--text-muted)]"
               : availability.kind === "ready" && availability.isAvailable
                 ? "bg-emerald-50 text-emerald-800"
                 : availability.kind === "ready" && !availability.isAvailable
                   ? "bg-rose-50 text-rose-800"
                   : availability.kind === "error"
-                    ? "bg-amber-50 text-amber-800"
-                    : "bg-slate-50 text-slate-500",
+                    ? "bg-[var(--orange-50)] text-[var(--orange-900)]"
+                    : "bg-[var(--surface-sunken)] text-[var(--text-muted)]",
           ].join(" ")}
           aria-live="polite"
         >
@@ -495,21 +546,59 @@ function BookingSidebar({
         </div>
       ) : null}
 
+      {availableColors.length > 0 ? (
+        <div className="mt-5 space-y-2.5">
+          <p className="type-spec text-[var(--text-muted)]">Color</p>
+          <div className="flex flex-wrap gap-2">
+            {availableColors.map((option) => {
+              const isSelected = colorsMatch(selectedColor, option.label);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => {
+                    setSelectedColor(option.label);
+                    setShowColorWarning(false);
+                  }}
+                  className={[
+                    "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-[background-color,border-color,color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2",
+                    isSelected
+                      ? "border-[var(--blue-500)] bg-[var(--blue-500)] text-white shadow-[var(--elev-2)]"
+                      : "border-[var(--line)] bg-[var(--surface-card)] text-[var(--ink-800)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)]",
+                  ].join(" ")}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          {showColorWarning ? (
+            <p className="text-xs font-medium text-rose-600" role="alert">
+              Please select a color to continue
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       {/* price breakdown */}
       {estimatedTotal !== null && estimatedTierDailyRate !== null ? (
-        <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
-          <div className="flex justify-between text-sm text-slate-600">
-            <span>€{estimatedTierDailyRate} × {days} day{days !== 1 ? "s" : ""}</span>
-            <span className="font-semibold text-slate-900">€{estimatedTotal}</span>
+        <div className="mt-5 rounded-[var(--r-card)] bg-[var(--surface-sunken)] px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--line-subtle)]">
+          <div
+            data-numeric
+            className="flex items-baseline justify-between gap-3 text-sm text-[var(--text-secondary)]"
+          >
+            <span>€{formatTierRateEur(estimatedTierDailyRate)} × {days} day{days !== 1 ? "s" : ""}</span>
+            <span className="text-base font-bold tracking-[-0.02em] text-[var(--ink-950)]">€{formatTierRateEur(estimatedTotal)}</span>
           </div>
-          <p className="mt-1 text-[0.65rem] text-slate-400">
+          <p className="mt-2 border-t border-[var(--line-subtle)] pt-2 text-[0.6875rem] leading-relaxed text-[var(--text-faint)]">
             Flat tier rate applied to the full trip duration. Final price confirmed before you pay — no card taken online.
           </p>
         </div>
       ) : null}
 
       {/* CTA */}
-      <div className="mt-4">
+      <div className="mt-5">
         <BookNowButton
           vehicle={vehicle}
           bookingHref={bookingHref}
@@ -517,12 +606,16 @@ function BookingSidebar({
           onTripDatesRequired={() => setShowDateWarning(true)}
           allowHold={allowHold}
           holdBlockedMessage={holdBlocked}
+          disabled={tripCommitted && availability.kind === "loading"}
+          availableColors={availableColors}
+          selectedColor={selectedColor}
+          onColorRequired={() => setShowColorWarning(true)}
           pickupDate={tripCommitted ? pickupDate : null}
           returnDate={tripCommitted ? returnDate : null}
           pickupTime={tripCommitted ? pickupTime : null}
           returnTime={tripCommitted ? returnTime : null}
-          className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--brand-orange)] px-5 py-3 text-sm font-bold text-slate-950 shadow-[0_12px_32px_-14px_rgba(255,147,15,0.8)] transition hover:bg-[var(--brand-orange-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange-strong)] focus-visible:ring-offset-2"
-          busyClassName="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--brand-orange)]/80 px-5 py-3 text-sm font-bold text-slate-950 transition disabled:cursor-wait"
+          className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[var(--orange-400)] px-5 py-3 text-sm font-bold text-[var(--ink-950)] shadow-[var(--elev-orange)] transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:bg-[var(--orange-500)] hover:shadow-[var(--elev-orange-lift)] active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none"
+          busyClassName="inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-full bg-[var(--orange-300)] px-5 py-3 text-sm font-bold text-[var(--ink-950)] opacity-90 transition-colors duration-[var(--dur-fast)] disabled:cursor-wait"
         />
       </div>
 
@@ -531,20 +624,23 @@ function BookingSidebar({
         href="https://wa.me/35699999999"
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+        className="mt-2.5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-[var(--line)] bg-[var(--surface-card)] px-5 py-2.5 text-sm font-semibold text-[var(--ink-800)] shadow-[var(--elev-1)] transition-[background-color,border-color,color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink-950)] hover:shadow-[var(--elev-2)] active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2"
       >
         <PhoneCall className="h-4 w-4" aria-hidden />
         Contact us on WhatsApp
       </a>
 
       {/* trust row */}
-      <ul className="mt-5 space-y-2">
+      <ul className="mt-5 divide-y divide-[var(--line-subtle)] border-t border-[var(--line-subtle)]">
         {[
-          { icon: <ShieldCheck className="h-4 w-4 text-emerald-600" />, text: "Secure booking — no card stored" },
-          { icon: <Zap className="h-4 w-4 text-[var(--brand-orange)]" />, text: "Instant hold on dates" },
-          { icon: <Lock className="h-4 w-4 text-slate-500" />, text: "Your details used only for this rental" },
+          { icon: <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />, text: "Secure booking — no card stored" },
+          { icon: <Zap className="h-4 w-4 shrink-0 text-[var(--orange-500)]" />, text: "Instant hold on dates" },
+          { icon: <Lock className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />, text: "Your details used only for this rental" },
         ].map(({ icon, text }) => (
-          <li key={text} className="flex items-center gap-2 text-xs text-slate-600">
+          <li
+            key={text}
+            className="flex items-center gap-2.5 py-2.5 text-xs leading-relaxed text-[var(--text-secondary)]"
+          >
             {icon}
             {text}
           </li>
@@ -558,12 +654,12 @@ function BookingSidebar({
 
 function Skeleton() {
   return (
-    <div className="pt-24">
-      <div className="h-72 animate-pulse bg-slate-100 sm:rounded-2xl" />
+    <div className="pt-24" aria-hidden>
+      <div className="skeleton h-72 sm:rounded-[var(--r-panel)]" />
       <Container className="pb-20 pt-8">
-        <div className="h-8 max-w-sm animate-pulse rounded-xl bg-slate-200/70" />
-        <div className="mt-3 h-5 max-w-xs animate-pulse rounded-xl bg-slate-200/50" />
-        <div className="mt-6 h-24 animate-pulse rounded-2xl bg-slate-100" />
+        <div className="skeleton h-8 max-w-sm rounded-[var(--r-field)]" />
+        <div className="skeleton mt-3 h-5 max-w-xs rounded-[var(--r-field)]" />
+        <div className="skeleton mt-6 h-24 rounded-[var(--r-card)]" />
         <div className="mt-8 grid gap-8 lg:grid-cols-12">
           <div className="space-y-5 lg:col-span-7">
             {[
@@ -574,12 +670,12 @@ function Skeleton() {
               <div
                 key={id}
                 style={{ height: h }}
-                className="animate-pulse rounded-2xl bg-slate-100/80"
+                className="skeleton rounded-[var(--r-card)]"
               />
             ))}
           </div>
           <div className="lg:col-span-5">
-            <div className="h-72 animate-pulse rounded-2xl bg-slate-100/80" />
+            <div className="skeleton h-72 rounded-[var(--r-panel)]" />
           </div>
         </div>
       </Container>
@@ -613,10 +709,13 @@ export function VehicleDetailsShell({
   if (error) {
     return (
       <Container className="pb-16 pt-28 sm:pt-32">
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-6 py-8">
-          <h1 className="text-xl font-semibold text-rose-900">{t("unableLoadTitle")}</h1>
-          <p className="mt-2 text-sm text-rose-800">{error}</p>
-          <Link href="/vehicles" className="mt-5 inline-flex text-sm font-semibold text-rose-900 underline">
+        <div className="rounded-[var(--r-panel)] border border-rose-200 bg-rose-50/80 px-6 py-8 shadow-sm">
+          <h1 className="type-h3 text-rose-950">{t("unableLoadTitle")}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-rose-800">{error}</p>
+          <Link
+            href="/vehicles"
+            className="mt-5 inline-flex text-sm font-semibold text-rose-900 underline underline-offset-4 transition-colors duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:text-rose-950"
+          >
             {t("backToVehicles")}
           </Link>
         </div>
@@ -627,10 +726,15 @@ export function VehicleDetailsShell({
   if (!vehicle) {
     return (
       <Container className="pb-16 pt-28 sm:pt-32">
-        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-8">
-          <h1 className="text-xl font-semibold text-slate-900">{t("notFoundTitle")}</h1>
-          <p className="mt-2 text-sm text-slate-600">{t("notFoundBody")}</p>
-          <Link href="/vehicles" className="mt-5 inline-flex text-sm font-semibold text-slate-900 underline">
+        <div className="surface-panel px-6 py-8">
+          <h1 className="type-h3 text-[var(--ink-950)]">{t("notFoundTitle")}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
+            {t("notFoundBody")}
+          </p>
+          <Link
+            href="/vehicles"
+            className="mt-5 inline-flex text-sm font-semibold text-[var(--ink-950)] underline underline-offset-4 transition-colors duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:text-[var(--blue-600)]"
+          >
             {t("browseVehicles")}
           </Link>
         </div>
@@ -647,44 +751,48 @@ export function VehicleDetailsShell({
       <div>
         <Container className="pb-24 pt-28 sm:pt-32 md:pb-16">
           {/* breadcrumb */}
-          <nav aria-label={t("breadcrumb")} className="mb-4 text-xs text-slate-500">
-            <Link href="/vehicles" className="hover:text-slate-900">
+          <nav aria-label={t("breadcrumb")} className="mb-5 text-xs text-[var(--text-muted)]">
+            <Link
+              href="/vehicles"
+              className="underline-offset-4 transition-colors duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:text-[var(--ink-950)] hover:underline"
+            >
               {t("vehiclesCrumb")}
             </Link>
             {" / "}
-            <span className="font-medium text-slate-900">{vehicle.name}</span>
+            <span className="font-medium text-[var(--ink-900)]">{vehicle.name}</span>
           </nav>
 
           {/* title block */}
-          <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-orange)]">
-                {typeLabel}
-              </p>
-              <h1 className="mt-1.5 text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl md:text-4xl">
-                {vehicle.name}
-              </h1>
+              <p className="type-eyebrow text-[var(--orange-600)]">{typeLabel}</p>
+              <h1 className="type-h1 mt-2 text-[var(--ink-950)]">{vehicle.name}</h1>
               {brandModel ? (
-                <p className="mt-1.5 text-base font-medium text-slate-600">{brandModel}</p>
+                <p className="mt-2 text-base font-medium text-[var(--text-secondary)]">
+                  {brandModel}
+                </p>
               ) : null}
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-1 text-sm text-slate-600">
-                  <MapPin className="h-3.5 w-3.5 text-[var(--brand-orange)]" aria-hidden />
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <div className="flex items-center gap-1.5 text-sm text-[var(--text-secondary)]">
+                  <MapPin className="h-3.5 w-3.5 text-[var(--orange-500)]" aria-hidden />
                   {vehicle.location}, Malta
                 </div>
                 {vehicle.rating > 0 ? (
-                  <div className="flex items-center gap-1 text-sm text-slate-600">
-                    <Star className="h-3.5 w-3.5 fill-[var(--brand-orange)] text-[var(--brand-orange)]" aria-hidden />
-                    <span className="font-semibold text-slate-900">{vehicle.rating.toFixed(1)}</span>
+                  <div
+                    data-numeric
+                    className="flex items-center gap-1.5 text-sm text-[var(--text-secondary)]"
+                  >
+                    <Star className="h-3.5 w-3.5 fill-[var(--orange-400)] text-[var(--orange-400)]" aria-hidden />
+                    <span className="font-semibold text-[var(--ink-950)]">{vehicle.rating.toFixed(1)}</span>
                     <span>({vehicle.reviewCount} reviews)</span>
                   </div>
                 ) : null}
                 {/* badges */}
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-orange)]/10 px-2.5 py-0.5 text-[0.65rem] font-semibold text-[var(--brand-orange-strong)]">
+                <span className="type-spec inline-flex items-center gap-1.5 rounded-full bg-[var(--orange-50)] px-2.5 py-1.5 text-[var(--orange-800)] ring-1 ring-inset ring-[var(--orange-200)]">
                   <Zap className="h-3 w-3" aria-hidden />
                   Popular
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[0.65rem] font-semibold text-emerald-800">
+                <span className="type-spec inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1.5 text-emerald-800 ring-1 ring-inset ring-emerald-200">
                   <CheckCircle2 className="h-3 w-3" aria-hidden />
                   Verified vehicle
                 </span>
@@ -692,22 +800,11 @@ export function VehicleDetailsShell({
             </div>
           </div>
 
-          {/* gallery */}
-          <VehicleDetailGallery name={vehicle.name} images={vehicle.images} />
-
-          {/* key info bar */}
-          <div className="mt-6">
-            <KeyInfoBar vehicle={vehicle} />
-          </div>
-
-          {/* main 2-col grid */}
-          <div className="mt-8 grid gap-8 md:grid-cols-12 md:gap-10">
-            {/* ── LEFT column — content sections ──────────── */}
-            <div className="order-2 space-y-10 md:order-none md:col-span-7">
-
-              {/* About */}
+          {/* About + specs (left) | gallery (right) */}
+          <div className="grid items-start gap-6 md:grid-cols-12 md:gap-8">
+            <div className="order-2 space-y-6 md:order-none md:col-span-5">
               <section aria-labelledby="v-about-h">
-                <h2 id="v-about-h" className="text-xl font-bold tracking-[-0.02em] text-slate-950">
+                <h2 id="v-about-h" className={sectionHeadingClass}>
                   About this vehicle
                 </h2>
                 <div className="mt-3">
@@ -715,71 +812,104 @@ export function VehicleDetailsShell({
                 </div>
               </section>
 
-              <hr className="border-slate-100" />
+              <KeyInfoBar vehicle={vehicle} />
+            </div>
+
+            <div className="order-1 md:order-none md:col-span-7">
+              <VehicleDetailGallery name={vehicle.name} images={vehicle.images} />
+            </div>
+          </div>
+
+          {/* main 2-col grid */}
+          <div className="mt-8 grid gap-8 md:grid-cols-12 md:gap-10">
+            {/* ── LEFT column — content sections ──────────── */}
+            <div className="order-2 space-y-10 md:order-none md:col-span-7">
 
               {/* What's included */}
-              <section aria-labelledby="v-features-h">
-                <h2 id="v-features-h" className="text-xl font-bold tracking-[-0.02em] text-slate-950">
-                  What&apos;s included
-                </h2>
-                <div className="mt-4">
-                  <FeaturesList vehicle={vehicle} />
-                </div>
-              </section>
+              <Reveal y={16}>
+                <section aria-labelledby="v-features-h">
+                  <h2 id="v-features-h" className={sectionHeadingClass}>
+                    What&apos;s included
+                  </h2>
+                  <div className="mt-4">
+                    <FeaturesList vehicle={vehicle} />
+                  </div>
+                </section>
+              </Reveal>
 
-              <hr className="border-slate-100" />
+              <hr className="rule-fade" />
 
               {/* Specifications */}
-              <section aria-labelledby="v-specs-h">
-                <h2 id="v-specs-h" className="text-xl font-bold tracking-[-0.02em] text-slate-950">
-                  Specifications
-                </h2>
-                <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {[
-                    { label: "Vehicle type", value: typeLabel },
-                    { label: "Brand / Model", value: brandModel ?? "Not specified" },
-                    { label: "Engine", value: vehicle.engine || "—" },
-                    { label: "Transmission", value: vehicle.transmission },
-                    { label: "Fuel", value: vehicle.fuel },
-                    { label: "Seats", value: String(vehicle.seats) },
-                    { label: "Color", value: vehicle.color },
-                    { label: "Storage box", value: vehicle.supportsStorageBox ? "Supported (optional add-on)" : "Not supported" },
-                    { label: "Helmets included", value: String(vehicle.helmetIncludedCount) },
-                    { label: "Pickup location", value: vehicle.location },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="rounded-xl bg-slate-50/80 px-4 py-3">
-                      <dt className="text-[0.65rem] font-semibold uppercase tracking-wider text-slate-400">
-                        {label}
-                      </dt>
-                      <dd className="mt-0.5 text-sm font-semibold text-slate-900">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
+              <Reveal y={16}>
+                <section aria-labelledby="v-specs-h">
+                  <h2 id="v-specs-h" className={sectionHeadingClass}>
+                    Specifications
+                  </h2>
+                  <dl className="mt-4 grid gap-x-8 sm:grid-cols-2">
+                    {[
+                      { label: "Vehicle type", value: typeLabel },
+                      { label: "Brand / Model", value: brandModel ?? "Not specified" },
+                      { label: "Engine", value: vehicle.engine || "—" },
+                      { label: "Transmission", value: vehicle.transmission },
+                      { label: "Fuel", value: vehicle.fuel },
+                      { label: "Seats", value: String(vehicle.seats) },
+                      {
+                        label: "Color",
+                        value:
+                          vehicle.availableColors && vehicle.availableColors.length > 0
+                            ? vehicle.availableColors.map((c) => c.label).join(", ")
+                            : vehicle.color ?? "—",
+                      },
+                      { label: "Storage box", value: vehicle.supportsStorageBox ? "Supported (optional add-on)" : "Not supported" },
+                      { label: "Helmets included", value: String(vehicle.helmetIncludedCount) },
+                      { label: "Pickup location", value: vehicle.location },
+                    ].map(({ label, value }) => (
+                      <div
+                        key={label}
+                        className="flex items-baseline justify-between gap-4 border-b border-[var(--line-subtle)] py-3"
+                      >
+                        <dt className="type-spec shrink-0 text-[var(--text-faint)]">
+                          {label}
+                        </dt>
+                        <dd
+                          data-numeric
+                          className="text-right text-sm font-semibold text-[var(--ink-950)]"
+                        >
+                          {value}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              </Reveal>
 
-              <hr className="border-slate-100" />
+              <hr className="rule-fade" />
 
               {/* Location */}
-              <section aria-labelledby="v-location-h">
-                <h2 id="v-location-h" className="text-xl font-bold tracking-[-0.02em] text-slate-950">
-                  Location &amp; pickup
-                </h2>
-                <div className="mt-4">
-                  <LocationSection location={vehicle.location} />
-                </div>
-              </section>
+              <Reveal y={16}>
+                <section aria-labelledby="v-location-h">
+                  <h2 id="v-location-h" className={sectionHeadingClass}>
+                    Location &amp; pickup
+                  </h2>
+                  <div className="mt-4">
+                    <LocationSection location={vehicle.location} />
+                  </div>
+                </section>
+              </Reveal>
 
-              <hr className="border-slate-100" />
+              <hr className="rule-fade" />
 
               {/* Policies */}
-              <section aria-labelledby="v-policies-h">
-                <h2 id="v-policies-h" className="text-xl font-bold tracking-[-0.02em] text-slate-950">
-                  Policies &amp; requirements
-                </h2>
-                <div className="mt-4">
-                  <PoliciesSection vehicle={vehicle} />
-                </div>
-              </section>
+              <Reveal y={16}>
+                <section aria-labelledby="v-policies-h">
+                  <h2 id="v-policies-h" className={sectionHeadingClass}>
+                    Policies &amp; requirements
+                  </h2>
+                  <div className="mt-4">
+                    <PoliciesSection vehicle={vehicle} />
+                  </div>
+                </section>
+              </Reveal>
             </div>
 
             {/* ── RIGHT column: booking sidebar ───────────── */}
@@ -801,18 +931,23 @@ export function VehicleDetailsShell({
 
 
       {/* ─── MOBILE bottom sticky bar (hidden once 2-col sidebar is visible) ── */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 px-4 py-3 backdrop-blur-md md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--line)] bg-[var(--surface-card)]/95 px-4 py-3 shadow-[0_-8px_24px_-16px_rgb(16_34_47/0.35)] backdrop-blur-md md:hidden">
         <div className="mx-auto flex max-w-md items-center justify-between gap-3">
           <div>
             {vehicle.baseDailyRate > 0 ? (
-              <p className="text-lg font-bold text-slate-950">
+              <p
+                data-numeric
+                className="text-xl font-bold leading-none tracking-[-0.035em] text-[var(--ink-950)]"
+              >
                 From €{vehicle.baseDailyRate}
-                <span className="ml-1 text-xs font-medium text-slate-500">/day</span>
+                <span className="ml-1 text-xs font-medium tracking-normal text-[var(--text-muted)]">
+                  /day
+                </span>
               </p>
             ) : (
-              <p className="text-sm font-semibold text-slate-700">Price on request</p>
+              <p className="text-sm font-semibold text-[var(--text-secondary)]">Price on request</p>
             )}
-            <p className="text-xs text-slate-500">Free cancellation</p>
+            <p className="mt-1.5 text-xs text-[var(--text-muted)]">Free cancellation</p>
           </div>
           <Link
             href={(() => {
@@ -824,7 +959,7 @@ export function VehicleDetailsShell({
               if (initialReturnTime) p.set("returnTime", initialReturnTime);
               return `/booking?${p.toString()}`;
             })()}
-            className="inline-flex min-h-11 items-center rounded-full bg-[var(--brand-orange)] px-6 text-sm font-bold text-slate-950 shadow-[0_8px_24px_-10px_rgba(255,147,15,0.7)] transition hover:bg-[var(--brand-orange-strong)]"
+            className="inline-flex min-h-11 shrink-0 items-center rounded-full bg-[var(--orange-400)] px-6 text-sm font-bold text-[var(--ink-950)] shadow-[var(--elev-orange)] transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:bg-[var(--orange-500)] hover:shadow-[var(--elev-orange-lift)] active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-500)] focus-visible:ring-offset-2"
           >
             Reserve now
           </Link>

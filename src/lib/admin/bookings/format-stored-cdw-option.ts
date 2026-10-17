@@ -1,15 +1,19 @@
+import { INSURANCE_PLANS, mapStoredCdwToInsurancePlan } from "@/lib/pricing/insurance-plans";
+
+/**
+ * Human-readable label for a stored booking `cdwOption` snapshot.
+ * Prefer snapshot rates/totals for amounts; this is display-only.
+ */
 export function formatStoredCdwOptionLabel(cdwOption: string): string {
+  const plan = mapStoredCdwToInsurancePlan(cdwOption);
+  if (plan) {
+    return INSURANCE_PLANS[plan].label;
+  }
+
   switch (cdwOption) {
-    case "REDUCE_350_50CC":
-      return "50cc reduced liability (EUR 350)";
-    case "REDUCE_500_125CC":
-      return "125cc reduced liability (EUR 500)";
-    case "FULL_COVERAGE_50CC_125CC":
-      return "Full coverage (50cc/125cc)";
     case "REDUCE_800_ATV":
       return "ATV reduced liability (EUR 800)";
-    case "NO_CDW":
     default:
-      return "No CDW";
+      return INSURANCE_PLANS.NO_INSURANCE.label;
   }
 }

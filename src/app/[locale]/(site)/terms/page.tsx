@@ -24,5 +24,9 @@ export async function generateMetadata({ params }: TermsPageProps): Promise<Meta
 export default async function TermsPage({ params }: TermsPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <TermsPageContent />;
+  return (
+    <div className="pt-[var(--site-header-offset)]">
+      <TermsPageContent />
+    </div>
+  );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { colorsMatch } from "@/features/vehicles/lib/vehicle-color";
 import type { BookingFlowState, ReservationHoldState } from "@/features/booking-flow/lib/types";
 import { createReservationHoldWithRetry, releaseReservationHold } from "@/features/booking-flow/lib/reservation-hold-api";
 
@@ -25,7 +26,8 @@ function holdMatchesRental(hold: ReservationHoldState, booking: BookingFlowState
     hold.pickupDate === booking.pickupDate &&
     hold.pickupTime === booking.pickupTime &&
     hold.returnDate === booking.returnDate &&
-    hold.returnTime === booking.returnTime
+    hold.returnTime === booking.returnTime &&
+    colorsMatch(hold.selectedColor, booking.selectedColor)
   );
 }
 
@@ -79,6 +81,7 @@ export function useReservationHold({
     const result = await createReservationHoldWithRetry({
       vehicleId: rental.vehicleId,
       ...(resolvedVehicleType ? { vehicleType: resolvedVehicleType } : {}),
+      ...(rental.selectedColor ? { color: rental.selectedColor } : {}),
       pickupDate: rental.pickupDate,
       pickupTime: rental.pickupTime,
       returnDate: rental.returnDate,
@@ -89,6 +92,14 @@ export function useReservationHold({
     });
 
     if (!result.ok) {
+      if (result.status === 409) {
+        setHold({
+          holdReference: null,
+          status: null,
+          expiresAt: null,
+          selectedColor: null,
+        });
+      }
       return {
         ok: false,
         message: result.message,
@@ -104,6 +115,7 @@ export function useReservationHold({
       vehicleId: rental.vehicleId,
       vehicleSlug: rental.vehicleSlug || null,
       vehicleType: holdVehicleType,
+      selectedColor: rental.selectedColor,
       pickupDate: rental.pickupDate,
       pickupTime: rental.pickupTime,
       returnDate: rental.returnDate,

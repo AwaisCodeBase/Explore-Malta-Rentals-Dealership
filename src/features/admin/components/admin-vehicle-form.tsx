@@ -6,14 +6,20 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { AdminSelect } from "@/features/admin/components/admin-select";
+import { VehicleColorSelect } from "@/features/admin/components/vehicle-color-select";
 import { defaultBaseDailyRateForVehicleType } from "@/lib/admin/vehicles/pricing-defaults";
 import { slugifyVehicleName } from "@/lib/admin/vehicles/slugify-name";
 import type { AdminVehicleDetail } from "@/lib/admin/vehicles/types";
 import { VEHICLE_CATALOG_STATUSES, VEHICLE_TYPES } from "@/lib/admin/vehicles/types";
 import {
+  defaultEngineCcForVehicleType,
+  vehicleTypeUsesEngineCc,
+  type EngineCcValue,
+} from "@/lib/vehicles/engine-cc";
+import {
   buildDurationPricingPreview,
   roundPricingAmount,
-  type DurationPricingRuleDto,
 } from "@/lib/pricing/duration-pricing";
 import type { VehicleCatalogStatus, VehicleType } from "@/generated/prisma/client";
 
@@ -28,7 +34,6 @@ type AdminVehicleFormProps = Readonly<{
   locale: string;
   mode: "create" | "edit";
   vehicle?: AdminVehicleDetail;
-  durationRules: DurationPricingRuleDto[];
 }>;
 
 type PricingState = {
@@ -62,7 +67,7 @@ function inputClassName(): string {
   return "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#3a7ca5]/40 focus:bg-white focus:ring-2 focus:ring-[#3a7ca5]/15";
 }
 
-export function AdminVehicleForm({ locale, mode, vehicle, durationRules }: AdminVehicleFormProps) {
+export function AdminVehicleForm({ locale, mode, vehicle }: AdminVehicleFormProps) {
   const t = useTranslations("Admin.vehicles");
   const router = useRouter();
 
@@ -70,8 +75,16 @@ export function AdminVehicleForm({ locale, mode, vehicle, durationRules }: Admin
   const [slug, setSlug] = useState(vehicle?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [vehicleType, setVehicleType] = useState<VehicleType>(vehicle?.vehicleType ?? "Scooter");
+  const [engineCc, setEngineCc] = useState<EngineCcValue | null>(
+    vehicleTypeUsesEngineCc(vehicle?.vehicleType ?? "Scooter")
+      ? ((vehicle?.engineCc === 50 || vehicle?.engineCc === 125
+          ? vehicle.engineCc
+          : defaultEngineCcForVehicleType(vehicle?.vehicleType ?? "Scooter")) ?? 50)
+      : null,
+  );
   const [brand, setBrand] = useState(vehicle?.brand ?? "");
   const [model, setModel] = useState(vehicle?.model ?? "");
+  const [color, setColor] = useState(vehicle?.color ?? "");
   const [shortDescription, setShortDescription] = useState(vehicle?.shortDescription ?? "");
   const [description, setDescription] = useState(vehicle?.description ?? "");
   const [mainImageUrl, setMainImageUrl] = useState(vehicle?.mainImageUrl ?? "");
@@ -112,8 +125,8 @@ export function AdminVehicleForm({ locale, mode, vehicle, durationRules }: Admin
     if (baseRate == null) {
       return null;
     }
-    return buildDurationPricingPreview(baseRate, vehicleType, durationRules);
-  }, [durationRules, pricing.baseDailyRate, vehicleType]);
+    return buildDurationPricingPreview(baseRate);
+  }, [pricing.baseDailyRate]);
 
   const cancelHref = `/${locale}/admin/vehicles`;
 
@@ -122,8 +135,10 @@ export function AdminVehicleForm({ locale, mode, vehicle, durationRules }: Admin
       name,
       slug,
       vehicleType,
+      engineCc,
       brand: brand.trim() || null,
       model: model.trim() || null,
+      color: color.trim() || null,
       shortDescription: shortDescription.trim() || null,
       description: description.trim() || null,
       mainImageUrl: mainImageUrl.trim() || null,
@@ -137,9 +152,11 @@ export function AdminVehicleForm({ locale, mode, vehicle, durationRules }: Admin
     }),
     [
       brand,
+      color,
       catalogStatus,
       description,
       displayOrder,
+      engineCc,
       helmetIncludedCount,
       images,
       isActive,
@@ -303,7 +320,19 @@ export function AdminVehicleForm({ locale, mode, vehicle, durationRules }: Admin
             <span className="mb-1.5 block text-sm font-semibold text-slate-700">{t("form.vehicleType")}</span>
             <select
               value={vehicleType}
-              onChange={(event) => setVehicleType(event.target.value as VehicleType)}
+              onChange={(event) => {
+                const nextType = event.target.value as VehicleType;
+                setVehicleType(nextType);
+                if (vehicleTypeUsesEngineCc(nextType)) {
+                  setEngineCc((current) =>
+                    current === 50 || current === 125
+                      ? current
+                      : (defaultEngineCcForVehicleType(nextType) ?? 50),
+                  );
+                } else {
+                  setEngineCc(null);
+                }
+              }}
               className={inputClassName()}
             >
               {VEHICLE_TYPES.map((type) => (
@@ -313,6 +342,21 @@ export function AdminVehicleForm({ locale, mode, vehicle, durationRules }: Admin
               ))}
             </select>
           </label>
+          {vehicleTypeUsesEngineCc(vehicleType) ? (
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-semibold text-slate-700">{t("form.engineCc")}</span>
+              <AdminSelect
+                value={engineCc ?? 50}
+                onChange={setEngineCc}
+                required
+                aria-label={t("form.engineCc")}
+                options={[
+                  { value: 50, label: t("form.engineCc50") },
+                  { value: 125, label: t("form.engineCc125") },
+                ]}
+              />
+            </label>
+          ) : null}
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-slate-700">{t("form.brand")}</span>
             <input type="text" value={brand} onChange={(event) => setBrand(event.target.value)} className={inputClassName()} />
@@ -320,6 +364,18 @@ export function AdminVehicleForm({ locale, mode, vehicle, durationRules }: Admin
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-slate-700">{t("form.model")}</span>
             <input type="text" value={model} onChange={(event) => setModel(event.target.value)} className={inputClassName()} />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-slate-700">{t("form.color")}</span>
+            <VehicleColorSelect
+              value={color}
+              onChange={setColor}
+              allowEmpty
+              emptyLabel={t("form.colorNone")}
+              customColorLabel={t("form.colorCustom")}
+              customColorPlaceholder={t("form.colorCustomPlaceholder")}
+              applyCustomLabel={t("form.colorCustomApply")}
+            />
           </label>
         </div>
       </section>

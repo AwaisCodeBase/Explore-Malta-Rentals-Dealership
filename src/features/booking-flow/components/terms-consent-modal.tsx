@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { m, useReducedMotion } from "motion/react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 type TermsConsentModalProps = {
@@ -15,7 +17,7 @@ const TERMS_SUMMARY_SECTIONS = [
   {
     heading: "Driver Requirements",
     points: [
-      "Minimum age is 18 years for 50cc and 21 years for 125cc/ATV rentals.",
+      "Minimum age is 21 years for all rentals, including 50cc, 125cc, and ATV.",
       "A valid driving licence and passport/ID must be presented at pickup.",
       "Non-EU licence holders may need an International Driving Permit (IDP).",
     ],
@@ -23,7 +25,7 @@ const TERMS_SUMMARY_SECTIONS = [
   {
     heading: "Rental Period",
     points: [
-      "Rentals are calculated on a 24-hour basis.",
+      "Rentals are calculated by day.",
       "Late return may incur an additional fee and extra rental day charge.",
       "No-show or delays above one hour may result in cancellation.",
     ],
@@ -39,7 +41,7 @@ const TERMS_SUMMARY_SECTIONS = [
   {
     heading: "Security Deposit",
     points: [
-      "A refundable security deposit is collected at pickup based on vehicle type.",
+      "A refundable security deposit of EUR 250 is collected at pickup for all vehicles.",
       "Deposit release may take up to 7-10 days after return checks.",
     ],
   },
@@ -168,6 +170,7 @@ const TERMS_SUMMARY_SECTIONS = [
 export function TermsConsentModal({ isOpen, onCancel, onAgree, isSubmitting = false }: TermsConsentModalProps) {
   const t = useTranslations("BookingFlow");
   const tTerms = useTranslations("BookingWizard.terms");
+  const reduceMotion = useReducedMotion();
   const [confirmChecked, setConfirmChecked] = useState(false);
 
   useEffect(() => {
@@ -208,30 +211,38 @@ export function TermsConsentModal({ isOpen, onCancel, onAgree, isSubmitting = fa
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/60 p-4 sm:p-6">
-      <div
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--ink-950)]/55 p-4 backdrop-blur-md sm:p-6">
+      <m.div
         role="dialog"
         aria-modal="true"
         aria-labelledby="terms-modal-title"
-        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl sm:max-h-[calc(100dvh-3rem)]"
+        initial={reduceMotion ? undefined : { opacity: 0, y: 12, scale: 0.985 }}
+        animate={reduceMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+        className="flex max-h-[calc(100dvh-2rem)] w-full max-w-xl flex-col overflow-hidden rounded-[var(--r-panel)] bg-[var(--surface-card)] shadow-[var(--elev-5)] ring-1 ring-[var(--line)] sm:max-h-[calc(100dvh-3rem)]"
       >
-        <header className="border-b border-slate-200 px-5 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-            {t("termsConsentKicker")}
-          </p>
-          <h3 id="terms-modal-title" className="mt-1 text-lg font-bold text-slate-900">
+        <header className="border-b border-[var(--line-subtle)] px-5 py-4 sm:px-6 sm:py-5">
+          <p className="type-eyebrow text-orange-600">{t("termsConsentKicker")}</p>
+          <h3 id="terms-modal-title" className="type-h3 mt-2 text-[var(--text-primary)]">
             {tTerms("modalTitle")}
           </h3>
-          <p className="mt-1 text-sm text-slate-600">{t("termsConsentReviewLead")}</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-[var(--text-secondary)]">
+            {t("termsConsentReviewLead")}
+          </p>
         </header>
 
-        <div className="min-h-0 px-5 py-4 text-sm text-slate-700">
-          <div className="max-h-[42vh] overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-slate-50/40 p-4">
-            <div className="space-y-4">
+        <div className="min-h-0 px-5 py-4 text-sm text-[var(--text-secondary)] sm:px-6">
+          <div className="max-h-[42vh] overflow-y-auto overscroll-contain rounded-[var(--r-card)] border border-[var(--line-subtle)] bg-[var(--surface-sunken)] p-3 sm:p-4">
+            <div className="space-y-3">
               {TERMS_SUMMARY_SECTIONS.map((section) => (
-                <section key={section.heading} className="rounded-md border border-slate-200 bg-white p-3">
-                  <h4 className="text-sm font-semibold text-slate-900">{section.heading}</h4>
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-slate-700 sm:text-sm">
+                <section
+                  key={section.heading}
+                  className="rounded-[var(--r-field)] bg-[var(--surface-card)] p-3.5 shadow-[inset_0_0_0_1px_var(--line-subtle),var(--elev-1)]"
+                >
+                  <h4 className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+                    {section.heading}
+                  </h4>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-5 text-[var(--text-secondary)] sm:text-sm sm:leading-6">
                     {section.points.map((point) => (
                       <li key={point}>{point}</li>
                     ))}
@@ -241,25 +252,29 @@ export function TermsConsentModal({ isOpen, onCancel, onAgree, isSubmitting = fa
             </div>
           </div>
           <p className="mt-3">
-            <Link href="/terms" target="_blank" className="font-semibold text-[var(--brand-blue)] underline">
+            <Link
+              href="/terms"
+              target="_blank"
+              className="font-semibold text-blue-600 underline decoration-blue-300 underline-offset-4 transition-colors hover:text-blue-700 hover:decoration-blue-500"
+            >
               {t("termsConsentOpenFull")}
             </Link>
           </p>
         </div>
 
-        <footer className="border-t border-slate-200 px-5 py-4">
-          <label className="flex items-start gap-2 text-sm text-slate-700">
+        <footer className="border-t border-[var(--line-subtle)] bg-[var(--surface-soft)] px-5 py-4 sm:px-6 sm:py-5">
+          <label className="flex cursor-pointer items-start gap-3 rounded-[var(--r-field)] border border-[var(--line)] bg-[var(--surface-card)] p-3.5 text-sm leading-relaxed text-[var(--text-primary)] transition-colors duration-[var(--dur-fast)] hover:border-[var(--line-strong)] has-[:checked]:border-orange-300 has-[:checked]:bg-orange-50/60 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60">
             <input
               type="checkbox"
               checked={confirmChecked}
               disabled={isSubmitting}
               onChange={(event) => setConfirmChecked(event.target.checked)}
-              className="mt-0.5 h-4 w-4"
+              className="mt-0.5 h-4 w-4 shrink-0 rounded-[0.25rem] accent-[var(--orange-500)]"
             />
             <span>{t("termsConsentAgreeCheckbox")}</span>
           </label>
 
-          <div className="mt-4 flex justify-end gap-2">
+          <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={() => {
@@ -267,7 +282,7 @@ export function TermsConsentModal({ isOpen, onCancel, onAgree, isSubmitting = fa
                 onCancel();
               }}
               disabled={isSubmitting}
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--surface-card)] px-5 text-sm font-semibold text-[var(--text-primary)] transition duration-[var(--dur-fast)] hover:border-[var(--ink-400)] hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:border-[var(--line-subtle)] disabled:bg-transparent disabled:text-[var(--text-faint)]"
             >
               {t("termsConsentCancel")}
             </button>
@@ -278,13 +293,20 @@ export function TermsConsentModal({ isOpen, onCancel, onAgree, isSubmitting = fa
                 void onAgree();
               }}
               disabled={!confirmChecked || isSubmitting}
-              className="rounded-full bg-[var(--brand-orange)] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-orange-400 px-6 text-sm font-semibold text-white shadow-[var(--elev-orange)] transition duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:bg-orange-500 hover:shadow-[var(--elev-orange-lift)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-[var(--ink-200)] disabled:text-[var(--text-faint)] disabled:shadow-none"
             >
-              {isSubmitting ? t("termsConsentSubmitting") : tTerms("iAgree")}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  {t("termsConsentSubmitting")}
+                </>
+              ) : (
+                tTerms("iAgree")
+              )}
             </button>
           </div>
         </footer>
-      </div>
+      </m.div>
     </div>
   );
 }

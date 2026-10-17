@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 import {
-  adminVehicleUnitWriteSchema,
+  adminVehicleUnitCreateSchema,
+  adminVehicleUnitUpdateSchema,
   createAdminVehicleUnit,
   DuplicateVehicleUnitLicensePlateError,
   listAdminVehicleUnits,
@@ -46,7 +47,7 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ success: false as const, message: "Invalid request body" }, { status: 400 });
     }
 
-    const parsed = adminVehicleUnitWriteSchema.safeParse(body);
+    const parsed = adminVehicleUnitCreateSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { success: false as const, message: formatZodError(parsed.error) },

@@ -45,11 +45,26 @@ export async function POST(request: Request) {
       returnDateTime: true,
       totalDueOnline: true,
       paymentStatus: true,
+      status: true,
     },
   });
 
   if (!booking) {
     return NextResponse.json({ ok: false, error: "Booking not found" }, { status: 404 });
+  }
+
+  if (booking.status === "CANCELLED") {
+    return NextResponse.json(
+      { ok: false, error: "This booking was cancelled because payment was not completed in time" },
+      { status: 409 },
+    );
+  }
+
+  if (booking.status !== "PENDING_PAYMENT" && booking.status !== "CONFIRMED") {
+    return NextResponse.json(
+      { ok: false, error: "This booking cannot accept online payment" },
+      { status: 409 },
+    );
   }
 
   if (booking.paymentStatus === "PAID") {

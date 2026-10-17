@@ -167,9 +167,53 @@ export function getLocaleDirection(locale: string): TextDirection {
   return meta?.direction ?? "ltr";
 }
 
-export function getVisibleLocaleButtons(current: AppLocale): [AppLocale, AppLocale] {
-  if (current === "en") {
-    return ["en", "mt"];
+/** Prefer Malta-relevant / high-traffic locales in the pill row. */
+const LOCALE_PILL_PRIORITY: readonly AppLocale[] = [
+  "en",
+  "mt",
+  "it",
+  "de",
+  "fr",
+  "es",
+  "nl",
+  "pl",
+  "pt",
+  "ru",
+  "ar",
+  "zh",
+  "ja",
+  "ko",
+  "tr",
+  "hi",
+  "th",
+  "vi",
+  "id",
+  "bn",
+  "ur",
+] as const;
+
+/**
+ * Locales shown as quick pills. Current locale is always first; remaining
+ * slots follow {@link LOCALE_PILL_PRIORITY}, then any leftover locale.
+ */
+export function getVisibleLocaleButtons(
+  current: AppLocale,
+  limit = 2,
+): AppLocale[] {
+  const max = Math.max(1, Math.min(limit, localeList.length));
+  const result: AppLocale[] = [];
+  const add = (code: AppLocale) => {
+    if (result.includes(code) || result.length >= max) return;
+    if (!(code in localeMetadata)) return;
+    result.push(code);
+  };
+
+  add(current);
+  for (const code of LOCALE_PILL_PRIORITY) {
+    add(code);
   }
-  return [current, "en"];
+  for (const { code } of localeList) {
+    add(code);
+  }
+  return result;
 }

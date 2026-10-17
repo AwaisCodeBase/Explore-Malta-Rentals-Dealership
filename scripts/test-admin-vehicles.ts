@@ -11,6 +11,7 @@ const basePayload = {
   name: "Vehicle Listing Test",
   slug: `vehicle-listing-test-${Date.now()}`,
   vehicleType: "Scooter" as const,
+  engineCc: 50,
   brand: null,
   model: null,
   shortDescription: null,
@@ -49,6 +50,7 @@ async function run() {
 
     const unit = await createAdminVehicleUnit(vehicle.id, {
       licensePlate: "TST-9001",
+      color: "Black",
       status: "AVAILABLE",
       isActive: true,
       notes: null,
@@ -64,6 +66,7 @@ async function run() {
     try {
       await createAdminVehicleUnit(vehicle.id, {
         licensePlate: "TST-9001",
+        color: "Black",
         status: "AVAILABLE",
         isActive: true,
         notes: null,
@@ -79,6 +82,53 @@ async function run() {
   } finally {
     await prisma.vehicleUnit.deleteMany({ where: { vehicleId: vehicle.id } }).catch(() => undefined);
     await prisma.vehicle.deleteMany({ where: { slug: { startsWith: basePayload.slug } } }).catch(() => undefined);
+  }
+
+  const expiredHoldVehicle = await prisma.vehicle.create({
+    data: {
+      name: "Expired Hold Guard Test Vehicle",
+      slug: `expired-hold-guard-test-${Date.now()}`,
+      vehicleType: "Scooter",
+      baseDailyRate: 25,
+      catalogStatus: "AVAILABLE",
+      isActive: true,
+      reservationHolds: {
+        create: [
+          {
+            holdReference: `HLD-TEST-EXP-${Date.now()}-1`,
+            vehicleType: "Scooter",
+            sessionKey: "test-session",
+            pickupDateTime: new Date("2026-07-01T10:00:00.000Z"),
+            returnDateTime: new Date("2026-07-02T10:00:00.000Z"),
+            status: "EXPIRED",
+            expiresAt: new Date("2026-06-01T10:00:00.000Z"),
+          },
+          {
+            holdReference: `HLD-TEST-EXP-${Date.now()}-2`,
+            vehicleType: "Scooter",
+            sessionKey: "test-session",
+            pickupDateTime: new Date("2026-07-03T10:00:00.000Z"),
+            returnDateTime: new Date("2026-07-04T10:00:00.000Z"),
+            status: "RELEASED",
+            expiresAt: new Date("2026-06-02T10:00:00.000Z"),
+          },
+        ],
+      },
+    },
+  });
+
+  try {
+    const loadedExpiredHoldVehicle = await getAdminVehicleById(expiredHoldVehicle.id);
+    assert.ok(loadedExpiredHoldVehicle);
+    assert.equal(loadedExpiredHoldVehicle.reservationHoldCount, 0);
+    assert.equal(loadedExpiredHoldVehicle.canDelete, true);
+
+    const deleteResult = await deleteAdminVehicle(expiredHoldVehicle.id);
+    assert.equal(deleteResult.ok, true);
+    assert.equal(await getAdminVehicleById(expiredHoldVehicle.id), null);
+  } finally {
+    await prisma.reservationHold.deleteMany({ where: { vehicleId: expiredHoldVehicle.id } }).catch(() => undefined);
+    await prisma.vehicle.deleteMany({ where: { id: expiredHoldVehicle.id } }).catch(() => undefined);
   }
 
   const bookedVehicle = await prisma.vehicle.create({
@@ -134,6 +184,69 @@ async function run() {
     await prisma.booking.deleteMany({ where: { vehicleId: bookedVehicle.id } });
     await prisma.vehicleUnit.deleteMany({ where: { vehicleId: bookedVehicle.id } });
     await prisma.vehicle.delete({ where: { id: bookedVehicle.id } });
+  }
+
+  const cancelledBookingReference = `TEST-CXL-${Date.now()}`;
+  const cancelledVehicle = await prisma.vehicle.create({
+    data: {
+      name: "Cancelled Booking Guard Test Vehicle",
+      slug: `cancelled-booking-guard-test-${Date.now()}`,
+      vehicleType: "Scooter",
+      baseDailyRate: 25,
+      catalogStatus: "AVAILABLE",
+      isActive: true,
+      units: {
+        create: {
+          licensePlate: `CXL-${Date.now()}`,
+          status: "AVAILABLE",
+          isActive: true,
+        },
+      },
+      bookings: {
+        create: {
+          bookingReference: cancelledBookingReference,
+          status: "CANCELLED",
+          vehicleType: "Scooter",
+          pickupDateTime: new Date("2026-07-01T10:00:00.000Z"),
+          returnDateTime: new Date("2026-07-02T10:00:00.000Z"),
+          actualDurationHours: 24,
+          billableDays: 1,
+          pickupOption: "OFFICE",
+          dropoffOption: "OFFICE",
+          customerFullName: "Test User",
+          customerPhone: "+35600000000",
+          customerEmail: "test@example.com",
+          customerNationality: "Malta",
+          customerDateOfBirth: new Date("1990-01-01T00:00:00.000Z"),
+          customerLicenseCategory: "B",
+          depositMethod: "IN_PERSON",
+        },
+      },
+    },
+  });
+
+  try {
+    const loadedCancelled = await getAdminVehicleById(cancelledVehicle.id);
+    assert.ok(loadedCancelled);
+    assert.equal(loadedCancelled.bookingCount, 0);
+    assert.equal(loadedCancelled.canDelete, true);
+
+    const deleteResult = await deleteAdminVehicle(cancelledVehicle.id);
+    assert.equal(deleteResult.ok, true);
+    assert.equal(await getAdminVehicleById(cancelledVehicle.id), null);
+
+    const preservedBooking = await prisma.booking.findUnique({
+      where: { bookingReference: cancelledBookingReference },
+      select: { vehicleId: true, vehicleUnitId: true, status: true },
+    });
+    assert.ok(preservedBooking);
+    assert.equal(preservedBooking.status, "CANCELLED");
+    assert.equal(preservedBooking.vehicleId, null);
+    assert.equal(preservedBooking.vehicleUnitId, null);
+  } finally {
+    await prisma.booking.deleteMany({ where: { bookingReference: cancelledBookingReference } });
+    await prisma.vehicleUnit.deleteMany({ where: { vehicleId: cancelledVehicle.id } }).catch(() => undefined);
+    await prisma.vehicle.deleteMany({ where: { id: cancelledVehicle.id } }).catch(() => undefined);
   }
 
   console.log("Admin vehicle listing + unit checks passed.");

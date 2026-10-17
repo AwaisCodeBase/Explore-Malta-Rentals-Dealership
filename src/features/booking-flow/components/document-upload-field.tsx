@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertCircle, CheckCircle2, Loader2, Paperclip } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { startTransition, useCallback, useEffect, useId, useRef, useState } from "react";
 import {
@@ -84,8 +85,15 @@ export function DocumentUploadField({
 
   return (
     <div className="space-y-2" data-field={dataField}>
-      <p className="text-sm font-medium text-slate-700">{label}</p>
-      {description ? <p className="text-xs text-slate-600">{description}</p> : null}
+      <label
+        htmlFor={inputId}
+        className="block text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]"
+      >
+        {label}
+      </label>
+      {description ? (
+        <p className="text-xs leading-relaxed text-[var(--text-secondary)]">{description}</p>
+      ) : null}
 
       <input
         id={inputId}
@@ -95,7 +103,12 @@ export function DocumentUploadField({
         name={name}
         accept="image/jpeg,image/jpg,image/png,application/pdf"
         disabled={disabled || phase === "uploading"}
-        className="mt-1 block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-800 hover:file:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+        aria-invalid={phase === "error" ? true : undefined}
+        className={`mt-1 block w-full cursor-pointer rounded-[var(--r-field)] border bg-[var(--surface-card)] py-2 pr-3 pl-2 text-sm text-[var(--text-secondary)] shadow-[var(--elev-1)] transition duration-[var(--dur-fast)] file:mr-3 file:cursor-pointer file:rounded-[0.4375rem] file:border-0 file:bg-[var(--surface-sunken)] file:px-3.5 file:py-2 file:text-sm file:font-semibold file:text-[var(--text-primary)] file:transition-colors hover:file:bg-[var(--ink-200)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[var(--surface-sunken)] disabled:text-[var(--text-faint)] disabled:shadow-none ${
+          phase === "error"
+            ? "border-red-400 ring-2 ring-red-500/20"
+            : "border-[var(--line)] hover:border-[var(--line-strong)]"
+        }`}
         onChange={(event) => {
           const files = event.target.files;
           if (!files || files.length !== 1) {
@@ -109,23 +122,39 @@ export function DocumentUploadField({
           event.target.value = "";
         }}
       />
-      <p className="text-xs text-slate-500">{t("documentUploadHint")}</p>
+      <p className="text-xs text-[var(--text-muted)]">{t("documentUploadHint")}</p>
 
       {phase === "uploading" ? (
-        <p className="text-xs font-medium text-[var(--brand-blue)]">{t("documentUploadAttaching")}</p>
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-blue-700" role="status">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+          {t("documentUploadAttaching")}
+        </p>
       ) : null}
       {phase === "success" || (phase === "idle" && hasPath) ? (
-        <p className="text-xs font-medium text-emerald-700">{t("documentUploadSuccess")}</p>
+        <p
+          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200"
+          role="status"
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+          {t("documentUploadSuccess")}
+        </p>
       ) : null}
       {phase === "error" && errorMessage ? (
-        <p className="text-xs font-medium text-red-600">
+        <p
+          className="flex items-start gap-1.5 rounded-[var(--r-field)] border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700"
+          role="alert"
+        >
+          <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
           {t("documentUploadFailed", { message: errorMessage })}
         </p>
       ) : null}
 
       {hasPath ? (
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-          <span className="break-all">{t("documentUploadAttached", { name: value })}</span>
+        <div className="flex flex-wrap items-center gap-2 rounded-[var(--r-field)] border border-[var(--line-subtle)] bg-[var(--surface-soft)] px-3 py-2.5 text-xs text-[var(--text-secondary)]">
+          <Paperclip className="h-3.5 w-3.5 shrink-0 text-[var(--text-faint)]" aria-hidden />
+          <span className="min-w-0 flex-1 break-all font-medium text-[var(--text-primary)]">
+            {t("documentUploadAttached", { name: value })}
+          </span>
           <button
             type="button"
             disabled={disabled || phase === "uploading"}
@@ -133,7 +162,7 @@ export function DocumentUploadField({
               onPathChange("");
               resetLocalStatus();
             }}
-            className="rounded-full border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full border border-[var(--line-strong)] bg-[var(--surface-card)] px-2.5 py-1 text-xs font-semibold text-[var(--text-primary)] transition duration-[var(--dur-fast)] hover:border-[var(--ink-400)] hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:border-[var(--line-subtle)] disabled:text-[var(--text-faint)]"
           >
             Remove
           </button>
@@ -144,7 +173,7 @@ export function DocumentUploadField({
               resetLocalStatus();
               inputRef.current?.click();
             }}
-            className="rounded-full border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full border border-[var(--line-strong)] bg-[var(--surface-card)] px-2.5 py-1 text-xs font-semibold text-[var(--text-primary)] transition duration-[var(--dur-fast)] hover:border-[var(--ink-400)] hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:border-[var(--line-subtle)] disabled:text-[var(--text-faint)]"
           >
             Replace
           </button>

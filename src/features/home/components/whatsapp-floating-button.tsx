@@ -8,6 +8,10 @@ import { getWhatsAppChatUrl, toWhatsAppDigits } from "@/lib/whatsapp-number";
 const DEFAULT_MESSAGE =
   "Hi! I'd like to book a ride / ask about availability in Malta.";
 
+function joinClasses(...classes: Array<string | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
 export function WhatsAppFloatingButton() {
   const t = useTranslations("WhatsApp");
   const panelId = useId();
@@ -49,29 +53,33 @@ export function WhatsAppFloatingButton() {
             id={panelId}
             role="dialog"
             aria-label={t("panelAriaLabel")}
-            className="w-[min(calc(100vw-2rem),18rem)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.25)]"
+            className="w-[min(calc(100vw-2rem),18rem)] rounded-[var(--r-panel)] bg-[var(--surface-card)] p-5 shadow-[inset_0_0_0_1px_var(--line-subtle),var(--elev-4)]"
           >
             {digits ? (
               <>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                  {t("numberLabel")}
-                </p>
-                <p className="mt-1 break-all text-lg font-semibold tabular-nums text-slate-950">
+                <p className="type-spec text-[var(--text-muted)]">{t("numberLabel")}</p>
+                <p className="mt-2 break-all text-lg font-semibold tabular-nums text-[var(--ink-950)]">
                   {displayNumber}
                 </p>
                 <a
                   href={chatUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-4 flex min-h-10 w-full items-center justify-center rounded-full bg-[#25D366] px-4 text-sm font-semibold text-white transition-opacity hover:opacity-95"
+                  className={joinClasses(
+                    "mt-5 flex min-h-11 w-full items-center justify-center rounded-full bg-[#25D366] px-4 text-sm font-semibold text-white",
+                    "shadow-[0_2px_6px_-2px_rgb(18_140_70_/_0.35),0_12px_26px_-10px_rgb(37_211_102_/_0.55)]",
+                    "transition-[transform,box-shadow,background-color] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] motion-reduce:transition-none",
+                    "hover:bg-[#1fbe5b] motion-safe:hover:-translate-y-0.5 active:translate-y-0",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#128c46] focus-visible:ring-offset-2",
+                  )}
                 >
                   {t("openApp")}
                 </a>
               </>
             ) : (
-              <p className="text-sm text-slate-600">
+              <p className="text-sm leading-[1.65] text-[var(--text-secondary)]">
                 Set{" "}
-                <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">
+                <code className="rounded bg-[var(--surface-sunken)] px-1 py-0.5 text-xs">
                   whatsapp_number
                 </code>{" "}
                 in your <code className="text-xs">.env</code> file and restart
@@ -83,14 +91,28 @@ export function WhatsAppFloatingButton() {
 
         <button
           type="button"
+          suppressHydrationWarning
           aria-label={t("openContact")}
           title={t("faqLabel")}
           aria-expanded={open}
           aria-controls={open ? panelId : undefined}
           onClick={() => setOpen((v) => !v)}
-          className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_18px_60px_-20px_rgba(37,211,102,0.65)] transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+          className={joinClasses(
+            "relative inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-[#25D366] text-white",
+            "shadow-[0_2px_6px_-2px_rgb(18_140_70_/_0.45),0_10px_24px_-8px_rgb(37_211_102_/_0.55),0_24px_56px_-18px_rgb(37_211_102_/_0.5)]",
+            "transition-[transform,box-shadow,background-color] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] motion-reduce:transition-none",
+            "hover:bg-[#1fbe5b] motion-safe:hover:scale-[1.06] active:scale-[0.97]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#128c46] focus-visible:ring-offset-2",
+          )}
         >
-          <WhatsAppIcon className="h-5 w-5 shrink-0" />
+          {/* Attention ring — suppressed for reduced-motion and once the panel is open. */}
+          {open ? null : (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-[#25D366]/45 motion-safe:animate-ping [animation-duration:2.8s]"
+            />
+          )}
+          <WhatsAppIcon className="h-6 w-6 shrink-0" />
         </button>
       </div>
     </div>

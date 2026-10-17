@@ -5,6 +5,12 @@ import { BOOKING_FLOW_STEPS, type BookingFlowStepId } from "@/features/booking-f
 import { vehicleTypeNeedsHelmetFlow } from "@/features/booking-flow/lib/helmet-rental";
 import { isLicenseAllowedForVehicle } from "@/features/booking-flow/lib/license-categories";
 import type { BookingFlowState } from "@/features/booking-flow/lib/types";
+import { isPickupDeliveryAllowedForDate } from "@/lib/booking/delivery-availability";
+import {
+  calculateCalendarRentalDays,
+  MAX_BILLABLE_RENTAL_DAYS,
+} from "@/lib/pricing/rental-duration";
+
 export type BookingValidationMessages = Readonly<{
   vehicleTypeRequired: string;
   pickupOptionRequired: string;
@@ -22,6 +28,7 @@ export type BookingValidationMessages = Readonly<{
   minRental: string;
   maxRental: string;
   pickupAddressDelivery: string;
+  deliveryUnavailableSunday: string;
   dropoffAddressRequired: string;
   helmetSizesRequired: string;
   additionalDriverName: string;
@@ -32,12 +39,15 @@ export type BookingValidationMessages = Readonly<{
   additionalDriverLicense: string;
   additionalPassportDelivery: string;
   additionalOfficeConfirm: string;
+  colorRequired: string;
+  pricingAcknowledgedRequired: string;
   licenseCategoryRequired: string;
   licenseInvalidForVehicle: string;
   licenseUploadDelivery: string;
   passportUploadDelivery: string;
   confirmDocumentsPickup: string;
   depositMethodRequired: string;
+  paymentProofRequired: string;
   reviewFields: string;
 }>;
 
@@ -64,6 +74,8 @@ export function createBookingFlowSchema(m: BookingValidationMessages): z.ZodType
       vehicleName: z.string(),
       vehicleLicensePlate: z.string(),
       vehicleType: requiredText(m.vehicleTypeRequired),
+      engineCc: z.union([z.literal(50), z.literal(125), z.null()]),
+      selectedColor: z.string().nullable(),
       pickupDate: requiredText(m.pickupDateRequired),
       pickupTime: requiredText(m.pickupTimeRequired),
       returnDate: requiredText(m.returnDateRequired),
@@ -87,7 +99,7 @@ export function createBookingFlowSchema(m: BookingValidationMessages): z.ZodType
       additionalDriver: z.boolean(),
       storageBox: z.boolean(),
       cdw: z.boolean(),
-      cdwPlan: z.enum(["none", "scooter_50", "scooter_125", "scooter_full", "atv_full"]),
+      cdwPlan: z.enum(["NO_INSURANCE", "BASIC", "FULL_COVERAGE"]).nullable(),
     }),
     customer: z.object({
       fullName: requiredText(m.fullNameRequired),
@@ -115,6 +127,10 @@ export function createBookingFlowSchema(m: BookingValidationMessages): z.ZodType
     deposit: z.object({
       depositMethod: z.enum(["", "online", "in_person"]),
     }),
+    payment: z.object({
+      mode: z.enum(["stripe", "already_paid"]),
+      proofPath: z.string(),
+    }),
     consent: z.object({
       summaryReviewed: z.boolean(),
       termsAccepted: z.boolean(),
@@ -130,6 +146,14 @@ export function createBookingFlowSchema(m: BookingValidationMessages): z.ZodType
   });
 
   return bookingBaseSchema.superRefine((state, context) => {
+    if (!state.rental.pricingAcknowledged) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: m.pricingAcknowledgedRequired,
+        path: ["rental", "pricingAcknowledged"],
+      });
+    }
+
     const pickup = parseDateTime(state.rental.pickupDate, state.rental.pickupTime);
     const dropoff = parseDateTime(state.rental.returnDate, state.rental.returnTime);
 
@@ -144,13 +168,25 @@ export function createBookingFlowSchema(m: BookingValidationMessages): z.ZodType
         });
       }
 
-      if (rentalHours > 24 * 7 * 4) {
+      const billableDays = calculateCalendarRentalDays(
+        state.rental.pickupDate,
+        state.rental.returnDate,
+      );
+      if (billableDays !== null && billableDays > MAX_BILLABLE_RENTAL_DAYS) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
           message: m.maxRental,
           path: ["rental", "returnDate"],
         });
       }
+    }
+
+    if (state.delivery.pickupOption === "delivery" && !isPickupDeliveryAllowedForDate(state.rental.pickupDate)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: m.deliveryUnavailableSunday,
+        path: ["delivery", "pickupOption"],
+      });
     }
 
     if (state.delivery.pickupOption === "delivery" && !hasText(state.delivery.pickupAddress)) {
@@ -258,7 +294,7 @@ export function createBookingFlowSchema(m: BookingValidationMessages): z.ZodType
         message: m.licenseCategoryRequired,
         path: ["customer", "licenseCategory"],
       });
-    } else if (!isLicenseAllowedForVehicle(state.customer.licenseCategory, state.rental.vehicleType, state.rental.vehicleId)) {
+    } else if (!isLicenseAllowedForVehicle(state.customer.licenseCategory, state.rental.vehicleType, state.rental.vehicleId, state.rental.engineCc)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         message: m.licenseInvalidForVehicle,
@@ -289,13 +325,15 @@ export function createBookingFlowSchema(m: BookingValidationMessages): z.ZodType
       });
     }
 
-    if (!hasText(state.deposit.depositMethod)) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: m.depositMethodRequired,
-        path: ["deposit", "depositMethod"],
-      });
-    } else if (state.deposit.depositMethod === "online") {
+    if (state.payment.mode === "already_paid") {
+      if (!hasText(state.payment.proofPath)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: m.paymentProofRequired,
+          path: ["payment", "proofPath"],
+        });
+      }
+    } else if (!hasText(state.deposit.depositMethod)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         message: m.depositMethodRequired,
@@ -308,10 +346,12 @@ export function createBookingFlowSchema(m: BookingValidationMessages): z.ZodType
 export const STEP_FIELD_PATHS: Record<BookingFlowStepId, FieldPath<BookingFlowState>[]> = {
   rental_details: [
     "rental.vehicleType",
+    "rental.selectedColor",
     "rental.pickupDate",
     "rental.pickupTime",
     "rental.returnDate",
     "rental.returnTime",
+    "rental.pricingAcknowledged",
   ],
   options_delivery: [
     "delivery.pickupOption",
@@ -341,7 +381,7 @@ export const STEP_FIELD_PATHS: Record<BookingFlowStepId, FieldPath<BookingFlowSt
     "customer.licenseConfirmationCheckbox",
     "customer.idConfirmationCheckbox",
   ],
-  review_confirm: ["deposit.depositMethod"],
+  review_confirm: ["deposit.depositMethod", "payment.mode", "payment.proofPath"],
 };
 
 function issuePathToString(path: (string | number)[]) {

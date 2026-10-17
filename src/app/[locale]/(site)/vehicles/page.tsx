@@ -1,11 +1,25 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Suspense } from "react";
 import { Container } from "@/components/ui/container";
-import { mapVehicleListItemToVehicle, type Vehicle } from "@/features/vehicles/data/vehicles";
+import { BookingSearchFormSkeleton } from "@/features/booking/components/booking-search-form-skeleton";
+import { VehicleGridServer } from "@/features/vehicles/components/vehicle-grid-server";
 import { VehicleListingShell } from "@/features/vehicles/components/vehicle-listing-shell";
-import { BookingSearchFormFromUrl } from "@/features/booking/components/booking-search-form-from-url";
-import { getVehicles } from "@/lib/vehicles";
+import type { VehicleColor } from "@/features/vehicles/data/vehicles";
+import { filterVehiclesFromSearchParams } from "@/features/vehicles/lib/filter-vehicles";
+import { getDistinctActiveVehicleBrands } from "@/lib/vehicles/getDistinctActiveVehicleBrands";
+import { getInitialVehiclesForListing } from "@/lib/vehicles/getInitialVehiclesForListing";
+
+const BookingSearchFormFromUrl = dynamic(
+  () =>
+    import("@/features/booking/components/booking-search-form-from-url").then((m) => ({
+      default: m.BookingSearchFormFromUrl,
+    })),
+  {
+    loading: () => <BookingSearchFormSkeleton />,
+  },
+);
 
 type VehiclesPageProps = Readonly<{
   params: Promise<{ locale: string }>;
@@ -44,17 +58,48 @@ export default async function VehiclesPage({ params, searchParams }: VehiclesPag
   const pickupTime = typeof pickupTimeRaw === "string" ? pickupTimeRaw.trim() : "";
   const returnTime = typeof returnTimeRaw === "string" ? returnTimeRaw.trim() : "";
 
-  const shouldHydrateAvailabilityFromApi =
+  const hasFullRentalWindow =
     pickupDate.length > 0 &&
     returnDate.length > 0 &&
     pickupTime.length > 0 &&
     returnTime.length > 0;
 
-  let initialVehicles: Vehicle[] | undefined;
-  if (!shouldHydrateAvailabilityFromApi) {
-    const baseVehicles = await getVehicles();
-    initialVehicles = baseVehicles.vehicles.map(mapVehicleListItemToVehicle);
-  }
+  const rentalWindow = hasFullRentalWindow
+    ? { pickupDate, pickupTime, returnDate, returnTime }
+    : null;
+
+  const initialVehicles = await getInitialVehiclesForListing(rentalWindow);
+  const brandOptions = await getDistinctActiveVehicleBrands();
+  const filteredVehicles = filterVehiclesFromSearchParams(
+    initialVehicles,
+    resolvedSearchParams,
+  );
+
+  const listingColorOptions = [
+    ...new Set(
+      initialVehicles
+        .map((vehicle) => vehicle.color)
+        .filter((color): color is VehicleColor => color != null),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+
+  const bookingHref = rentalWindow
+    ? `/booking?${new URLSearchParams({
+        date: rentalWindow.pickupDate,
+        returnDate: rentalWindow.returnDate,
+        pickupTime: rentalWindow.pickupTime,
+        dropoffTime: rentalWindow.returnTime,
+      }).toString()}`
+    : "/booking";
+
+  const detailsDateQuery = rentalWindow
+    ? `?${new URLSearchParams({
+        pickupDate: rentalWindow.pickupDate,
+        returnDate: rentalWindow.returnDate,
+        pickupTime: rentalWindow.pickupTime,
+        returnTime: rentalWindow.returnTime,
+      }).toString()}`
+    : "";
 
   return (
     <main className="flex flex-1 flex-col bg-white">
@@ -79,12 +124,34 @@ export default async function VehiclesPage({ params, searchParams }: VehiclesPag
         <VehicleListingShell
           heroIntro={heroIntro}
           vehicles={initialVehicles}
+          brandOptions={brandOptions}
           searchPanel={
-            <Suspense fallback={<div className="h-[440px] animate-pulse rounded-2xl bg-white/10" aria-hidden />}>
-              <BookingSearchFormFromUrl />
+            <Suspense
+              fallback={
+                <BookingSearchFormSkeleton />
+              }
+            >
+              <BookingSearchFormFromUrl
+                brandOptions={brandOptions}
+                vehicleListingFilters
+                listingColorOptions={listingColorOptions}
+              />
             </Suspense>
           }
-        />
+        >
+          {filteredVehicles.length > 0 ? (
+            <VehicleGridServer
+              vehicles={filteredVehicles}
+              bookingHref={bookingHref}
+              detailsDateQuery={detailsDateQuery}
+              tripDatesCommitted={hasFullRentalWindow}
+              pickupDate={pickupDate || null}
+              returnDate={returnDate || null}
+              pickupTime={pickupTime || null}
+              returnTime={returnTime || null}
+            />
+          ) : null}
+        </VehicleListingShell>
       </Suspense>
     </main>
   );

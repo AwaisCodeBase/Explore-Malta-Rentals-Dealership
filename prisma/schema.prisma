@@ -12,8 +12,11 @@ model Vehicle {
   name                String
   slug                String               @unique
   vehicleType         VehicleType
+  /// Engine displacement in cc. Required for Scooter and Motorcycle (50 or 125). Null for Bicycle and ATV.
+  engineCc            Int?
   brand               String?
   model               String?
+  color               String?
   shortDescription    String?
   description         String?
   mainImageUrl        String?
@@ -42,6 +45,7 @@ model VehicleUnit {
   id               String                 @id @default(cuid())
   vehicleId        String
   licensePlate     String                 @unique
+  color            String?
   status           VehicleUnitStatus      @default(AVAILABLE)
   isActive         Boolean                @default(true)
   notes            String?
@@ -54,6 +58,7 @@ model VehicleUnit {
 
   @@index([vehicleId, isActive, status])
   @@index([vehicleId, createdAt])
+  @@index([vehicleId, color, isActive, status])
 }
 
 model VehicleImage {
@@ -289,6 +294,7 @@ model Booking {
   vehicleTypeSnapshot                        VehicleType?
   termsVersionId                             String?
   vehicleLicensePlateSnapshot                String?
+  vehicleColorSnapshot                       String?
   baseDailyRateSnapshot                      Decimal?                @db.Decimal(10, 2)
   durationDiscountPercentSnapshot            Decimal?                @db.Decimal(5, 2)
   appliedDailyRateSnapshot                   Decimal?                @db.Decimal(10, 2)
@@ -302,6 +308,7 @@ model Booking {
   vehicleUnitId                              String?
   paymentStatus                              PaymentStatus           @default(PENDING)
   securityDepositStatus                      SecurityDepositStatus   @default(PENDING)
+  paymentProofUploadPath                     String?
   paymentReceivedAmount                      Decimal?                @db.Decimal(10, 2)
   paymentMethod                              PaymentMethod?
   securityDepositCollectedAmount             Decimal?                @db.Decimal(10, 2)
@@ -407,6 +414,7 @@ model ReservationHold {
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
   vehicleUnitId   String?
+  selectedColor   String?
   booking         Booking?              @relation(fields: [bookingId], references: [id])
   vehicle         Vehicle               @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   vehicleUnit     VehicleUnit?          @relation(fields: [vehicleUnitId], references: [id])
@@ -553,6 +561,7 @@ model WebhookEvent {
 }
 
 enum BookingStatus {
+  PENDING_PAYMENT
   CONFIRMED
   VEHICLE_HANDED_OVER
   RETURNED

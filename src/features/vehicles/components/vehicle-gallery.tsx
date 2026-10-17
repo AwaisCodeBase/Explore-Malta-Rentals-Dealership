@@ -5,6 +5,11 @@ type VehicleGalleryProps = Readonly<{
   images: readonly string[];
 }>;
 
+/* Tonal plate so cut-out product shots never float on flat white, with the
+   hairline drawn as an inset ring so it never doubles up with the shadow. */
+const plateClass =
+  "relative overflow-hidden rounded-[var(--r-panel)] bg-[linear-gradient(155deg,var(--ink-50)_0%,var(--surface-sunken)_58%,var(--ink-100)_100%)] shadow-[inset_0_0_0_1px_var(--line-subtle),var(--elev-2)]";
+
 export function VehicleGallery({ name, images }: VehicleGalleryProps) {
   if (images.length === 0) {
     return null;
@@ -18,7 +23,7 @@ export function VehicleGallery({ name, images }: VehicleGalleryProps) {
         aria-label={`${name} gallery`}
         className="flex w-full justify-end"
       >
-        <div className="relative w-full max-w-[30rem] min-h-[14rem] overflow-hidden rounded-2xl sm:min-h-[18rem]">
+        <div className={`${plateClass} w-full max-w-[30rem] min-h-[14rem] sm:min-h-[18rem]`}>
           <Image
             src={hero}
             alt={`${name} — product photo`}
@@ -35,7 +40,7 @@ export function VehicleGallery({ name, images }: VehicleGalleryProps) {
   if (images.length === 2) {
     return (
       <section aria-label={`${name} gallery`} className="grid gap-3 sm:grid-cols-2">
-        <div className="relative min-h-[14rem] overflow-hidden rounded-2xl sm:min-h-[20rem]">
+        <div className={`${plateClass} min-h-[14rem] sm:min-h-[20rem]`}>
           <Image
             src={hero}
             alt={`${name} — main image`}
@@ -45,7 +50,7 @@ export function VehicleGallery({ name, images }: VehicleGalleryProps) {
             priority
           />
         </div>
-        <div className="relative min-h-[14rem] overflow-hidden rounded-2xl sm:min-h-[20rem]">
+        <div className={`${plateClass} min-h-[14rem] sm:min-h-[20rem]`}>
           <Image
             src={second}
             alt={`${name} — second image`}
@@ -61,7 +66,7 @@ export function VehicleGallery({ name, images }: VehicleGalleryProps) {
 
   return (
     <section aria-label={`${name} gallery`} className="grid gap-3 sm:grid-cols-2">
-      <div className="relative min-h-[14rem] overflow-hidden rounded-2xl sm:row-span-2 sm:min-h-[20rem]">
+      <div className={`${plateClass} min-h-[14rem] sm:row-span-2 sm:min-h-[20rem]`}>
         <Image
           src={hero}
           alt={`${name} — main image`}
@@ -71,7 +76,7 @@ export function VehicleGallery({ name, images }: VehicleGalleryProps) {
           priority
         />
       </div>
-      <div className="relative min-h-[9.5rem] overflow-hidden rounded-2xl">
+      <div className={`${plateClass} min-h-[9.5rem]`}>
         <Image
           src={second!}
           alt={`${name} — second image`}
@@ -81,7 +86,7 @@ export function VehicleGallery({ name, images }: VehicleGalleryProps) {
           loading="lazy"
         />
       </div>
-      <div className="relative min-h-[9.5rem] overflow-hidden rounded-2xl">
+      <div className={`${plateClass} min-h-[9.5rem]`}>
         <Image
           src={third!}
           alt={`${name} — third image`}

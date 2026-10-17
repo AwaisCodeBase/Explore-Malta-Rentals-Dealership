@@ -3,7 +3,6 @@ import { setRequestLocale } from "next-intl/server";
 
 import { AdminVehicleDetailView } from "@/features/admin/components/admin-vehicle-detail";
 import { getAdminVehicleById, getAdminVehicleBookingsForCalendar } from "@/lib/admin/vehicles";
-import { getDurationPricingRules } from "@/lib/pricing/get-duration-pricing-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -15,15 +14,14 @@ export default async function AdminVehicleDetailPage({ params }: AdminVehicleDet
   const { locale, id } = await params;
   setRequestLocale(locale);
 
-  const [vehicle, bookings, durationRules] = await Promise.all([
+  const [vehicle, bookings] = await Promise.all([
     getAdminVehicleById(id),
     getAdminVehicleBookingsForCalendar(id),
-    getDurationPricingRules(),
   ]);
 
   if (!vehicle) {
     notFound();
   }
 
-  return <AdminVehicleDetailView locale={locale} vehicle={vehicle} bookings={bookings} durationRules={durationRules} />;
+  return <AdminVehicleDetailView locale={locale} vehicle={vehicle} bookings={bookings} />;
 }

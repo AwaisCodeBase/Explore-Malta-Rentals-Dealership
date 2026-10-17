@@ -6,6 +6,7 @@ import type {
   DROPOFF_OPTIONS,
   HELMET_SIZES,
   LICENSE_CATEGORIES,
+  PAYMENT_MODES,
   PICKUP_OPTIONS,
   VEHICLE_TYPES,
 } from "@/lib/booking/bookingSubmissionSchema";
@@ -17,6 +18,7 @@ export type LicenseCategory = (typeof LICENSE_CATEGORIES)[number];
 export type CdwOption = (typeof CDW_OPTIONS)[number];
 export type HelmetSize = (typeof HELMET_SIZES)[number];
 export type DepositMethod = (typeof DEPOSIT_METHODS)[number];
+export type PaymentMode = (typeof PAYMENT_MODES)[number];
 
 export type BookingSubmission = z.infer<typeof bookingSubmissionSchema>;
 export type BookingSubmissionInput = z.input<typeof bookingSubmissionSchema>;
@@ -26,6 +28,7 @@ export type NormalizedBookingPayload = {
   idempotencyKey: string | null;
   hotelCode: string | null;
   vehicleId: string | null;
+  selectedColor: string | null;
   vehicleType: VehicleType;
   pickupDateTime: Date;
   returnDateTime: Date;
@@ -73,6 +76,10 @@ export type NormalizedBookingPayload = {
   };
   deposit: {
     depositMethod: DepositMethod;
+  };
+  payment: {
+    mode: PaymentMode;
+    proofPath: string | null;
   };
   consent: {
     termsAccepted: boolean;

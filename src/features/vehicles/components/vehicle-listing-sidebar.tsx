@@ -31,6 +31,9 @@ const SEAT_OPTIONS: readonly BookingOption[] = [
 ];
 
 type VehicleListingSidebarProps = Readonly<{
+  brandOptions: readonly string[];
+  selectedBrand: string | "All";
+  onBrandChange: (value: string | "All") => void;
   colorOptions: readonly (VehicleColor | "All")[];
   selectedType: VehicleType | "All";
   onTypeChange: (value: VehicleType | "All") => void;
@@ -300,6 +303,9 @@ function joinClasses(...classes: Array<string | undefined>) {
 }
 
 export function VehicleListingSidebar({
+  brandOptions,
+  selectedBrand,
+  onBrandChange,
   colorOptions,
   selectedType,
   onTypeChange,
@@ -329,6 +335,28 @@ export function VehicleListingSidebar({
       id={filterPanelId}
       className={sleekRail ? "space-y-3.5" : "space-y-5"}
     >
+      <FilterSection title="Brand" sleek={sleekRail}>
+        <RadioRow
+          name="brand"
+          id="brand-all"
+          label="All brands"
+          checked={selectedBrand === "All"}
+          onChange={() => onBrandChange("All")}
+          sleek={sleekRail}
+        />
+        {brandOptions.map((brand) => (
+          <RadioRow
+            key={brand}
+            name="brand"
+            id={`brand-${brand.toLowerCase().replace(/\s+/g, "-")}`}
+            label={brand}
+            checked={selectedBrand === brand}
+            onChange={() => onBrandChange(brand)}
+            sleek={sleekRail}
+          />
+        ))}
+      </FilterSection>
+
       <FilterSection title="Vehicle type" sleek={sleekRail}>
         {VEHICLE_TYPE_OPTIONS.map((value) => (
           <RadioRow

@@ -2,6 +2,8 @@ import { VehicleType } from "@/generated/prisma/client";
 import { NextResponse } from "next/server";
 
 import { enrichVehicleListWithRentalWindow } from "@/lib/vehicles/enrichVehicleListWithRentalWindow";
+import { isBookableRentalWindowStatus } from "@/lib/vehicles/types";
+import { getDistinctActiveVehicleBrands } from "@/lib/vehicles/getDistinctActiveVehicleBrands";
 import { getVehicles, type GetVehiclesFilters } from "@/lib/vehicles";
 
 const vehicleTypes = new Set<string>(Object.values(VehicleType));
@@ -89,7 +91,9 @@ export async function GET(request: Request) {
 
       try {
         const enriched = await Promise.race([enrichPromise, timeoutPromise]);
-        vehicles = enriched.filter((v) => v.rentalWindowStatus !== "unavailable");
+        vehicles = enriched.filter((v) =>
+          isBookableRentalWindowStatus(v.rentalWindowStatus),
+        );
       } catch (enrichError) {
         // Availability enrichment timed out or failed — fall back to returning all vehicles
         // without rental-window status so the UI is still usable.
@@ -101,6 +105,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true as const,
       vehicles,
+      brands: await getDistinctActiveVehicleBrands(),
     });
   } catch (error) {
     console.error("[vehicles] Failed to fetch vehicles", error);

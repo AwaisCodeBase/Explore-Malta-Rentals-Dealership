@@ -1,4 +1,5 @@
 import { format, parse } from "date-fns";
+import { normalizeVehicleColorForStorage } from "@/features/vehicles/lib/vehicle-color";
 import { normalizeHotelCode } from "@/lib/hotel-codes/normalize-hotel-code";
 import type { BookingSubmission, NormalizedBookingPayload } from "@/lib/booking/types";
 import { combineDateAndTime } from "@/lib/booking/bookingSubmissionSchema";
@@ -43,6 +44,9 @@ export function normalizeBookingPayload(payload: BookingSubmission): NormalizedB
     idempotencyKey: payload.idempotencyKey ?? null,
     hotelCode: payload.hotelCode ? normalizeHotelCode(payload.hotelCode) : null,
     vehicleId,
+    selectedColor: payload.rental.selectedColor
+      ? normalizeVehicleColorForStorage(payload.rental.selectedColor)
+      : null,
     vehicleType: payload.rental.vehicleType,
     pickupDateTime,
     returnDateTime,
@@ -92,6 +96,10 @@ export function normalizeBookingPayload(payload: BookingSubmission): NormalizedB
     },
     deposit: {
       depositMethod: payload.deposit.depositMethod,
+    },
+    payment: {
+      mode: payload.payment.mode,
+      proofPath: normalizeText(payload.payment.proofPath),
     },
     consent: {
       termsAccepted: payload.consent.termsAccepted === true,

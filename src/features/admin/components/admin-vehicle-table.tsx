@@ -61,6 +61,11 @@ export function AdminVehicleTable({ locale, vehicles }: AdminVehicleTableProps) 
     }
 
     const { vehicle, mode } = dialogTarget;
+
+    if (mode === "delete" && !vehicle.canDelete) {
+      return;
+    }
+
     setActionVehicleId(vehicle.id);
     setFeedback(null);
 
@@ -190,6 +195,12 @@ export function AdminVehicleTable({ locale, vehicles }: AdminVehicleTableProps) 
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-slate-900">{vehicle.name}</p>
                           <p className="truncate text-xs text-slate-500">{vehicle.slug}</p>
+                          {(vehicle.brand || vehicle.model || vehicle.color) ? (
+                            <p className="mt-0.5 truncate text-[11px] text-slate-500">
+                              {[vehicle.brand, vehicle.model].filter(Boolean).join(" ")}
+                              {vehicle.color ? ` · ${vehicle.color}` : ""}
+                            </p>
+                          ) : null}
                           {vehicle.bookingCount > 0 ? (
                             <p className="mt-0.5 text-[11px] text-slate-400">
                               {t("table.bookingCount", { count: vehicle.bookingCount })}
@@ -198,7 +209,12 @@ export function AdminVehicleTable({ locale, vehicles }: AdminVehicleTableProps) 
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-slate-700">{t(`vehicleTypes.${vehicle.vehicleType}`)}</td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {t(`vehicleTypes.${vehicle.vehicleType}`)}
+                      {vehicle.engineCc === 50 || vehicle.engineCc === 125
+                        ? ` · ${vehicle.engineCc}cc`
+                        : null}
+                    </td>
                     <td className="px-4 py-3 font-semibold text-slate-800">€{vehicle.baseDailyRate.toFixed(2)}</td>
                     <td className="px-4 py-3 text-slate-700">{vehicle.totalUnits}</td>
                     <td className="px-4 py-3 text-slate-700">{vehicle.availableUnits}</td>
@@ -275,7 +291,7 @@ export function AdminVehicleTable({ locale, vehicles }: AdminVehicleTableProps) 
                             {
                               key: "delete",
                               label: t("table.delete"),
-                              disabled: !vehicle.canDelete || actionVehicleId === vehicle.id,
+                              disabled: actionVehicleId === vehicle.id,
                               tone: "danger",
                               onClick: () => setDialogTarget({ vehicle, mode: "delete" }),
                             },
@@ -319,6 +335,10 @@ export function AdminVehicleTable({ locale, vehicles }: AdminVehicleTableProps) 
         mode={dialogTarget?.mode ?? "deactivate"}
         vehicleName={dialogTarget?.vehicle.name ?? ""}
         bookingCount={dialogTarget?.vehicle.bookingCount ?? 0}
+        reservationHoldCount={dialogTarget?.vehicle.reservationHoldCount ?? 0}
+        availabilityBlockCount={dialogTarget?.vehicle.availabilityBlockCount ?? 0}
+        canDelete={dialogTarget?.vehicle.canDelete ?? true}
+        deleteBlockedReasons={dialogTarget?.vehicle.deleteBlockedReasons ?? []}
         isSubmitting={actionVehicleId !== null}
         onCancel={() => setDialogTarget(null)}
         onConfirm={handleDialogConfirm}

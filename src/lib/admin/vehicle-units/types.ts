@@ -4,6 +4,7 @@ export type AdminVehicleUnitDto = {
   id: string;
   vehicleId: string;
   licensePlate: string;
+  color: string | null;
   status: VehicleUnitStatus;
   isActive: boolean;
   notes: string | null;

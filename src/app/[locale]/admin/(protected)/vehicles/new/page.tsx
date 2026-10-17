@@ -1,7 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { AdminVehicleForm } from "@/features/admin/components/admin-vehicle-form";
-import { getDurationPricingRules } from "@/lib/pricing/get-duration-pricing-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +12,6 @@ export default async function AdminNewVehiclePage({ params }: AdminNewVehiclePag
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "Admin.vehicles" });
-  const durationRules = await getDurationPricingRules();
 
   return (
     <div className="space-y-5">
@@ -21,7 +19,7 @@ export default async function AdminNewVehiclePage({ params }: AdminNewVehiclePag
         <h2 className="text-lg font-bold text-slate-950">{t("createTitle")}</h2>
         <p className="mt-1 text-sm text-slate-600">{t("createDescription")}</p>
       </section>
-      <AdminVehicleForm locale={locale} mode="create" durationRules={durationRules} />
+      <AdminVehicleForm locale={locale} mode="create" />
     </div>
   );
 }

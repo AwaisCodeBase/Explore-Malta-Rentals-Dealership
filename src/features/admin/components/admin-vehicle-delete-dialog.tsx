@@ -3,21 +3,45 @@
 import { AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import type { VehicleDeleteBlockedReason } from "@/lib/admin/vehicles/vehicle-delete-errors";
+
 type AdminVehicleDeleteDialogProps = Readonly<{
   open: boolean;
   mode: "activate" | "deactivate" | "delete";
   vehicleName: string;
   bookingCount: number;
+  reservationHoldCount: number;
+  availabilityBlockCount: number;
+  canDelete: boolean;
+  deleteBlockedReasons: VehicleDeleteBlockedReason[];
   isSubmitting: boolean;
   onCancel: () => void;
   onConfirm: () => void;
 }>;
+
+function blockedReasonCount(
+  reason: VehicleDeleteBlockedReason,
+  counts: { bookingCount: number; reservationHoldCount: number; availabilityBlockCount: number },
+): number {
+  switch (reason) {
+    case "HAS_BOOKINGS":
+      return counts.bookingCount;
+    case "HAS_RESERVATION_HOLDS":
+      return counts.reservationHoldCount;
+    case "HAS_AVAILABILITY_BLOCKS":
+      return counts.availabilityBlockCount;
+  }
+}
 
 export function AdminVehicleDeleteDialog({
   open,
   mode,
   vehicleName,
   bookingCount,
+  reservationHoldCount,
+  availabilityBlockCount,
+  canDelete,
+  deleteBlockedReasons,
   isSubmitting,
   onCancel,
   onConfirm,
@@ -30,6 +54,9 @@ export function AdminVehicleDeleteDialog({
 
   const isActivate = mode === "activate";
   const isDeactivate = mode === "deactivate";
+  const isPermanentDelete = mode === "delete";
+  const counts = { bookingCount, reservationHoldCount, availabilityBlockCount };
+  const confirmDisabled = isSubmitting || (isPermanentDelete && !canDelete);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -72,6 +99,20 @@ export function AdminVehicleDeleteDialog({
             {t("deleteDialog.bookingWarning", { count: bookingCount })}
           </p>
         ) : null}
+        {isPermanentDelete && !canDelete ? (
+          <div className="mt-3 space-y-2">
+            {deleteBlockedReasons.map((reason) => (
+              <p
+                key={reason}
+                className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800"
+              >
+                {t(`permanentDeleteDialog.blockedReasons.${reason}`, {
+                  count: blockedReasonCount(reason, counts),
+                })}
+              </p>
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-6 flex flex-wrap justify-end gap-2">
           <button
@@ -85,9 +126,9 @@ export function AdminVehicleDeleteDialog({
           <button
             type="button"
             onClick={onConfirm}
-            disabled={isSubmitting}
+            disabled={confirmDisabled}
             className={[
-              "cursor-pointer rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60",
+              "cursor-pointer rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60",
               isActivate
                 ? "bg-emerald-600 hover:bg-emerald-700"
                 : "bg-rose-600 hover:bg-rose-700",

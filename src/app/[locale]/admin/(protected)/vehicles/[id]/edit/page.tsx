@@ -3,7 +3,6 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { AdminVehicleForm } from "@/features/admin/components/admin-vehicle-form";
 import { getAdminVehicleById } from "@/lib/admin/vehicles";
-import { getDurationPricingRules } from "@/lib/pricing/get-duration-pricing-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +14,7 @@ export default async function AdminEditVehiclePage({ params }: AdminEditVehicleP
   const { locale, id } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "Admin.vehicles" });
-  const [vehicle, durationRules] = await Promise.all([
-    getAdminVehicleById(id),
-    getDurationPricingRules(),
-  ]);
+  const vehicle = await getAdminVehicleById(id);
 
   if (!vehicle) {
     notFound();
@@ -30,7 +26,7 @@ export default async function AdminEditVehiclePage({ params }: AdminEditVehicleP
         <h2 className="text-lg font-bold text-slate-950">{t("editTitle", { name: vehicle.name })}</h2>
         <p className="mt-1 text-sm text-slate-600">{t("editDescription")}</p>
       </section>
-      <AdminVehicleForm locale={locale} mode="edit" vehicle={vehicle} durationRules={durationRules} />
+      <AdminVehicleForm locale={locale} mode="edit" vehicle={vehicle} />
     </div>
   );
 }

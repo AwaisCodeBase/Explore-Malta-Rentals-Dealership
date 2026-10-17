@@ -15,7 +15,14 @@ function SocialLink({ href, label, children }: SocialLinkProps) {
       rel="noopener noreferrer"
       aria-label={label}
       title={label}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/[0.06] text-white/75 transition-all duration-200 hover:border-white/25 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a1628]"
+      className={[
+        "flex h-11 w-11 items-center justify-center rounded-full text-[var(--ink-300)]",
+        "shadow-[inset_0_0_0_1px_var(--line-inverse)]",
+        "transition-[background-color,color,box-shadow,transform] duration-[var(--dur-base)] ease-[var(--ease-out-expo)]",
+        "hover:bg-white hover:text-[var(--ink-950)] hover:shadow-[inset_0_0_0_1px_rgb(255_255_255_/_0.9),0_10px_24px_-12px_rgb(255_255_255_/_0.45)]",
+        "motion-safe:hover:-translate-y-0.5 active:translate-y-0",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-400)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ink-950)]",
+      ].join(" ")}
     >
       {children}
     </a>
@@ -96,7 +103,7 @@ export function FooterSocialLinks() {
   if (resolved.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2.5">
       {resolved.map(({ href, label, node }) => (
         <SocialLink key={label} href={href} label={label}>
           {node}

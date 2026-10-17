@@ -1,19 +1,31 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, KeyRound, Loader2, RotateCcw, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, KeyRound, Loader2, RotateCcw, Undo2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import type { AdminVehicleUnitDto } from "@/lib/admin/vehicle-units/types";
+import { buildBookingCancellationEmailDraft } from "@/lib/email/buildBookingCancellationEmailDraft";
 
 type AdminBookingLifecycleActionsProps = Readonly<{
   booking: AdminBookingDetail;
   vehicleUnits: AdminVehicleUnitDto[];
 }>;
 
-type ActiveDialog = "handOver" | "markReturned" | "complete" | "cancel" | null;
+type ActiveDialog = "handOver" | "markReturned" | "complete" | "cancel" | "restore" | null;
+
+function previousStatusBeforeCancel(booking: AdminBookingDetail): "CONFIRMED" | "PENDING_PAYMENT" {
+  const cancelled = booking.statusHistory.find(
+    (entry) =>
+      entry.newStatus === "CANCELLED" &&
+      (entry.oldStatus === "CONFIRMED" || entry.oldStatus === "PENDING_PAYMENT"),
+  );
+  return cancelled?.oldStatus === "PENDING_PAYMENT" ? "PENDING_PAYMENT" : "CONFIRMED";
+}
+
+type CancelDialogStep = "details" | "email";
 
 function toLocalDateTimeInputValue(iso: string | null | undefined): string {
   if (!iso) {
@@ -43,6 +55,12 @@ type LifecycleActionVariant = "primary" | "danger" | "orange" | "sky";
 
 function stageGuidelineTheme(status: AdminBookingDetail["status"]) {
   switch (status) {
+    case "PENDING_PAYMENT":
+      return {
+        box: "border-amber-300/60 bg-amber-50",
+        label: "text-amber-700",
+        divider: "border-amber-200",
+      };
     case "CONFIRMED":
       return {
         box: "border-emerald-300/60 bg-emerald-50",
@@ -186,6 +204,7 @@ function LifecycleGuideline({
   t: ReturnType<typeof useTranslations<"Admin.bookings.lifecycle">>;
 }>) {
   const stepStatuses = [
+    "PENDING_PAYMENT",
     "CONFIRMED",
     "VEHICLE_HANDED_OVER",
     "RETURNED",
@@ -212,7 +231,7 @@ function LifecycleGuideline({
         <p className="mt-1 text-sm leading-relaxed text-slate-600">
           {t(`guidelines.steps.${status}.description` as "guidelines.steps.CONFIRMED.description")}
         </p>
-        {status !== "COMPLETED" && status !== "CANCELLED" ? (
+        {status !== "COMPLETED" ? (
           <p className={["mt-3 border-t pt-3 text-sm leading-relaxed text-slate-700", theme.divider].join(" ")}>
             <span className="font-semibold text-slate-800">{t("guidelines.whatToDoNext")}: </span>
             {t(`guidelines.steps.${status}.nextStep` as "guidelines.steps.CONFIRMED.nextStep")}
@@ -282,6 +301,7 @@ export function AdminBookingLifecycleActions({
   const t = useTranslations("Admin.bookings.lifecycle");
   const router = useRouter();
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
+  const [cancelDialogStep, setCancelDialogStep] = useState<CancelDialogStep>("details");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -321,7 +341,12 @@ export function AdminBookingLifecycleActions({
     depositDeductionAmount: 0,
     depositDeductionReason: "",
     note: "",
+    emailSubject: "",
+    emailBody: "",
+    emailCustomized: false,
   });
+  const [restoreNote, setRestoreNote] = useState("");
+  const restoreTargetStatus = previousStatusBeforeCancel(booking);
 
   const selectableUnits = useMemo(
     () =>
@@ -342,12 +367,20 @@ export function AdminBookingLifecycleActions({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const payload = (await response.json()) as { success: boolean; message?: string };
+      const payload = (await response.json()) as {
+        success: boolean;
+        message?: string;
+        emailSent?: boolean;
+      };
       if (!response.ok || !payload.success) {
         setError(payload.message ?? t("genericError"));
         return;
       }
+      if (path === "cancel" && payload.emailSent === false) {
+        window.alert(payload.message ?? t("cancelDialog.emailFailed"));
+      }
       setActiveDialog(null);
+      setCancelDialogStep("details");
       router.refresh();
     } catch {
       setError(t("genericError"));
@@ -356,14 +389,57 @@ export function AdminBookingLifecycleActions({
     }
   }
 
-  const showHandOver = booking.status === "CONFIRMED";
-  const showCancel = booking.status === "CONFIRMED";
+  function openCancelDialog() {
+    setError(null);
+    setCancelDialogStep("details");
+    setCancelForm((current) => ({
+      ...current,
+      emailSubject: "",
+      emailBody: "",
+      emailCustomized: false,
+    }));
+    setActiveDialog("cancel");
+  }
+
+  function continueToCancellationEmail() {
+    const draft = buildBookingCancellationEmailDraft({
+      customerFullName: booking.customerFullName,
+      bookingReference: booking.bookingReference,
+      vehicleName: booking.vehicleName,
+      pickupDateTime: booking.pickupDateTime,
+      returnDateTime: booking.returnDateTime,
+      refundPayment: cancelForm.refundPayment,
+    });
+    setCancelForm((current) => ({
+      ...current,
+      emailSubject: current.emailCustomized ? current.emailSubject : draft.subject,
+      emailBody: current.emailCustomized ? current.emailBody : draft.body,
+    }));
+    setCancelDialogStep("email");
+  }
+
+  function closeLifecycleDialog() {
+    setActiveDialog(null);
+    setCancelDialogStep("details");
+    setError(null);
+  }
+
+  function openRestoreDialog() {
+    setError(null);
+    setRestoreNote("");
+    setActiveDialog("restore");
+  }
+
+  const showHandOver =
+    booking.status === "CONFIRMED" &&
+    (Number(booking.totalDueOnline) <= 0 || booking.paymentStatus === "PAID");
+  const showCancel = booking.status === "CONFIRMED" || booking.status === "PENDING_PAYMENT";
   const showMarkReturned = booking.status === "VEHICLE_HANDED_OVER";
   const showComplete = booking.status === "RETURNED";
-  const readOnlyLifecycle =
-    booking.status === "COMPLETED" || booking.status === "CANCELLED";
+  const showRestore = booking.status === "CANCELLED";
+  const readOnlyLifecycle = booking.status === "COMPLETED";
 
-  if (!showHandOver && !showCancel && !showMarkReturned && !showComplete && !readOnlyLifecycle) {
+  if (!showHandOver && !showCancel && !showMarkReturned && !showComplete && !showRestore && !readOnlyLifecycle) {
     return null;
   }
 
@@ -374,9 +450,7 @@ export function AdminBookingLifecycleActions({
       <LifecycleGuideline status={booking.status} t={t} />
 
       {readOnlyLifecycle ? (
-        <p className="mt-4 text-sm text-slate-600">
-          {booking.status === "COMPLETED" ? t("readOnlyCompleted") : t("readOnlyCancelled")}
-        </p>
+        <p className="mt-4 text-sm text-slate-600">{t("readOnlyCompleted")}</p>
       ) : (
         <div className="mt-4 space-y-3">
           <p className="text-sm font-semibold text-slate-700">
@@ -414,6 +488,16 @@ export function AdminBookingLifecycleActions({
               onAction={() => setActiveDialog("complete")}
             />
           ) : null}
+          {showRestore ? (
+            <LifecycleActionCard
+              title={t("actions.restore")}
+              summary={t("guidelines.actions.restore.summary")}
+              effects={t("guidelines.actions.restore.effects")}
+              effectsLabel={t("guidelines.effectsLabel")}
+              icon={Undo2}
+              onAction={openRestoreDialog}
+            />
+          ) : null}
           {showCancel ? (
             <LifecycleActionCard
               title={t("actions.cancel")}
@@ -421,7 +505,7 @@ export function AdminBookingLifecycleActions({
               effects={t("guidelines.actions.cancel.effects")}
               effectsLabel={t("guidelines.effectsLabel")}
               icon={XCircle}
-              onAction={() => setActiveDialog("cancel")}
+              onAction={openCancelDialog}
               variant="danger"
             />
           ) : null}
@@ -546,7 +630,7 @@ export function AdminBookingLifecycleActions({
             </div>
             {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" disabled={isSubmitting} onClick={() => setActiveDialog(null)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
+              <button type="button" disabled={isSubmitting} onClick={closeLifecycleDialog} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
                 {t("cancel")}
               </button>
               <button
@@ -619,7 +703,7 @@ export function AdminBookingLifecycleActions({
             </div>
             {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" disabled={isSubmitting} onClick={() => setActiveDialog(null)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
+              <button type="button" disabled={isSubmitting} onClick={closeLifecycleDialog} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
                 {t("cancel")}
               </button>
               <button
@@ -748,7 +832,7 @@ export function AdminBookingLifecycleActions({
             </div>
             {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" disabled={isSubmitting} onClick={() => setActiveDialog(null)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
+              <button type="button" disabled={isSubmitting} onClick={closeLifecycleDialog} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
                 {t("cancel")}
               </button>
               <button
@@ -771,66 +855,216 @@ export function AdminBookingLifecycleActions({
 
       {activeDialog === "cancel" ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-          <div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
-            <h4 className="text-lg font-bold text-slate-950">{t("cancelDialog.title")}</h4>
-            <p className="mt-1 text-sm text-slate-600">{t("cancelDialog.description", { reference: booking.bookingReference })}</p>
-            <div className="mt-4 space-y-3">
-              {booking.paymentStatus === "PAID" ? (
-                <label className="flex items-center gap-2 text-sm text-slate-700">
-                  <input
-                    type="checkbox"
-                    checked={cancelForm.refundPayment}
-                    onChange={(event) =>
-                      setCancelForm((current) => ({ ...current, refundPayment: event.target.checked }))
-                    }
-                  />
-                  {t("cancelDialog.refundPayment")}
-                </label>
-              ) : null}
-              {booking.securityDepositStatus === "COLLECTED" ? (
-                <>
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl"
+          >
+            {cancelDialogStep === "details" ? (
+              <>
+                <h4 className="text-lg font-bold text-slate-950">{t("cancelDialog.title")}</h4>
+                <p className="mt-1 text-sm text-slate-600">
+                  {t("cancelDialog.description", { reference: booking.bookingReference })}
+                </p>
+                <div className="mt-4 space-y-3">
+                  {booking.paymentStatus === "PAID" ? (
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={cancelForm.refundPayment}
+                        onChange={(event) =>
+                          setCancelForm((current) => ({
+                            ...current,
+                            refundPayment: event.target.checked,
+                            emailCustomized: false,
+                          }))
+                        }
+                      />
+                      {t("cancelDialog.refundPayment")}
+                    </label>
+                  ) : null}
+                  {booking.securityDepositStatus === "COLLECTED" ? (
+                    <label>
+                      <span className={labelClassName()}>{t("cancelDialog.depositOutcome")}</span>
+                      <select
+                        value={cancelForm.depositOutcome}
+                        onChange={(event) =>
+                          setCancelForm((current) => ({
+                            ...current,
+                            depositOutcome: event.target.value as typeof current.depositOutcome,
+                          }))
+                        }
+                        className={inputClassName()}
+                      >
+                        <option value="UNCHANGED">{t("cancelDialog.depositUnchanged")}</option>
+                        <option value="REFUNDED">{t("depositStatus.REFUNDED")}</option>
+                        <option value="DEDUCTED">{t("depositStatus.DEDUCTED")}</option>
+                      </select>
+                    </label>
+                  ) : null}
                   <label>
-                    <span className={labelClassName()}>{t("cancelDialog.depositOutcome")}</span>
-                    <select
-                      value={cancelForm.depositOutcome}
+                    <span className={labelClassName()}>{t("cancelDialog.note")}</span>
+                    <textarea
+                      rows={3}
+                      value={cancelForm.note}
+                      onChange={(event) => setCancelForm((current) => ({ ...current, note: event.target.value }))}
+                      className={inputClassName()}
+                    />
+                  </label>
+                </div>
+                {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+                <div className="mt-5 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={closeLifecycleDialog}
+                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+                  >
+                    {t("cancelDialog.dismiss")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={continueToCancellationEmail}
+                    className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    {t("cancelDialog.continue")}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h4 className="text-lg font-bold text-slate-950">{t("cancelDialog.emailTitle")}</h4>
+                <p className="mt-1 text-sm text-slate-600">
+                  {t("cancelDialog.emailDescription", { email: booking.customerEmail })}
+                </p>
+                <div className="mt-4 space-y-3">
+                  <label>
+                    <span className={labelClassName()}>{t("cancelDialog.emailRecipient")}</span>
+                    <input type="text" value={booking.customerEmail} readOnly className={inputClassName()} />
+                  </label>
+                  <label>
+                    <span className={labelClassName()}>{t("cancelDialog.emailSubject")}</span>
+                    <input
+                      type="text"
+                      value={cancelForm.emailSubject}
                       onChange={(event) =>
                         setCancelForm((current) => ({
                           ...current,
-                          depositOutcome: event.target.value as typeof current.depositOutcome,
+                          emailSubject: event.target.value,
+                          emailCustomized: true,
                         }))
                       }
                       className={inputClassName()}
-                    >
-                      <option value="UNCHANGED">{t("cancelDialog.depositUnchanged")}</option>
-                      <option value="REFUNDED">{t("depositStatus.REFUNDED")}</option>
-                      <option value="DEDUCTED">{t("depositStatus.DEDUCTED")}</option>
-                    </select>
+                    />
                   </label>
-                </>
-              ) : null}
+                  <label>
+                    <span className={labelClassName()}>{t("cancelDialog.emailBody")}</span>
+                    <textarea
+                      rows={14}
+                      value={cancelForm.emailBody}
+                      onChange={(event) =>
+                        setCancelForm((current) => ({
+                          ...current,
+                          emailBody: event.target.value,
+                          emailCustomized: true,
+                        }))
+                      }
+                      className={`${inputClassName()} min-h-[16rem] font-sans`}
+                    />
+                  </label>
+                </div>
+                {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+                <div className="mt-5 flex flex-wrap justify-end gap-2">
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => setCancelDialogStep("details")}
+                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+                  >
+                    {t("cancelDialog.back")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={closeLifecycleDialog}
+                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+                  >
+                    {t("cancelDialog.dismiss")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={
+                      isSubmitting || !cancelForm.emailSubject.trim() || !cancelForm.emailBody.trim()
+                    }
+                    onClick={() =>
+                      submitAction("cancel", {
+                        refundPayment: cancelForm.refundPayment,
+                        depositOutcome: cancelForm.depositOutcome,
+                        depositRefundAmount: cancelForm.depositRefundAmount,
+                        depositDeductionAmount: cancelForm.depositDeductionAmount,
+                        depositDeductionReason: cancelForm.depositDeductionReason,
+                        note: cancelForm.note,
+                        emailSubject: cancelForm.emailSubject,
+                        emailBody: cancelForm.emailBody,
+                      })
+                    }
+                    className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    {isSubmitting ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+                    {t("cancelDialog.confirmAndSend")}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {activeDialog === "restore" ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+          <div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
+            <h4 className="text-lg font-bold text-slate-950">{t("restoreDialog.title")}</h4>
+            <p className="mt-1 text-sm text-slate-600">
+              {t("restoreDialog.description", {
+                reference: booking.bookingReference,
+                status: t(`restoreDialog.status.${restoreTargetStatus}` as "restoreDialog.status.CONFIRMED"),
+              })}
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">{t("restoreDialog.emailWarning")}</p>
+            <div className="mt-4">
               <label>
-                <span className={labelClassName()}>{t("cancelDialog.note")}</span>
+                <span className={labelClassName()}>{t("restoreDialog.note")}</span>
                 <textarea
                   rows={3}
-                  value={cancelForm.note}
-                  onChange={(event) => setCancelForm((current) => ({ ...current, note: event.target.value }))}
+                  value={restoreNote}
+                  onChange={(event) => setRestoreNote(event.target.value)}
                   className={inputClassName()}
                 />
               </label>
             </div>
             {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" disabled={isSubmitting} onClick={() => setActiveDialog(null)} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
-                {t("cancelDialog.dismiss")}
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={closeLifecycleDialog}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+              >
+                {t("cancel")}
               </button>
               <button
                 type="button"
                 disabled={isSubmitting}
-                onClick={() => submitAction("cancel", cancelForm)}
-                className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white"
+                onClick={() => submitAction("restore", { note: restoreNote })}
+                className={lifecycleConfirmButtonClassName}
               >
-                {isSubmitting ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-                {t("cancelDialog.confirm")}
+                {isSubmitting ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <Undo2 className="size-4 shrink-0" aria-hidden />
+                )}
+                {t("restoreDialog.confirm")}
               </button>
             </div>
           </div>

@@ -45,6 +45,8 @@ function categoryDocumentFolder(category: UploadFileOptions["category"]): string
     case "customer_passport":
     case "additional_driver_passport":
       return "id-documents";
+    case "payment_proof":
+      return "payment-proof";
     default:
       return "documents";
   }

@@ -1,4 +1,11 @@
-import type { VehicleRentalWindowStatus } from "@/lib/vehicles/types";
+import { parseVehicleColorValue } from "@/features/vehicles/lib/vehicle-color";
+import type { VehicleRentalWindowStatus, AvailableColorDto } from "@/lib/vehicles/types";
+import {
+  formatEngineCcLabel,
+  isEngineCcValue,
+  normalizeEngineCc,
+  type EngineCcValue,
+} from "@/lib/vehicles/engine-cc";
 
 export const VEHICLE_TYPES = ["Scooter", "Motorcycle", "Bicycle", "ATV"] as const;
 
@@ -13,11 +20,13 @@ export type VehicleSeatsFilter = 1 | 2 | 3 | "All";
 export type VehicleColor =
   | "Black"
   | "White"
-  | "Gray"
+  | "Grey"
   | "Red"
   | "Blue"
   | "Silver"
-  | "Orange";
+  | "Orange"
+  | "Green"
+  | "Cream";
 
 export type VehicleAddOn = Readonly<{
   id: string;
@@ -31,8 +40,10 @@ export type VehicleListApiItem = Readonly<{
   name: string;
   slug: string;
   vehicleType: ApiVehicleType;
+  engineCc?: number | null;
   brand: string | null;
   model: string | null;
+  color: string | null;
   shortDescription: string | null;
   description: string | null;
   mainImageUrl: string | null;
@@ -40,6 +51,7 @@ export type VehicleListApiItem = Readonly<{
   supportsStorageBox: boolean;
   baseDailyRate: number;
   rentalWindowStatus?: VehicleRentalWindowStatus;
+  availableColors?: readonly AvailableColorDto[];
 }>;
 
 export type VehicleImageApiItem = Readonly<{
@@ -74,7 +86,8 @@ export type Vehicle = Readonly<{
   seats: number;
   transmission: Transmission;
   fuel: string;
-  color: VehicleColor;
+  color: VehicleColor | null;
+  engineCc: EngineCcValue | null;
   engine: string;
   rating: number;
   reviewCount: number;
@@ -84,6 +97,7 @@ export type Vehicle = Readonly<{
   addOns: readonly VehicleAddOn[];
   /** Present when listing was fetched with full pickup/return date+time (holds). */
   rentalWindowStatus?: VehicleRentalWindowStatus;
+  availableColors?: readonly AvailableColorDto[];
 }>;
 
 const PLACEHOLDER_ADDONS: readonly VehicleAddOn[] = [
@@ -99,11 +113,10 @@ function mapApiTypeToListingType(type: ApiVehicleType): VehicleType {
   return type;
 }
 
-function engineByApiType(type: ApiVehicleType): string {
-  if (type === "Scooter") return "50cc";
-  if (type === "Motorcycle") return "125cc";
-  if (type === "ATV") return "ATV";
-  return "Bicycle";
+function engineLabelForVehicle(type: ApiVehicleType, engineCc: number | null | undefined): string {
+  const normalized = normalizeEngineCc(type, engineCc);
+  const label = formatEngineCcLabel(normalized, type);
+  return label || formatEngineCcLabel(null, type);
 }
 
 function supportsStorageFeatureLabel(supportsStorageBox: boolean): string {
@@ -142,6 +155,7 @@ export function mapVehicleListItemToVehicle(item: VehicleListApiItem): Vehicle {
   const inferredType = mapApiTypeToListingType(item.vehicleType);
   const supportsStorageBox = item.supportsStorageBox === true;
   const baseDailyRate = mapApiPricingToBaseDailyRate(item);
+  const engineCc = isEngineCcValue(item.engineCc) ? item.engineCc : normalizeEngineCc(item.vehicleType, item.engineCc);
 
   return {
     id: item.id,
@@ -163,8 +177,9 @@ export function mapVehicleListItemToVehicle(item: VehicleListApiItem): Vehicle {
     seats: item.vehicleType === "Bicycle" ? 1 : 2,
     transmission: item.vehicleType === "Bicycle" ? "Manual" : "Automatic",
     fuel: item.vehicleType === "Bicycle" ? "Human powered" : "Petrol",
-    color: "Gray",
-    engine: engineByApiType(item.vehicleType),
+    color: parseVehicleColorValue(item.color),
+    engineCc,
+    engine: engineLabelForVehicle(item.vehicleType, item.engineCc),
     rating: 0,
     reviewCount: 0,
     location: "Pieta, Malta",
@@ -181,6 +196,7 @@ export function mapVehicleListItemToVehicle(item: VehicleListApiItem): Vehicle {
       ? [{ id: "storage-box", name: "Storage box", priceOnce: 10 }, ...PLACEHOLDER_ADDONS]
       : PLACEHOLDER_ADDONS,
     ...(item.rentalWindowStatus ? { rentalWindowStatus: item.rentalWindowStatus } : {}),
+    ...(item.availableColors ? { availableColors: item.availableColors } : {}),
   };
 }
 

@@ -94,6 +94,7 @@ const listSelect = {
   pickupDateTime: true,
   returnDateTime: true,
   status: true,
+  paymentStatus: true,
   depositMethod: true,
   depositAmount: true,
   totalDueOnline: true,
@@ -115,6 +116,7 @@ function mapListItem(booking: {
   pickupDateTime: Date;
   returnDateTime: Date;
   status: AdminBookingListItem["status"];
+  paymentStatus: AdminBookingListItem["paymentStatus"];
   depositMethod: AdminBookingListItem["depositMethod"];
   depositAmount: { toNumber: () => number };
   totalDueOnline: { toNumber: () => number };
@@ -135,6 +137,7 @@ function mapListItem(booking: {
     pickupDateTime: booking.pickupDateTime.toISOString(),
     returnDateTime: booking.returnDateTime.toISOString(),
     status: booking.status,
+    paymentStatus: booking.paymentStatus,
     depositMethod: booking.depositMethod,
     depositAmount: booking.depositAmount.toNumber(),
     totalDueOnline: booking.totalDueOnline.toNumber(),

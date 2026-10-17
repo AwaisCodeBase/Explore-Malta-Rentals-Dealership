@@ -19,6 +19,7 @@ const vehicles = [
     slug: "neco-one-50cc",
     licensePlate: "MLT-101",
     vehicleType: "Scooter",
+    engineCc: 50,
     brand: "Neco",
     model: "One 50cc",
     shortDescription: "Compact automatic 50cc scooter for city rides.",
@@ -35,6 +36,7 @@ const vehicles = [
     slug: "lexmoto-aura-125cc",
     licensePlate: "MLT-204",
     vehicleType: "Motorcycle",
+    engineCc: 125,
     brand: "Lexmoto",
     model: "Aura 125",
     shortDescription: "Reliable 125cc automatic scooter for island touring.",
@@ -51,6 +53,7 @@ const vehicles = [
     slug: "giant-escape-city-bike",
     licensePlate: "MLT-318",
     vehicleType: "Bicycle",
+    engineCc: null,
     brand: "Giant",
     model: "Escape",
     shortDescription: "Comfort-focused bicycle for scenic daytime routes.",
@@ -67,6 +70,7 @@ const vehicles = [
     slug: "cfmoto-cforce-atv",
     licensePlate: "MLT-452",
     vehicleType: "ATV",
+    engineCc: null,
     brand: "CFMOTO",
     model: "CForce",
     shortDescription: "ATV with strong handling for off-main-road adventures.",
@@ -87,6 +91,7 @@ const upsertSql = `
     "slug",
     "licensePlate",
     "vehicleType",
+    "engineCc",
     "brand",
     "model",
     "shortDescription",
@@ -101,13 +106,14 @@ const upsertSql = `
     "updatedAt"
   )
   VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11, $12, $13, $14, NOW(), NOW()
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, $12, $13, $14, $15, NOW(), NOW()
   )
   ON CONFLICT ("slug")
   DO UPDATE SET
     "name" = EXCLUDED."name",
     "licensePlate" = EXCLUDED."licensePlate",
     "vehicleType" = EXCLUDED."vehicleType",
+    "engineCc" = EXCLUDED."engineCc",
     "brand" = EXCLUDED."brand",
     "model" = EXCLUDED."model",
     "shortDescription" = EXCLUDED."shortDescription",
@@ -132,6 +138,7 @@ async function main() {
       vehicle.slug,
       vehicle.licensePlate,
       vehicle.vehicleType,
+      vehicle.engineCc,
       vehicle.brand,
       vehicle.model,
       vehicle.shortDescription,

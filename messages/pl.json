@@ -580,7 +580,9 @@
     "passportUploadDelivery": "Do dostawy wymagane jest przesłanie paszportu/dowód osobisty",
     "confirmDocumentsPickup": "Potwierdź, że przedstawisz dokumenty przy odbiorze",
     "depositMethodRequired": "Wymagana jest metoda wpłaty",
-    "reviewFields": "Proszę sprawdzić wyróżnione pola."
+    "reviewFields": "Proszę sprawdzić wyróżnione pola.",
+    "deliveryUnavailableSunday": "Delivery is unavailable on Sundays. Please select Office Pickup.",
+    "paymentProofRequired": "Payment proof is required when selecting Already paid"
   },
   "PrivacyPage": {
     "legalKicker": "Prawny",
@@ -753,10 +755,14 @@
     "emptyTitle": "W tej chwili brak dostępnych pojazdów",
     "emptyBody": "Sprawdź wkrótce nowo wystawione oferty wynajmu.",
     "noMatchTitle": "Nie znaleziono dokładnego dopasowania",
-    "noMatchBody": "Wypróbuj inny typ, skrzynię biegów, siedzenia lub kolor.",
-    "ratesBlurb": "Kwoty na dzień kalendarzowy dla motocykli i skuterów przed dodatkami. Skorzystaj z nich jako wskazówki podczas wyszukiwania.",
+    "noMatchBody": "Try another brand, type, transmission, seats, or color.",
+    "ratesBlurb": "Dłuższe wynajmy odblokowują rabaty za czas trwania przed dodatkami — użyj ich jako wskazówki podczas wyszukiwania.",
     "ariaFilters": "Filtry samochodowe",
-    "ariaRates": "Orientacyjne stawki dzienne"
+    "ariaRates": "Orientacyjne stawki dzienne",
+    "group50": "Skutery 50cc",
+    "group125": "Motocykle 125cc",
+    "groupOther": "Inne pojazdy",
+    "groupCount": "{count, plural, one {# pojazd} other {# pojazdy}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "Wyszukiwanie pojazdu",
@@ -784,21 +790,27 @@
     "anyColor": "Dowolny kolor",
     "durationLine": "{count, plural, one {# dzień} other {# dni}}",
     "pickupPrefix": "Ulec poprawie",
-    "indicativeLine": "Orientacyjna suma motocykli/skuterów ~{tripEur} ({dailyEur}/dzień × {count} {dayLabel}) · Ostateczna cena zależy od pojazdu i dodatków.",
     "hotelDelivery": "Potrzebujesz dostawy do hotelu",
     "clearFilters": "Wyczyść filtry",
-    "search": "Szukaj"
+    "search": "Szukaj",
+    "brand": "Brand",
+    "allBrands": "All brands",
+    "brandAria": "Vehicle brand",
+    "durationDiscountLine": "{count} {dayLabel}: {percent} % rabatu za czas trwania · Cena końcowa zależy od pojazdu i dodatków.",
+    "durationDiscountLineMax": "Wynajmij na 7+ dni i zaoszczędź do {percent} % · Cena końcowa zależy od pojazdu i dodatków."
   },
   "IndicativeRates": {
-    "cardTitle": "Orientacyjne stawki dzienne",
-    "cardSubtitle": "Motocykle/skutery",
+    "cardTitle": "Rabaty za czas trwania",
+    "cardSubtitle": "Dłuższy wynajem = większe oszczędności",
     "perDaySuffix": "/ dzień",
-    "beforeExtras": "Za dzień kalendarzowy, przed dodatkami",
-    "footnote": "Ostateczna cena zależy od pojazdu, sezonu i dostępności — napisz do nas, aby uzyskać wycenę.",
+    "beforeExtras": "Dotyczy wynajmu pojazdu przed dodatkami",
+    "footnote": "Cena końcowa zależy od stawki bazowej, sezonu i dostępności — napisz do nas po wycenę.",
     "rowOneDay": "1 dzień",
     "rowTwoDays": "2 dni",
     "rowThreeTo21": "3 dni – 3 tygodnie",
-    "rowThreeWeeksPlus": "3 tygodnie lub dłużej"
+    "rowThreeWeeksPlus": "3 tygodnie lub dłużej",
+    "noDiscount": "0 % rabatu",
+    "percentOff": "{percent} % rabatu"
   },
   "BookingSearch": {
     "quickFilterTitle": "Szybkie filtrowanie według wielkości silnika",
@@ -831,11 +843,16 @@
     "offPickup": "· Zażądano odbioru poza siedzibą firmy",
     "offDropoff": "· Różne zrzuty",
     "offSiteExtra": "· +€{amount} poza siedzibą",
-    "indicativeSummary": "Orientacyjna suma motocykli/skuterów ~{tripEur} ({dailyEur}/dzień × {days} {dayLabel}) · Ostateczna cena zależy od pojazdu i dodatków.",
     "vehicleTypeLabel": "Typ pojazdu",
     "vehicleTypeAll": "Wszystkie typy",
     "submitSearching": "Badawczy…",
-    "submitIdle": "Wyszukaj dostępne pojazdy"
+    "submitIdle": "Wyszukaj dostępne pojazdy",
+    "brandLabel": "Brand",
+    "brandAria": "Vehicle brand",
+    "durationDiscountSummary": "{days} {dayLabel}: {percent} % rabatu za czas trwania · Cena końcowa zależy od pojazdu i dodatków.",
+    "durationDiscountSummaryMax": "Wynajmij na 7+ dni i zaoszczędź do {percent} % · Cena końcowa zależy od pojazdu i dodatków.",
+    "moreFilters": "Więcej filtrów",
+    "fewerFilters": "Mniej filtrów"
   },
   "BookingForm": {
     "invalidPickupDate": "Nieprawidłowa data odbioru",
@@ -933,7 +950,7 @@
       "rentalCost": "Koszt wynajmu:",
       "deliveryLine": "Dostawa / przywóz: {total} (odbiór {pickup} + przywóz {dropoff}{discount})",
       "bundleDiscount": "- Zniżka na pakiet {amount}",
-      "cdwCost": "CDW:",
+      "cdwCost": "Insurance:",
       "addDriverCost": "Dodatkowy sterownik:",
       "storageCost": "Pudełko do przechowywania:",
       "subtotal": "Suma częściowa:",
@@ -947,7 +964,26 @@
       "dueLater": "Termin odbioru/później:",
       "depositAtPickupNote": "Depozyt zostanie wpłacony przy odbiorze i nie jest wliczany do kwoty całkowitej online.",
       "depositOnlineNote": "Kaucja jest wliczona w kwotę płatności online.",
-      "reviewCheckbox": "Przejrzałem podsumowanie powyżej."
+      "reviewCheckbox": "Przejrzałem podsumowanie powyżej.",
+      "insuranceNotSelected": "Not selected yet",
+      "baseDailyRate": "Stawka dzienna bazowa:",
+      "rentalDuration": "Czas wynajmu:",
+      "durationDiscount": "Rabat za czas: {percent} % → {rate}/dzień",
+      "payAtPickupDescription": "Hand over the security deposit in person when collecting the vehicle.",
+      "payOnlineDescription": "Include the security deposit in your Stripe payment — fully refundable after the rental.",
+      "alreadyPaid": "Already paid",
+      "alreadyPaidDescription": "I already paid the full amount outside this website. Upload proof of payment.",
+      "alreadyPaidModalTitle": "Upload payment proof",
+      "alreadyPaidModalDescription": "Upload an image or PDF showing proof that this booking was already paid.",
+      "alreadyPaidUploadLabel": "Payment proof",
+      "alreadyPaidUploadHint": "Accepted formats: JPEG, PNG, or PDF (max 2 MB).",
+      "alreadyPaidModalCancel": "Cancel",
+      "alreadyPaidModalConfirm": "Confirm proof",
+      "alreadyPaidProofRequired": "Please upload payment proof to continue.",
+      "alreadyPaidProofAttached": "Proof attached: {name}",
+      "alreadyPaidSummaryLabel": "Already paid (no Stripe)",
+      "alreadyPaidNote": "Booking and security deposit are marked as paid. No online Stripe payment will be charged.",
+      "payNowOnlineStripe": "Pay now online (Stripe)"
     },
     "pickupDropoff": {
       "shellTitle": "Odbiór i dowóz",
@@ -967,7 +1003,8 @@
       "bothLabel": "Obydwa: {amount}",
       "youGetOff": "(Otrzymujesz {amount} wyłączone)",
       "currentTotal": "Aktualnie wybrana suma konfiguracji: {total} (odbiór {pickup} + wyładunek {dropoff}{discount})",
-      "bundleDiscountShort": "- Zniżka na pakiet {amount}"
+      "bundleDiscountShort": "- Zniżka na pakiet {amount}",
+      "deliveryUnavailableSunday": "Delivery is unavailable on Sundays. Please select Office Pickup."
     },
     "customer": {
       "shellTitle": "Informacje o kliencie",
@@ -1012,7 +1049,7 @@
       "cdwAtv": "15 EUR/dzień - obniżka do 800 EUR (ATV)",
       "cdwTitle": "Zwolnienie z odpowiedzialności za szkody powstałe w wyniku kolizji (CDW)",
       "cdwDefaultIntro": "Domyślnie odpowiadasz za szkody w następujący sposób:",
-      "cdwExclusionsTitle": "CDW nie obejmuje:",
+      "cdwExclusionsTitle": "Insurance nie obejmuje:",
       "cdwEx1": "Odpowiedzialność 500 EUR (50cc)",
       "cdwEx2": "Odpowiedzialność 800 EUR (125 cm3)",
       "cdwEx3": "Uwaga o wykluczeniu: zaniedbanie",
@@ -1034,12 +1071,55 @@
       "addDriverIdHeading": "Dodatkowa weryfikacja tożsamości kierowcy (w oparciu o metodę odbioru)",
       "addDriverIdBody": "Odbiór dostawy wymaga przesłania zdjęcia. Odbiór z biura wymaga potwierdzenia osobistego dowodu tożsamości.",
       "addDriverOfficeConfirm": "Potwierdzam, że dodatkowy kierowca okaże dokument tożsamości osobiście przy odbiorze.",
-      "storageBoxLabel": "Schowek (10 EUR jednorazowo)"
+      "storageBoxLabel": "Schowek (10 EUR jednorazowo)",
+      "insuranceTitle": "Insurance options",
+      "insuranceIntro": "Choose an insurance plan for your rental. You can continue without paid coverage by selecting No Insurance.",
+      "insuranceFree": "€0/day",
+      "insurancePerDay": "{amount}/day",
+      "insuranceTotalLine": "{days} rental days × {rate} = {total}",
+      "insuranceExclusionsNote": "Insurance does not cover negligence, alcohol/drug use, off-road misuse, lost keys, or tyre damage.",
+      "insurancePlan": {
+        "NO_INSURANCE": {
+          "name": "No Insurance",
+          "coverage": "Customers are fully liable. An excess of €800 applies in case of damage."
+        },
+        "BASIC": {
+          "name": "Basic Plan",
+          "coverage": "The company covers damage costs up to €500. The customer is responsible for the remaining excess."
+        },
+        "FULL_COVERAGE": {
+          "name": "Full Coverage",
+          "coverage": "All damages are fully covered by the insurance company. Zero customer liability."
+        }
+      }
+    },
+    "insurancePrompt": {
+      "title": "Choose your insurance",
+      "description": "Please select an insurance option before continuing to payment. You may choose No Insurance if you prefer to decline paid coverage.",
+      "selectionRequired": "Please select an insurance option to continue.",
+      "confirmContinue": "Confirm and continue",
+      "cancel": "Cancel",
+      "dismiss": "Close insurance prompt"
     }
   },
   "TripDate": {
     "label": "Daty wycieczek",
     "change": "Zmiana",
     "ariaSummary": "Daty wyjazdu: {summary}. Zmień daty."
+  },
+  "Admin": {
+    "vehicles": {
+      "form": {
+        "color": "Color",
+        "colorNone": "No color specified"
+      }
+    },
+    "bookings": {
+      "details": {
+        "fields": {
+          "paymentProofUpload": "Payment proof"
+        }
+      }
+    }
   }
 }

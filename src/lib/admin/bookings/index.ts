@@ -14,6 +14,8 @@ export {
   handOverVehicleSchema,
   markVehicleReturned,
   markVehicleReturnedSchema,
+  restoreCancelledBooking,
+  restoreCancelledBookingSchema,
 } from "@/lib/admin/bookings/lifecycle";
 export type {
   CancelBookingInput,
@@ -24,6 +26,8 @@ export type {
   HandOverVehicleResult,
   MarkVehicleReturnedInput,
   MarkVehicleReturnedResult,
+  RestoreCancelledBookingInput,
+  RestoreCancelledBookingResult,
 } from "@/lib/admin/bookings/lifecycle";
 export { updateAdminBookingStatus } from "@/lib/admin/bookings/updateAdminBookingStatus";
 export type {

@@ -35,16 +35,21 @@ function logMockEmail(payload: EmailPayload): void {
  */
 export async function sendEmail(payload: EmailPayload): Promise<SendEmailResult> {
   if (!isResendConfigured()) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[email] RESEND_API_KEY is not configured — refusing to mock in production");
+      return { ok: false, reason: "transport_create_failed" };
+    }
     logMockEmail(payload);
     return { ok: true, deliveryMode: "development_console" };
   }
 
   try {
     const resend = new Resend(process.env.RESEND_API_KEY!.trim());
+    const to = payload.to.trim();
 
-    const { error } = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: resolveFromAddress(),
-      to: [payload.to],
+      to: [to],
       subject: payload.subject,
       html: payload.html,
       text: payload.text,
@@ -56,6 +61,7 @@ export async function sendEmail(payload: EmailPayload): Promise<SendEmailResult>
       return { ok: false, reason: "send_failed", cause: error };
     }
 
+    console.log("[email] Resend accepted message", { to, id: data?.id ?? null });
     return { ok: true, deliveryMode: "resend" };
   } catch (error) {
     console.error("[email] Resend unexpected error", error);

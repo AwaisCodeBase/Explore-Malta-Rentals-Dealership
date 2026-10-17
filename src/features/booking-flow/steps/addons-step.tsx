@@ -1,10 +1,11 @@
 "use client";
 
 import * as Popover from "@radix-ui/react-popover";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown, HardHat, Package, ShieldCheck, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { DocumentUploadField } from "@/features/booking-flow/components/document-upload-field";
+import { InsurancePlanOptions } from "@/features/booking-flow/components/insurance-plan-options";
 import { StepShell } from "@/features/booking-flow/components/step-shell";
 import { useBookingFlow } from "@/features/booking-flow/context/booking-flow-context";
 import { vehicleTypeNeedsHelmetFlow } from "@/features/booking-flow/lib/helmet-rental";
@@ -14,9 +15,35 @@ import {
   getLicenseCategoryHint,
   type LicenseCategory,
 } from "@/features/booking-flow/lib/license-categories";
+import type { InsurancePlanCode } from "@/lib/pricing/insurance-plans";
+import { calculateCalendarRentalDays } from "@/lib/pricing/rental-duration";
 
-const fieldClass =
-  "mt-1 w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-[var(--brand-blue)] focus:ring-2 focus:ring-[var(--brand-blue)]/20";
+const fieldBase =
+  "mt-1.5 min-h-12 w-full rounded-[var(--r-field)] border bg-[var(--surface-card)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] shadow-[var(--elev-1)] outline-none transition duration-[var(--dur-fast)] placeholder:text-[var(--text-faint)] disabled:cursor-not-allowed disabled:bg-[var(--surface-sunken)] disabled:text-[var(--text-faint)] disabled:shadow-none";
+const fieldIdle =
+  "border-[var(--line)] hover:border-[var(--line-strong)] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25";
+const fieldError =
+  "border-red-400 ring-2 ring-red-500/20 focus:border-red-500 focus:ring-red-500/25";
+
+function fieldClass(invalid: boolean) {
+  return `${fieldBase} ${invalid ? fieldError : fieldIdle}`;
+}
+
+const captionClass = "type-spec block text-[var(--text-muted)]";
+const errorClass = "mt-1.5 block text-xs font-medium text-red-600";
+const popoverContentClass =
+  "z-[100] w-[var(--radix-popover-trigger-width)] rounded-[var(--r-card)] border border-[var(--line)] bg-[var(--surface-card)] p-1.5 shadow-[var(--elev-4)]";
+const popoverOptionBase =
+  "flex w-full items-center justify-between gap-2 rounded-[var(--r-field)] px-3 py-2.5 text-left text-sm transition duration-[var(--dur-fast)]";
+const popoverOptionSelected = "bg-blue-50 font-semibold text-blue-800";
+const popoverOptionIdle =
+  "text-[var(--text-secondary)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]";
+const addonCardClass =
+  "rounded-[var(--r-panel)] border border-[var(--line)] bg-[var(--surface-card)] p-4 shadow-[var(--elev-1)] transition duration-[var(--dur-base)] ease-[var(--ease-standard)] sm:p-5";
+const addonIconClass =
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-sunken)] text-[var(--text-muted)]";
+const addonIconActiveClass =
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700";
 
 export function AddonsStep() {
   const t = useTranslations("BookingWizard.addons");
@@ -44,17 +71,6 @@ export function AddonsStep() {
       ] as const,
     [t],
   );
-  const allCdwOptions = useMemo(
-    () =>
-      [
-        { value: "none", label: t("cdwNone") },
-        { value: "scooter_50", label: t("cdw50") },
-        { value: "scooter_125", label: t("cdw125") },
-        { value: "scooter_full", label: t("cdwFull") },
-        { value: "atv_full", label: t("cdwAtv") },
-      ] as const,
-    [t],
-  );
 
   const { state, updateSection, getFieldError, isFieldInvalid, bookingSessionId } = useBookingFlow();
   const { vehicles } = useVehicles();
@@ -65,30 +81,17 @@ export function AddonsStep() {
     return vehicles.find((vehicle) => vehicle.id === state.rental.vehicleId) ?? null;
   }, [state.rental.vehicleId, vehicles]);
   const supportsStorageBox = selectedVehicle?.supportsStorageBox === true;
-  const [cdwMenuOpen, setCdwMenuOpen] = useState(false);
   const [licenseMenuOpen, setLicenseMenuOpen] = useState(false);
   const [helmetSize1MenuOpen, setHelmetSize1MenuOpen] = useState(false);
   const [helmetSize2MenuOpen, setHelmetSize2MenuOpen] = useState(false);
   const helmetEnabled = state.addons.helmet;
   const supportsHelmet = vehicleTypeNeedsHelmetFlow(state.rental.vehicleType);
 
-  const allowedCdwValues = useMemo((): ReadonlyArray<string> => {
-    const vt = (state.rental.vehicleType ?? "").toLowerCase();
-    if (vt === "scooter") return ["none", "scooter_50", "scooter_full"];
-    if (vt === "motorcycle") return ["none", "scooter_125", "scooter_full"];
-    if (vt === "atv") return ["none", "atv_full"];
-    if (vt === "bicycle") return ["none"];
-    return ["none", "scooter_50", "scooter_125", "scooter_full", "atv_full"];
-  }, [state.rental.vehicleType]);
-
-  const cdwOptions = useMemo(
-    () => allCdwOptions.filter((o) => allowedCdwValues.includes(o.value)),
-    [allCdwOptions, allowedCdwValues],
+  const rentalDays = useMemo(
+    () => calculateCalendarRentalDays(state.rental.pickupDate, state.rental.returnDate),
+    [state.rental.pickupDate, state.rental.returnDate],
   );
 
-  const selectedCdwOption =
-    cdwOptions.find((option) => option.value === state.addons.cdwPlan) ??
-    cdwOptions[0];
   const selectedLicenseCategoryOption =
     licenseCategoryOptions.find(
       (option) => option.value === state.additionalDriver.licenseCategory,
@@ -96,12 +99,13 @@ export function AddonsStep() {
   const allowedLicenseOptions = getAllowedLicenseCategories(
     state.rental.vehicleType,
     state.rental.vehicleId,
+    state.rental.engineCc,
   );
   const allowedLicenseCategoryOptions = licenseCategoryOptions.filter(
     (option) =>
       option.value === "" || allowedLicenseOptions.includes(option.value as LicenseCategory),
   );
-  const licenseCategoryHint = getLicenseCategoryHint(state.rental.vehicleType);
+  const licenseCategoryHint = getLicenseCategoryHint(state.rental.vehicleType, state.rental.engineCc);
   const selectedHelmetSize1Option =
     helmetSizeOptions.find((option) => option.value === state.addons.helmetSize1) ??
     helmetSizeOptions[0];
@@ -146,16 +150,6 @@ export function AddonsStep() {
   ]);
 
   useEffect(() => {
-    if (
-      state.addons.cdwPlan &&
-      state.addons.cdwPlan !== "none" &&
-      !allowedCdwValues.includes(state.addons.cdwPlan)
-    ) {
-      updateSection("addons", { cdwPlan: "none", cdw: false });
-    }
-  }, [allowedCdwValues, state.addons.cdwPlan, updateSection]);
-
-  useEffect(() => {
     if (state.delivery.pickupOption === "office" && state.additionalDriver.passportIdUpload) {
       updateSection("additionalDriver", { passportIdUpload: "" });
     }
@@ -167,37 +161,60 @@ export function AddonsStep() {
     }
   }, [supportsStorageBox, state.addons.storageBox, updateSection]);
 
+  function handleInsuranceSelect(plan: InsurancePlanCode) {
+    updateSection("addons", {
+      cdwPlan: plan,
+      cdw: plan !== "NO_INSURANCE",
+    });
+  }
+
+  const additionalDriverSelected = state.addons.additionalDriver;
+
   return (
     <StepShell title={tSteps("title")} description={tSteps("description")}>
-      <div className="grid gap-2 sm:grid-cols-2">
-        <div className="rounded-lg border border-slate-200 p-3">
-          <div className="flex items-center gap-2 text-sm text-slate-700">
-            <input type="checkbox" checked={supportsHelmet} readOnly disabled />
-            {t("helmetLabel")}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {/* ── Helmets ───────────────────────────────────────────────────── */}
+        <div
+          className={`${addonCardClass} ${
+            supportsHelmet ? "border-blue-200 bg-blue-50/40" : ""
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <span className={supportsHelmet ? addonIconActiveClass : addonIconClass} aria-hidden>
+              <HardHat className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2.5 text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+                <input
+                  type="checkbox"
+                  checked={supportsHelmet}
+                  readOnly
+                  disabled
+                  className="h-4 w-4 shrink-0 rounded-sm accent-[var(--blue-500)] disabled:cursor-not-allowed"
+                />
+                {t("helmetLabel")}
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed text-[var(--text-secondary)]">
+                {t("helmetIncludedNote")}
+              </p>
+            </div>
           </div>
-          <p className="mt-2 text-xs text-slate-600">
-            {t("helmetIncludedNote")}
-          </p>
 
           {supportsHelmet && helmetEnabled ? (
-            <div className="mt-3 space-y-3">
-              <label className="text-sm font-medium text-slate-700">
-                {t("helmetSize1")}
+            <div className="mt-4 space-y-3">
+              <label className="block">
+                <span className={captionClass}>{t("helmetSize1")}</span>
                 <Popover.Root open={helmetSize1MenuOpen} onOpenChange={setHelmetSize1MenuOpen}>
                   <Popover.Trigger asChild>
                     <button
                       type="button"
                       aria-haspopup="listbox"
                       data-field="addons.helmetSize1"
-                      className={`mt-1 flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm text-slate-900 outline-none transition focus:ring-2 ${
-                        isFieldInvalid("addons.helmetSize1")
-                          ? "border-red-500 focus:border-red-500 focus:ring-red-200"
-                          : "border-slate-200 hover:border-slate-300 focus:border-[var(--brand-blue)] focus:ring-[var(--brand-blue)]/20"
-                      }`}
+                      className={`${fieldClass(isFieldInvalid("addons.helmetSize1"))} flex items-center justify-between text-left`}
                     >
                       <span>{selectedHelmetSize1Option.label}</span>
                       <ChevronDown
-                        className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${
+                        className={`h-4 w-4 shrink-0 text-[var(--text-faint)] transition-transform duration-[var(--dur-fast)] ${
                           helmetSize1MenuOpen ? "rotate-180" : ""
                         }`}
                         aria-hidden
@@ -209,7 +226,7 @@ export function AddonsStep() {
                       side="bottom"
                       align="start"
                       sideOffset={6}
-                      className="z-[100] w-[var(--radix-popover-trigger-width)] rounded-md border border-slate-200 bg-white p-1 shadow-[0_20px_40px_-24px_rgba(15,23,42,0.35)]"
+                      className={popoverContentClass}
                     >
                       <div role="listbox" className="max-h-64 overflow-y-auto">
                         {helmetSizeOptions.map((option) => {
@@ -220,10 +237,8 @@ export function AddonsStep() {
                               type="button"
                               role="option"
                               aria-selected={selected}
-                              className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm transition ${
-                                selected
-                                  ? "bg-[var(--brand-blue)]/10 text-slate-900"
-                                  : "text-slate-700 hover:bg-slate-50"
+                              className={`${popoverOptionBase} ${
+                                selected ? popoverOptionSelected : popoverOptionIdle
                               }`}
                               onClick={() => {
                                 updateSection("addons", { helmetSize1: option.value });
@@ -231,6 +246,9 @@ export function AddonsStep() {
                               }}
                             >
                               {option.label}
+                              {selected ? (
+                                <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} aria-hidden />
+                              ) : null}
                             </button>
                           );
                         })}
@@ -240,25 +258,23 @@ export function AddonsStep() {
                 </Popover.Root>
               </label>
               {getFieldError("addons.helmetSize1") ? (
-                <p className="text-xs text-red-600">{getFieldError("addons.helmetSize1")}</p>
+                <p className="text-xs font-medium text-red-600">
+                  {getFieldError("addons.helmetSize1")}
+                </p>
               ) : null}
-              <label className="text-sm font-medium text-slate-700">
-                {t("helmetSize2")}
+              <label className="block">
+                <span className={captionClass}>{t("helmetSize2")}</span>
                 <Popover.Root open={helmetSize2MenuOpen} onOpenChange={setHelmetSize2MenuOpen}>
                   <Popover.Trigger asChild>
                     <button
                       type="button"
                       aria-haspopup="listbox"
                       data-field="addons.helmetSize2"
-                      className={`mt-1 flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm text-slate-900 outline-none transition focus:ring-2 ${
-                        isFieldInvalid("addons.helmetSize2")
-                          ? "border-red-500 focus:border-red-500 focus:ring-red-200"
-                          : "border-slate-200 hover:border-slate-300 focus:border-[var(--brand-blue)] focus:ring-[var(--brand-blue)]/20"
-                      }`}
+                      className={`${fieldClass(isFieldInvalid("addons.helmetSize2"))} flex items-center justify-between text-left`}
                     >
                       <span>{selectedHelmetSize2Option.label}</span>
                       <ChevronDown
-                        className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${
+                        className={`h-4 w-4 shrink-0 text-[var(--text-faint)] transition-transform duration-[var(--dur-fast)] ${
                           helmetSize2MenuOpen ? "rotate-180" : ""
                         }`}
                         aria-hidden
@@ -270,7 +286,7 @@ export function AddonsStep() {
                       side="bottom"
                       align="start"
                       sideOffset={6}
-                      className="z-[100] w-[var(--radix-popover-trigger-width)] rounded-md border border-slate-200 bg-white p-1 shadow-[0_20px_40px_-24px_rgba(15,23,42,0.35)]"
+                      className={popoverContentClass}
                     >
                       <div role="listbox" className="max-h-64 overflow-y-auto">
                         {helmetSizeOptions.map((option) => {
@@ -281,10 +297,8 @@ export function AddonsStep() {
                               type="button"
                               role="option"
                               aria-selected={selected}
-                              className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm transition ${
-                                selected
-                                  ? "bg-[var(--brand-blue)]/10 text-slate-900"
-                                  : "text-slate-700 hover:bg-slate-50"
+                              className={`${popoverOptionBase} ${
+                                selected ? popoverOptionSelected : popoverOptionIdle
                               }`}
                               onClick={() => {
                                 updateSection("addons", { helmetSize2: option.value });
@@ -292,6 +306,9 @@ export function AddonsStep() {
                               }}
                             >
                               {option.label}
+                              {selected ? (
+                                <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} aria-hidden />
+                              ) : null}
                             </button>
                           );
                         })}
@@ -301,37 +318,55 @@ export function AddonsStep() {
                 </Popover.Root>
               </label>
               {getFieldError("addons.helmetSize2") ? (
-                <p className="text-xs text-red-600">{getFieldError("addons.helmetSize2")}</p>
+                <p className="text-xs font-medium text-red-600">
+                  {getFieldError("addons.helmetSize2")}
+                </p>
               ) : null}
             </div>
           ) : supportsHelmet ? (
-            <p className="mt-2 text-xs text-slate-600">
+            <p className="mt-3 text-xs leading-relaxed text-[var(--text-muted)]">
               {t("helmetAutoIncluded")}
             </p>
           ) : (
-            <p className="mt-2 text-xs text-slate-600">
+            <p className="mt-3 text-xs leading-relaxed text-[var(--text-muted)]">
               {t("helmetOnlyMotorbikeAtv")}
             </p>
           )}
         </div>
 
-        <div className="rounded-lg border border-slate-200 p-3">
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={state.addons.additionalDriver}
-              onChange={(event) =>
-                updateSection("addons", { additionalDriver: event.target.checked })
-              }
-            />
-            {t("additionalDriver")}
+        {/* ── Additional driver ─────────────────────────────────────────── */}
+        <div
+          className={`${addonCardClass} ${
+            additionalDriverSelected
+              ? "border-blue-400 bg-blue-50/50 ring-2 ring-blue-500/20 shadow-[var(--elev-2)]"
+              : "hover:border-[var(--line-strong)]"
+          }`}
+        >
+          <label className="flex cursor-pointer items-start gap-3">
+            <span
+              className={additionalDriverSelected ? addonIconActiveClass : addonIconClass}
+              aria-hidden
+            >
+              <UserPlus className="h-4 w-4" />
+            </span>
+            <span className="flex min-w-0 flex-1 items-center gap-2.5 text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+              <input
+                type="checkbox"
+                checked={state.addons.additionalDriver}
+                onChange={(event) =>
+                  updateSection("addons", { additionalDriver: event.target.checked })
+                }
+                className="h-4 w-4 shrink-0 rounded-sm accent-[var(--blue-500)]"
+              />
+              {t("additionalDriver")}
+            </span>
           </label>
 
           {state.addons.additionalDriver ? (
-            <div className="mt-3 space-y-3">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="text-sm font-medium text-slate-700">
-                  {tCust("fullName")}
+            <div className="mt-4 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className={captionClass}>{tCust("fullName")}</span>
                   <input
                     type="text"
                     name="additionalDriver.fullName"
@@ -340,16 +375,14 @@ export function AddonsStep() {
                     onChange={(event) =>
                       updateSection("additionalDriver", { fullName: event.target.value })
                     }
-                    className={`${fieldClass} ${isFieldInvalid("additionalDriver.fullName") ? "border-red-500 focus:border-red-500 focus:ring-red-200" : ""}`}
+                    className={fieldClass(isFieldInvalid("additionalDriver.fullName"))}
                   />
                   {getFieldError("additionalDriver.fullName") ? (
-                    <span className="mt-1 block text-xs text-red-600">
-                      {getFieldError("additionalDriver.fullName")}
-                    </span>
+                    <span className={errorClass}>{getFieldError("additionalDriver.fullName")}</span>
                   ) : null}
                 </label>
-                <label className="text-sm font-medium text-slate-700">
-                  {tCust("phone")}
+                <label className="block">
+                  <span className={captionClass}>{tCust("phone")}</span>
                   <input
                     type="tel"
                     name="additionalDriver.phone"
@@ -358,16 +391,14 @@ export function AddonsStep() {
                     onChange={(event) =>
                       updateSection("additionalDriver", { phone: event.target.value })
                     }
-                    className={`${fieldClass} ${isFieldInvalid("additionalDriver.phone") ? "border-red-500 focus:border-red-500 focus:ring-red-200" : ""}`}
+                    className={fieldClass(isFieldInvalid("additionalDriver.phone"))}
                   />
                   {getFieldError("additionalDriver.phone") ? (
-                    <span className="mt-1 block text-xs text-red-600">
-                      {getFieldError("additionalDriver.phone")}
-                    </span>
+                    <span className={errorClass}>{getFieldError("additionalDriver.phone")}</span>
                   ) : null}
                 </label>
-                <label className="text-sm font-medium text-slate-700">
-                  {tCust("email")}
+                <label className="block">
+                  <span className={captionClass}>{tCust("email")}</span>
                   <input
                     type="email"
                     name="additionalDriver.email"
@@ -376,17 +407,15 @@ export function AddonsStep() {
                     onChange={(event) =>
                       updateSection("additionalDriver", { email: event.target.value })
                     }
-                    className={`${fieldClass} ${isFieldInvalid("additionalDriver.email") ? "border-red-500 focus:border-red-500 focus:ring-red-200" : ""}`}
+                    className={fieldClass(isFieldInvalid("additionalDriver.email"))}
                     suppressHydrationWarning
                   />
                   {getFieldError("additionalDriver.email") ? (
-                    <span className="mt-1 block text-xs text-red-600">
-                      {getFieldError("additionalDriver.email")}
-                    </span>
+                    <span className={errorClass}>{getFieldError("additionalDriver.email")}</span>
                   ) : null}
                 </label>
-                <label className="text-sm font-medium text-slate-700">
-                  {tCust("nationality")}
+                <label className="block">
+                  <span className={captionClass}>{tCust("nationality")}</span>
                   <input
                     type="text"
                     name="additionalDriver.nationality"
@@ -395,16 +424,16 @@ export function AddonsStep() {
                     onChange={(event) =>
                       updateSection("additionalDriver", { nationality: event.target.value })
                     }
-                    className={`${fieldClass} ${isFieldInvalid("additionalDriver.nationality") ? "border-red-500 focus:border-red-500 focus:ring-red-200" : ""}`}
+                    className={fieldClass(isFieldInvalid("additionalDriver.nationality"))}
                   />
                   {getFieldError("additionalDriver.nationality") ? (
-                    <span className="mt-1 block text-xs text-red-600">
+                    <span className={errorClass}>
                       {getFieldError("additionalDriver.nationality")}
                     </span>
                   ) : null}
                 </label>
-                <label className="text-sm font-medium text-slate-700">
-                  {tCust("dateOfBirth")}
+                <label className="block">
+                  <span className={captionClass}>{tCust("dateOfBirth")}</span>
                   <input
                     type="date"
                     name="additionalDriver.dateOfBirth"
@@ -413,26 +442,26 @@ export function AddonsStep() {
                     onChange={(event) =>
                       updateSection("additionalDriver", { dateOfBirth: event.target.value })
                     }
-                    className={`${fieldClass} ${isFieldInvalid("additionalDriver.dateOfBirth") ? "border-red-500 focus:border-red-500 focus:ring-red-200" : ""}`}
+                    className={`${fieldClass(isFieldInvalid("additionalDriver.dateOfBirth"))} tabular-nums`}
                   />
                   {getFieldError("additionalDriver.dateOfBirth") ? (
-                    <span className="mt-1 block text-xs text-red-600">
+                    <span className={errorClass}>
                       {getFieldError("additionalDriver.dateOfBirth")}
                     </span>
                   ) : null}
                 </label>
-                <label className="text-sm font-medium text-slate-700">
-                  {tCust("licenseCategory")}
+                <label className="block">
+                  <span className={captionClass}>{tCust("licenseCategory")}</span>
                   <Popover.Root open={licenseMenuOpen} onOpenChange={setLicenseMenuOpen}>
                     <Popover.Trigger asChild>
                       <button
                         type="button"
                         aria-haspopup="listbox"
-                        className="mt-1 flex w-full items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-left text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-[var(--brand-blue)] focus:ring-2 focus:ring-[var(--brand-blue)]/20"
+                        className={`${fieldClass(isFieldInvalid("additionalDriver.licenseCategory"))} flex items-center justify-between text-left`}
                       >
                         <span>{selectedLicenseCategoryOption.label}</span>
                         <ChevronDown
-                          className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${
+                          className={`h-4 w-4 shrink-0 text-[var(--text-faint)] transition-transform duration-[var(--dur-fast)] ${
                             licenseMenuOpen ? "rotate-180" : ""
                           }`}
                           aria-hidden
@@ -444,7 +473,7 @@ export function AddonsStep() {
                         side="bottom"
                         align="start"
                         sideOffset={6}
-                        className="z-[100] w-[var(--radix-popover-trigger-width)] rounded-md border border-slate-200 bg-white p-1 shadow-[0_20px_40px_-24px_rgba(15,23,42,0.35)]"
+                        className={popoverContentClass}
                       >
                         <div role="listbox" className="max-h-64 overflow-y-auto">
                           {allowedLicenseCategoryOptions.map((option) => {
@@ -455,10 +484,8 @@ export function AddonsStep() {
                                 type="button"
                                 role="option"
                                 aria-selected={selected}
-                                className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm transition ${
-                                  selected
-                                    ? "bg-[var(--brand-blue)]/10 text-slate-900"
-                                    : "text-slate-700 hover:bg-slate-50"
+                                className={`${popoverOptionBase} ${
+                                  selected ? popoverOptionSelected : popoverOptionIdle
                                 }`}
                                 onClick={() => {
                                   updateSection("additionalDriver", {
@@ -468,6 +495,13 @@ export function AddonsStep() {
                                 }}
                               >
                                 {option.label}
+                                {selected ? (
+                                  <Check
+                                    className="h-3.5 w-3.5 shrink-0"
+                                    strokeWidth={3}
+                                    aria-hidden
+                                  />
+                                ) : null}
                               </button>
                             );
                           })}
@@ -475,20 +509,24 @@ export function AddonsStep() {
                       </Popover.Content>
                     </Popover.Portal>
                   </Popover.Root>
-                  <p className="mt-1 text-xs text-slate-500">{licenseCategoryHint}</p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-[var(--text-muted)]">
+                    {licenseCategoryHint}
+                  </p>
                   {getFieldError("additionalDriver.licenseCategory") ? (
-                    <p className="mt-1 text-xs text-red-600">
+                    <p className="mt-1.5 text-xs font-medium text-red-600">
                       {getFieldError("additionalDriver.licenseCategory")}
                     </p>
                   ) : null}
                 </label>
               </div>
 
-              <div className="rounded-md border border-slate-200 bg-slate-50/60 p-3">
-                <p className="text-xs font-semibold text-slate-700">{t("addDriverIdHeading")}</p>
-                <p className="mt-1 text-xs text-slate-600">{t("addDriverIdBody")}</p>
+              <div className="rounded-[var(--r-card)] border border-[var(--line-subtle)] bg-[var(--surface-sunken)] p-3.5">
+                <p className="type-spec text-[var(--text-muted)]">{t("addDriverIdHeading")}</p>
+                <p className="mt-1.5 text-xs leading-relaxed text-[var(--text-secondary)]">
+                  {t("addDriverIdBody")}
+                </p>
                 {state.delivery.pickupOption === "delivery" ? (
-                  <div className="mt-2">
+                  <div className="mt-3">
                     <DocumentUploadField
                       label={t("passportUploadLabel")}
                       description={t("passportUploadDesc")}
@@ -502,13 +540,13 @@ export function AddonsStep() {
                       data-field="additionalDriver.passportIdUpload"
                     />
                     {getFieldError("additionalDriver.passportIdUpload") ? (
-                      <p className="mt-1 text-xs text-red-600">
+                      <p className="mt-1.5 text-xs font-medium text-red-600">
                         {getFieldError("additionalDriver.passportIdUpload")}
                       </p>
                     ) : null}
                   </div>
                 ) : (
-                  <label className="mt-2 flex items-center gap-2 text-sm text-slate-700">
+                  <label className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-[var(--r-field)] border border-[var(--line)] bg-[var(--surface-card)] px-3.5 py-2.5 text-sm leading-relaxed text-[var(--text-secondary)] transition duration-[var(--dur-fast)] hover:border-[var(--line-strong)] has-[:checked]:border-blue-400 has-[:checked]:bg-blue-50/60 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 has-[:focus-visible]:ring-offset-2">
                     <input
                       type="checkbox"
                       name="additionalDriver.officeIdConfirmed"
@@ -517,6 +555,7 @@ export function AddonsStep() {
                       onChange={(event) =>
                         updateSection("additionalDriver", { officeIdConfirmed: event.target.checked })
                       }
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded-sm accent-[var(--blue-500)] focus:outline-none"
                     />
                     {t("addDriverOfficeConfirm")}
                   </label>
@@ -527,87 +566,69 @@ export function AddonsStep() {
         </div>
       </div>
 
-      <div className="mt-4 rounded-lg border border-slate-200 p-4">
-        <p className="text-sm font-semibold text-slate-900">{t("cdwTitle")}</p>
-        <p className="mt-2 text-xs font-semibold text-slate-700">{t("cdwDefaultIntro")}</p>
-        <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-slate-600">
-          <li>{t("cdwEx1")}</li>
-          <li>{t("cdwEx2")}</li>
-          <li>{t("cdwCanReduce")}</li>
-        </ul>
-        <Popover.Root open={cdwMenuOpen} onOpenChange={setCdwMenuOpen}>
-          <Popover.Trigger asChild>
-            <button
-              type="button"
-              aria-haspopup="listbox"
-              className="mt-2 flex w-full items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-left text-sm text-slate-900 outline-none transition hover:border-slate-300 focus:border-[var(--brand-blue)] focus:ring-2 focus:ring-[var(--brand-blue)]/20"
-            >
-              <span>{selectedCdwOption.label}</span>
-              <ChevronDown
-                className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${
-                  cdwMenuOpen ? "rotate-180" : ""
-                }`}
-                aria-hidden
-              />
-            </button>
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Content
-              side="bottom"
-              align="start"
-              sideOffset={6}
-              className="z-[100] w-[var(--radix-popover-trigger-width)] rounded-md border border-slate-200 bg-white p-1 shadow-[0_20px_40px_-24px_rgba(15,23,42,0.35)]"
-            >
-              <div role="listbox" className="max-h-64 overflow-y-auto">
-                {cdwOptions.map((option) => {
-                  const selected = option.value === state.addons.cdwPlan;
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      role="option"
-                      aria-selected={selected}
-                      className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm transition ${
-                        selected
-                          ? "bg-[var(--brand-blue)]/10 text-slate-900"
-                          : "text-slate-700 hover:bg-slate-50"
-                      }`}
-                      onClick={() => {
-                        updateSection("addons", {
-                          cdwPlan: option.value,
-                          cdw: option.value !== "none",
-                        });
-                        setCdwMenuOpen(false);
-                      }}
-                    >
-                      {option.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </Popover.Content>
-          </Popover.Portal>
-        </Popover.Root>
-        <p className="mt-3 text-xs font-semibold text-slate-700">{t("cdwExclusionsTitle")}</p>
-        <ul className="mt-1 list-disc space-y-1 pl-5 text-xs text-slate-600">
+      {/* ── Insurance ───────────────────────────────────────────────────── */}
+      <div className={`${addonCardClass} mt-3`}>
+        <div className="flex items-start gap-3">
+          <span className={addonIconActiveClass} aria-hidden>
+            <ShieldCheck className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+              {t("insuranceTitle")}
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-[var(--text-secondary)]">
+              {t("insuranceIntro")}
+            </p>
+          </div>
+        </div>
+        <div className="mt-4">
+          <InsurancePlanOptions
+            selectedPlan={state.addons.cdwPlan}
+            rentalDays={rentalDays}
+            onSelect={handleInsuranceSelect}
+            name="addonsInsurancePlan"
+          />
+        </div>
+        <hr className="rule-fade mt-5" />
+        <p className="type-spec mt-4 text-[var(--text-muted)]">{t("cdwExclusionsTitle")}</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs leading-relaxed text-[var(--text-secondary)] marker:text-[var(--orange-400)]">
           <li>{t("cdwEx3")}</li>
           <li>{t("cdwEx4")}</li>
           <li>{t("cdwEx5")}</li>
           <li>{t("cdwEx6")}</li>
           <li>{t("cdwEx7")}</li>
         </ul>
+        <p className="mt-3 text-[11px] leading-relaxed text-[var(--text-faint)]">
+          {t("insuranceExclusionsNote")}
+        </p>
       </div>
 
+      {/* ── Extra equipment ─────────────────────────────────────────────── */}
       {supportsStorageBox ? (
-        <div className="mt-4 rounded-lg border border-slate-200 p-4">
-          <p className="text-sm font-semibold text-slate-900">{t("extraEquipment")}</p>
-          <label className="mt-2 flex items-center gap-2 text-sm text-slate-700">
-            <input
-              type="checkbox"
-              checked={state.addons.storageBox}
-              onChange={(event) => updateSection("addons", { storageBox: event.target.checked })}
-            />
-            {t("storageBoxLabel")}
+        <div
+          className={`${addonCardClass} mt-3 ${
+            state.addons.storageBox
+              ? "border-blue-400 bg-blue-50/50 ring-2 ring-blue-500/20 shadow-[var(--elev-2)]"
+              : "hover:border-[var(--line-strong)]"
+          }`}
+        >
+          <p className="type-spec text-[var(--text-muted)]">{t("extraEquipment")}</p>
+          <label className="mt-3 flex cursor-pointer items-center gap-3">
+            <span
+              className={state.addons.storageBox ? addonIconActiveClass : addonIconClass}
+              aria-hidden
+            >
+              <Package className="h-4 w-4" />
+            </span>
+            <span className="flex min-w-0 flex-1 items-center gap-2.5 text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+              <input
+                type="checkbox"
+                checked={state.addons.storageBox}
+                onChange={(event) => updateSection("addons", { storageBox: event.target.checked })}
+                className="h-4 w-4 shrink-0 rounded-sm accent-[var(--blue-500)]"
+              />
+              {t("storageBoxLabel")}
+            </span>
           </label>
         </div>
       ) : null}

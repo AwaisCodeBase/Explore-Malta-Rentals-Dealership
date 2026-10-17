@@ -4,7 +4,9 @@ import { ensureUniqueVehicleSlug } from "@/lib/admin/vehicles/slug";
 import type { AdminVehicleDetail } from "@/lib/admin/vehicles/types";
 import type { AdminVehicleWriteInput } from "@/lib/admin/vehicles/vehicle-schema";
 import { getAdminVehicleById } from "@/lib/admin/vehicles/listAdminVehicles";
+import { vehicleDeleteRelationCountSelect } from "@/lib/admin/vehicles/vehicle-delete-errors";
 import { prisma } from "@/lib/prisma";
+import { normalizeEngineCc } from "@/lib/vehicles/engine-cc";
 
 export class DuplicateLicensePlateError extends Error {
   constructor() {
@@ -65,9 +67,11 @@ export async function createAdminVehicle(input: AdminVehicleWriteInput): Promise
         name: input.name.trim(),
         slug,
         vehicleType: input.vehicleType as VehicleType,
+        engineCc: normalizeEngineCc(input.vehicleType, input.engineCc),
         baseDailyRate: input.baseDailyRate,
         brand: input.brand?.trim() || null,
         model: input.model?.trim() || null,
+        color: input.color?.trim() || null,
         shortDescription: input.shortDescription?.trim() || null,
         description: input.description?.trim() || null,
         mainImageUrl,
@@ -125,9 +129,11 @@ export async function updateAdminVehicle(
           name: input.name.trim(),
           slug,
           vehicleType: input.vehicleType as VehicleType,
+          engineCc: normalizeEngineCc(input.vehicleType, input.engineCc),
           baseDailyRate: input.baseDailyRate,
           brand: input.brand?.trim() || null,
           model: input.model?.trim() || null,
+          color: input.color?.trim() || null,
           shortDescription: input.shortDescription?.trim() || null,
           description: input.description?.trim() || null,
           mainImageUrl,
@@ -221,30 +227,39 @@ export type DeleteAdminVehicleResult =
   | { ok: false; reason: "not_found" | "has_related_records" };
 
 export async function deleteAdminVehicle(id: string): Promise<DeleteAdminVehicleResult> {
-  const existing = await prisma.vehicle.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      _count: {
-        select: {
-          bookings: true,
-          reservationHolds: true,
-          availabilityBlocks: true,
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.vehicle.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        _count: {
+          select: vehicleDeleteRelationCountSelect(),
         },
       },
-    },
+    });
+
+    if (!existing) {
+      return { ok: false, reason: "not_found" };
+    }
+
+    const { bookings, reservationHolds, availabilityBlocks } = existing._count;
+    if (bookings > 0 || reservationHolds > 0 || availabilityBlocks > 0) {
+      return { ok: false, reason: "has_related_records" };
+    }
+
+    await tx.booking.updateMany({
+      where: {
+        status: "CANCELLED",
+        OR: [{ vehicleId: id }, { vehicleUnit: { vehicleId: id } }],
+      },
+      data: {
+        vehicleId: null,
+        vehicleUnitId: null,
+      },
+    });
+
+    await tx.vehicle.delete({ where: { id } });
+
+    return { ok: true };
   });
-
-  if (!existing) {
-    return { ok: false, reason: "not_found" };
-  }
-
-  const { bookings, reservationHolds, availabilityBlocks } = existing._count;
-  if (bookings > 0 || reservationHolds > 0 || availabilityBlocks > 0) {
-    return { ok: false, reason: "has_related_records" };
-  }
-
-  await prisma.vehicle.delete({ where: { id } });
-
-  return { ok: true };
 }

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { AdminVehicleUnitDetailDto } from "@/lib/admin/vehicle-units/types";
 import type { VehicleUnitStatus } from "@/generated/prisma/client";
+import { formatMaltaDate, formatMaltaDateTime } from "@/lib/format-malta-datetime";
 
 type AdminVehicleUnitDetailDialogProps = Readonly<{
   open: boolean;
@@ -40,32 +41,6 @@ function bookingStatusBadgeClass(status: string): string {
   if (status === "COMPLETED") return "bg-slate-100 text-slate-700";
   if (status === "CANCELLED") return "bg-slate-100 text-slate-600";
   return "bg-amber-50 text-amber-800";
-}
-
-function formatDateTime(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
-  return date.toLocaleString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "—";
-  }
-  return date.toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 export function AdminVehicleUnitDetailDialog({
@@ -194,6 +169,16 @@ export function AdminVehicleUnitDetailDialog({
                 </div>
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {tUnits("table.color")}
+                  </dt>
+                  <dd className="mt-1 text-sm font-medium text-slate-900">
+                    {unit.color ?? (
+                      <span className="text-xs font-semibold text-amber-700">{tUnits("colorMissing")}</span>
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     {tUnits("table.status")}
                   </dt>
                   <dd className="mt-1">
@@ -225,13 +210,13 @@ export function AdminVehicleUnitDetailDialog({
                   <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     {t("details.createdAt")}
                   </dt>
-                  <dd className="mt-1 text-sm text-slate-700">{formatDate(unit.createdAt)}</dd>
+                  <dd className="mt-1 text-sm text-slate-700">{formatMaltaDate(unit.createdAt)}</dd>
                 </div>
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                     {t("table.unitUpdated")}
                   </dt>
-                  <dd className="mt-1 text-sm text-slate-700">{formatDate(unit.updatedAt)}</dd>
+                  <dd className="mt-1 text-sm text-slate-700">{formatMaltaDate(unit.updatedAt)}</dd>
                 </div>
               </dl>
 
@@ -254,9 +239,9 @@ export function AdminVehicleUnitDetailDialog({
                             <td className="px-3 py-2 font-mono text-xs font-semibold text-amber-950">
                               {hold.holdReference}
                             </td>
-                            <td className="px-3 py-2 text-amber-950">{formatDateTime(hold.pickupDateTime)}</td>
-                            <td className="px-3 py-2 text-amber-950">{formatDateTime(hold.returnDateTime)}</td>
-                            <td className="px-3 py-2 text-amber-950">{formatDateTime(hold.expiresAt)}</td>
+                            <td className="px-3 py-2 text-amber-950">{formatMaltaDateTime(hold.pickupDateTime)}</td>
+                            <td className="px-3 py-2 text-amber-950">{formatMaltaDateTime(hold.returnDateTime)}</td>
+                            <td className="px-3 py-2 text-amber-950">{formatMaltaDateTime(hold.expiresAt)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -300,10 +285,10 @@ export function AdminVehicleUnitDetailDialog({
                               <p className="text-xs text-slate-500">{booking.customerEmail}</p>
                             </td>
                             <td className="px-3 py-2 text-slate-700">
-                              {formatDateTime(booking.pickupDateTime)}
+                              {formatMaltaDateTime(booking.pickupDateTime)}
                             </td>
                             <td className="px-3 py-2 text-slate-700">
-                              {formatDateTime(booking.returnDateTime)}
+                              {formatMaltaDateTime(booking.returnDateTime)}
                             </td>
                             <td className="px-3 py-2">
                               <span

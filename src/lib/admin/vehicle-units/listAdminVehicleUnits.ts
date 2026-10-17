@@ -6,6 +6,7 @@ function mapUnit(unit: {
   id: string;
   vehicleId: string;
   licensePlate: string;
+  color: string | null;
   status: AdminVehicleUnitDto["status"];
   isActive: boolean;
   notes: string | null;
@@ -16,6 +17,7 @@ function mapUnit(unit: {
     id: unit.id,
     vehicleId: unit.vehicleId,
     licensePlate: unit.licensePlate,
+    color: unit.color,
     status: unit.status,
     isActive: unit.isActive,
     notes: unit.notes,
@@ -32,6 +34,7 @@ export async function listAdminVehicleUnits(vehicleId: string): Promise<AdminVeh
       id: true,
       vehicleId: true,
       licensePlate: true,
+      color: true,
       status: true,
       isActive: true,
       notes: true,

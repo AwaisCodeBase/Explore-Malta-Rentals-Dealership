@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { MapPin } from "lucide-react";
 
+import { Reveal } from "@/components/motion/reveal";
 import { Container } from "@/components/ui/container";
 import { BrandBlueUnderlinedText } from "@/features/guide/components/brand-blue-underlined-text";
 import { GuideParkingRulesSection } from "@/features/guide/components/guide-parking-rules-section";
@@ -41,34 +42,40 @@ export async function GuideContent({
       <section
         id="guide-location"
         aria-labelledby="guide-location-title"
-        className="relative isolate flex min-h-svh scroll-mt-28 items-center overflow-hidden border-t border-slate-200/70 bg-[var(--surface-elevated)] pt-24 pb-10 sm:pt-28 sm:pb-12"
+        className="relative isolate flex min-h-svh scroll-mt-28 items-center overflow-hidden bg-[var(--surface-card)] pt-[calc(var(--site-header-offset)+2rem)] pb-16 sm:pt-[calc(var(--site-header-offset)+3rem)] sm:pb-20 lg:pb-24"
       >
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: [
-              "linear-gradient(100deg, rgba(255,255,255,0.92) 0%, rgba(248,250,252,0.88) 45%, rgba(240,246,250,0.92) 100%)",
+              "linear-gradient(100deg, rgba(251,251,250,0.95) 0%, rgba(243,245,248,0.90) 45%, rgba(238,241,245,0.92) 100%)",
               `url("${GUIDE_PAGE_HERO_BACKDROP}")`,
             ].join(", "),
           }}
         />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(180deg,transparent,var(--background))]"
+        />
         <Container>
           <div className="relative z-10">
-            <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,0.64fr)_minmax(0,1fr)] lg:items-center lg:gap-10">
-              <div className="pt-1 lg:pt-0">
-                <div className="text-left">
-                  <h2
-                    id="guide-location-title"
-                    className="text-4xl font-bold tracking-[-0.04em] text-slate-950 sm:text-5xl"
-                  >
-                    <span>{t("findUsLine1")} </span>
-                    <BrandBlueUnderlinedText>{t("findUsLine2")}</BrandBlueUnderlinedText>
-                  </h2>
-                  <p className="mt-3 text-base leading-7 text-slate-600">{t("mapIntro")}</p>
-                </div>
-              </div>
-              <div className="overflow-hidden rounded-xl border border-slate-200/90 bg-[var(--surface-card)] shadow-sm ring-1 ring-slate-950/[0.04]">
+            <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,0.68fr)_minmax(0,1fr)] lg:items-center lg:gap-14">
+              <Reveal className="text-left" y={24} duration={0.8}>
+                <h1 id="guide-location-title" className="type-h1 text-[var(--text-primary)]">
+                  <span>{t("findUsLine1")} </span>
+                  <BrandBlueUnderlinedText>{t("findUsLine2")}</BrandBlueUnderlinedText>
+                </h1>
+                <p className="mt-7 max-w-[52ch] text-[length:var(--text-lead)] leading-[1.68] text-[var(--text-secondary)]">
+                  {t("mapIntro")}
+                </p>
+              </Reveal>
+              <Reveal
+                className="surface-panel overflow-hidden"
+                y={28}
+                delay={0.08}
+                scale={0.985}
+              >
                 <div className="grid gap-0 md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
                   <iframe
                     title={t("mapIframeTitle")}
@@ -77,31 +84,30 @@ export async function GuideContent({
                     referrerPolicy="no-referrer-when-downgrade"
                     className="h-[min(23rem,56svh)] w-full border-0 md:h-[min(28rem,62svh)]"
                   />
-                  <div className="flex flex-col justify-center border-t border-slate-200/80 bg-slate-50/80 px-5 py-5 md:border-t-0 md:border-l">
-                    <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[var(--brand-orange)]">
-                      <MapPin
-                        className="size-3.5 shrink-0 stroke-[2.25]"
-                        aria-hidden
-                      />
+                  <div className="flex flex-col justify-center border-t border-[var(--line-subtle)] bg-[var(--surface-band)] px-6 py-7 md:border-t-0 md:border-l">
+                    <p className="type-eyebrow flex items-center gap-2 text-orange-600">
+                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-orange-50 text-orange-600 ring-1 ring-inset ring-orange-200/80">
+                        <MapPin className="size-3.5 shrink-0 stroke-[2.25]" aria-hidden />
+                      </span>
                       {t("currentLocation")}
                     </p>
-                    <h3 className="mt-2 text-xl font-bold tracking-[-0.02em] text-slate-950">
-                      {locationTitle}
-                    </h3>
+                    <h2 className="type-h3 mt-4 text-[var(--text-primary)]">{locationTitle}</h2>
                     {mapsPageUrl ? null : (
-                      <p className="mt-3 text-sm leading-6 text-slate-600">{address}</p>
+                      <p className="mt-3 text-[0.9375rem] leading-[1.65] text-[var(--text-secondary)]">
+                        {address}
+                      </p>
                     )}
                     <a
                       href={openMapsHref}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-4 inline-flex w-fit text-sm font-semibold text-slate-900 underline decoration-[var(--brand-orange)]/50 underline-offset-4 transition-colors hover:text-[var(--brand-orange-strong)] hover:decoration-[var(--brand-orange)]"
+                      className="mt-6 inline-flex w-fit items-center text-sm font-semibold text-[var(--text-primary)] underline decoration-orange-400/50 decoration-2 underline-offset-4 transition-colors duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:text-orange-700 hover:decoration-orange-400"
                     >
                       {t("openMaps")}
                     </a>
                   </div>
                 </div>
-              </div>
+              </Reveal>
             </div>
           </div>
         </Container>
@@ -110,63 +116,63 @@ export async function GuideContent({
       <section
         id="guide-pieta-brand"
         aria-labelledby="guide-pieta-brand-title"
-        className="scroll-mt-28 border-t border-slate-200/70 bg-[var(--surface-soft)] py-12 sm:py-14"
+        className="scroll-mt-28 border-t border-[var(--line-subtle)] bg-[var(--surface-band)] py-20 sm:py-24 lg:py-28"
       >
         <Container>
-          <div
-            className={[
-              "relative isolate overflow-hidden rounded-2xl border border-white/10 bg-[#050d18] p-6 text-white shadow-[0_24px_80px_-48px_rgba(0,0,0,0.45)] sm:p-8 lg:p-10",
-              "motion-safe:transition-shadow motion-safe:duration-300",
-            ].join(" ")}
+          <Reveal
+            className="grain relative isolate overflow-hidden rounded-[var(--r-feature)] bg-[var(--surface-inverse)] p-7 text-white shadow-[var(--elev-5)] ring-1 ring-inset ring-[var(--line-inverse)] sm:p-10 lg:p-12"
+            y={24}
+            scale={0.985}
           >
             <div
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_55%_at_50%_0%,rgba(58,124,165,0.14),transparent_55%)]"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_58%_at_50%_0%,rgba(85,152,193,0.20),transparent_58%)]"
               aria-hidden
             />
-            <div className="relative max-w-xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--brand-orange)]">
-                {tBrand("locationKicker")}
-              </p>
-              <h2
-                id="guide-pieta-brand-title"
-                className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl lg:text-[2rem] lg:leading-tight"
-              >
+            <div className="relative max-w-2xl">
+              <p className="type-eyebrow text-orange-300">{tBrand("locationKicker")}</p>
+              <h2 id="guide-pieta-brand-title" className="type-h2 mt-4 text-white">
                 {tBrand("primaryHeadline")}
               </h2>
-              <p className="mt-3 text-sm leading-relaxed text-white/80 sm:text-base">
+              <p className="mt-5 text-[length:var(--text-lead)] leading-[1.62] text-white/82">
                 {tBrand("primaryBody")}
               </p>
-              <p className="mt-2 text-sm leading-relaxed text-white/65 sm:text-base">
+              <p className="mt-3 text-[0.9375rem] leading-[1.7] text-white/62">
                 {tBrand("primarySupporting")}
               </p>
             </div>
-          </div>
+          </Reveal>
         </Container>
       </section>
 
       <section
         id="guide-map"
         aria-labelledby="guide-map-title"
-        className="scroll-mt-28 border-t border-slate-200/70 bg-white py-14 sm:py-16"
+        className="scroll-mt-28 border-t border-[var(--line-subtle)] bg-[var(--surface-card)] py-20 sm:py-24 lg:py-32"
       >
         <Container>
-          <SectionHeader
-            titleId="guide-map-title"
-            title={t("mapSectionTitle")}
-            tone="light"
-            description={t("mapSectionDescription")}
-          />
-          <div className="mt-8 overflow-hidden rounded-xl border border-slate-200/90 bg-slate-50 p-2 shadow-sm ring-1 ring-slate-950/[0.04] sm:p-3">
+          <Reveal y={18}>
+            <SectionHeader
+              titleId="guide-map-title"
+              title={t("mapSectionTitle")}
+              tone="light"
+              description={t("mapSectionDescription")}
+            />
+          </Reveal>
+          <Reveal
+            className="mt-14 overflow-hidden rounded-[var(--r-feature)] bg-[var(--surface-band)] p-3 shadow-[var(--elev-3)] ring-1 ring-inset ring-[var(--line-subtle)] sm:p-4"
+            y={24}
+            scale={0.99}
+          >
             <Image
               src={TOURIST_GUIDE_MAP_SRC}
               alt={t("mapImageAlt")}
               width={2200}
               height={1500}
-              className="h-auto w-full rounded-lg object-cover object-center"
+              className="h-auto w-full rounded-[var(--r-card)] object-cover object-center"
               sizes="(min-width: 1280px) 76rem, 96vw"
               priority
             />
-          </div>
+          </Reveal>
         </Container>
       </section>
 

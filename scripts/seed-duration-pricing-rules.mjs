@@ -1,3 +1,9 @@
+/**
+ * Seeds DurationPricingRule rows for historical reference only.
+ * Runtime pricing uses fixed tiers in src/lib/pricing/pricing-tiers.ts.
+ *
+ * Run: node scripts/seed-duration-pricing-rules.mjs
+ */
 import "dotenv/config";
 
 import { randomUUID } from "node:crypto";
@@ -13,40 +19,15 @@ if (!connectionString) {
 
 const pool = new pg.Pool({ connectionString });
 
-const DEFAULT_RULES = [
-  { vehicleType: "Scooter", minDays: 1, maxDays: 1, discountPercent: 0, displayOrder: 10 },
-  { vehicleType: "Scooter", minDays: 2, maxDays: 2, discountPercent: 10, displayOrder: 20 },
-  { vehicleType: "Scooter", minDays: 3, maxDays: 20, discountPercent: 20, displayOrder: 30 },
-  { vehicleType: "Scooter", minDays: 21, maxDays: null, discountPercent: 40, displayOrder: 40 },
-  { vehicleType: "Motorcycle", minDays: 1, maxDays: 1, discountPercent: 0, displayOrder: 10 },
-  { vehicleType: "Motorcycle", minDays: 2, maxDays: 2, discountPercent: 10, displayOrder: 20 },
-  { vehicleType: "Motorcycle", minDays: 3, maxDays: 20, discountPercent: 20, displayOrder: 30 },
-  { vehicleType: "Motorcycle", minDays: 21, maxDays: null, discountPercent: 40, displayOrder: 40 },
-  { vehicleType: "Bicycle", minDays: 1, maxDays: 1, discountPercent: 0, displayOrder: 10 },
-  { vehicleType: "Bicycle", minDays: 2, maxDays: 2, discountPercent: 10, displayOrder: 20 },
-  { vehicleType: "Bicycle", minDays: 3, maxDays: 20, discountPercent: 20, displayOrder: 30 },
-  { vehicleType: "Bicycle", minDays: 21, maxDays: null, discountPercent: 40, displayOrder: 40 },
-  { vehicleType: "ATV", minDays: 1, maxDays: 1, discountPercent: 0, displayOrder: 10 },
-  { vehicleType: "ATV", minDays: 2, maxDays: 2, discountPercent: 10, displayOrder: 20 },
-  { vehicleType: "ATV", minDays: 3, maxDays: 20, discountPercent: 20, displayOrder: 30 },
-  { vehicleType: "ATV", minDays: 21, maxDays: null, discountPercent: 40, displayOrder: 40 },
-];
+const VEHICLE_TYPES = ["Scooter", "Motorcycle", "Bicycle", "ATV"] as const;
 
-const upsertSql = `
-  INSERT INTO "DurationPricingRule" (
-    "id",
-    "vehicleType",
-    "minDays",
-    "maxDays",
-    "discountPercent",
-    "isActive",
-    "displayOrder",
-    "createdAt",
-    "updatedAt"
-  )
-  VALUES ($1, $2, $3, $4, $5, true, $6, NOW(), NOW())
-  ON CONFLICT DO NOTHING;
-`;
+/** Milestone 5 tier configuration — stored for audit only; runtime ignores inactive rows. */
+const DEFAULT_RULES = VEHICLE_TYPES.flatMap((vehicleType) => [
+  { vehicleType, minDays: 1, maxDays: 6, discountPercent: 0, displayOrder: 10 },
+  { vehicleType, minDays: 7, maxDays: 13, discountPercent: 20, displayOrder: 20 },
+  { vehicleType, minDays: 14, maxDays: 20, discountPercent: 28, displayOrder: 30 },
+  { vehicleType, minDays: 21, maxDays: null, discountPercent: 40, displayOrder: 40 },
+]);
 
 const deleteTypeRulesSql = `
   DELETE FROM "DurationPricingRule"
@@ -65,14 +46,13 @@ const insertRuleSql = `
     "createdAt",
     "updatedAt"
   )
-  VALUES ($1, $2, $3, $4, $5, true, $6, NOW(), NOW());
+  VALUES ($1, $2, $3, $4, $5, false, $6, NOW(), NOW());
 `;
 
 async function main() {
-  console.log(`Seeding ${DEFAULT_RULES.length} duration pricing rules...`);
+  console.log(`Seeding ${DEFAULT_RULES.length} duration pricing rules (inactive, historical only)...`);
 
-  const vehicleTypes = [...new Set(DEFAULT_RULES.map((rule) => rule.vehicleType))];
-  for (const vehicleType of vehicleTypes) {
+  for (const vehicleType of VEHICLE_TYPES) {
     await pool.query(deleteTypeRulesSql, [vehicleType]);
   }
 
@@ -86,11 +66,11 @@ async function main() {
       rule.displayOrder,
     ]);
     console.log(
-      `Seeded ${rule.vehicleType}: ${rule.minDays}${rule.maxDays == null ? "+" : `–${rule.maxDays}`} days @ ${rule.discountPercent}% off`,
+      `Seeded ${rule.vehicleType}: ${rule.minDays}${rule.maxDays == null ? "+" : `–${rule.maxDays}`} days @ ${rule.discountPercent}% off (inactive)`,
     );
   }
 
-  console.log("Duration pricing rule seed complete.");
+  console.log("Duration pricing rule seed complete (rows inactive — use PRICING_TIERS in code).");
 }
 
 try {

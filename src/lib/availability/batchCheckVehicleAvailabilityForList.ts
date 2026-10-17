@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { VehicleListItemDto } from "@/lib/vehicles/types";
-import { findAvailableVehicleUnits } from "@/lib/vehicle-units";
+import { batchFindAvailableVehicleUnits } from "@/lib/vehicle-units/findAvailableVehicleUnits";
 
 import { findConflictingBlocks } from "@/lib/availability/findConflictingBlocks";
 import { findConflictingReservationHolds } from "@/lib/availability/findConflictingReservationHolds";
@@ -45,7 +45,7 @@ function buildAvailabilityResult(
 
 /**
  * Runs availability checks for many vehicle listings using batched conflict queries
- * plus per-vehicle unit assignment checks.
+ * and a single batched unit-availability query (no per-vehicle N+1).
  */
 export async function batchCheckVehicleAvailabilityForList(
   vehicles: readonly VehicleListItemDto[],
@@ -69,7 +69,7 @@ export async function batchCheckVehicleAvailabilityForList(
   const ids = active.map((v) => v.id);
   const uniqueTypes = [...new Set(active.map((v) => v.vehicleType))];
 
-  const [allBlocks, allHolds] = await Promise.all([
+  const [allBlocks, allHolds, availableUnitsByVehicle] = await Promise.all([
     findConflictingBlocks(
       {
         requestedStart,
@@ -87,24 +87,21 @@ export async function batchCheckVehicleAvailabilityForList(
       },
       db,
     ),
+    batchFindAvailableVehicleUnits({
+      vehicleIds: ids,
+      requestedStart,
+      requestedEnd,
+    }),
   ]);
 
-  await Promise.all(
-    active.map(async (vehicle) => {
-      const availableUnits = await findAvailableVehicleUnits({
-        vehicleId: vehicle.id,
-        requestedStart,
-        requestedEnd,
-      });
-
-      const holds = allHolds.filter((h) => h.vehicleId === vehicle.id);
-      const blocks = allBlocks.filter(
-        (b) => b.vehicleId === vehicle.id || b.vehicleType === vehicle.vehicleType,
-      );
-
-      out.set(vehicle.id, buildAvailabilityResult(availableUnits.length > 0, blocks, holds));
-    }),
-  );
+  for (const vehicle of active) {
+    const availableUnits = availableUnitsByVehicle.get(vehicle.id) ?? [];
+    const holds = allHolds.filter((h) => h.vehicleId === vehicle.id);
+    const blocks = allBlocks.filter(
+      (b) => b.vehicleId === vehicle.id || b.vehicleType === vehicle.vehicleType,
+    );
+    out.set(vehicle.id, buildAvailabilityResult(availableUnits.length > 0, blocks, holds));
+  }
 
   return out;
 }

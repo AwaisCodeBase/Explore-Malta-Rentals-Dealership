@@ -118,3 +118,8 @@ export async function deleteOccupancyForHold(db: OccupancyDb, reservationHoldId:
     DELETE FROM "VehicleUnitOccupancy" WHERE "reservationHoldId" = ${reservationHoldId}
   `;
 }
+
+export { reconcileMismatchedBookingOccupancies } from "@/lib/vehicle-unit-occupancy/reconcileBookingOccupancy";
+export type { ReconcileBookingOccupancyResult } from "@/lib/vehicle-unit-occupancy/reconcileBookingOccupancy";
+export { syncBookingOccupancyToAssignedUnit } from "@/lib/vehicle-unit-occupancy/syncBookingOccupancy";
+export type { SyncBookingOccupancyInput } from "@/lib/vehicle-unit-occupancy/syncBookingOccupancy";

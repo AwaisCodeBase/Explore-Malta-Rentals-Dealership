@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const bookingStatusSchema = z.enum([
+  "PENDING_PAYMENT",
   "CONFIRMED",
   "VEHICLE_HANDED_OVER",
   "RETURNED",

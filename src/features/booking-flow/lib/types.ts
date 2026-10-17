@@ -1,3 +1,5 @@
+import type { InsurancePlanSelection } from "@/lib/pricing/insurance-plans";
+
 export type LicenseCategory = "" | "B" | "AM" | "A" | "A1" | "A2";
 export type ReservationHoldStatus = "ACTIVE" | "EXPIRED" | "RELEASED" | "CONVERTED";
 
@@ -9,6 +11,7 @@ export type ReservationHoldState = {
   vehicleId: string | null;
   vehicleSlug: string | null;
   vehicleType: string | null;
+  selectedColor: string | null;
   pickupDate: string | null;
   pickupTime: string | null;
   returnDate: string | null;
@@ -22,6 +25,8 @@ export type BookingFlowState = {
     vehicleName: string;
     vehicleLicensePlate: string;
     vehicleType: string;
+    engineCc: number | null;
+    selectedColor: string | null;
     pickupDate: string;
     pickupTime: string;
     returnDate: string;
@@ -41,7 +46,12 @@ export type BookingFlowState = {
     additionalDriver: boolean;
     storageBox: boolean;
     cdw: boolean;
-    cdwPlan: "none" | "scooter_50" | "scooter_125" | "scooter_full" | "atv_full";
+    /**
+     * Explicit insurance selection.
+     * `null` = customer has not chosen yet (triggers pre-payment prompt).
+     * `NO_INSURANCE` = customer explicitly declined paid insurance.
+     */
+    cdwPlan: InsurancePlanSelection;
   };
   customer: {
     fullName: string;
@@ -69,6 +79,10 @@ export type BookingFlowState = {
   deposit: {
     depositMethod: "online" | "in_person" | "";
   };
+  payment: {
+    mode: "stripe" | "already_paid";
+    proofPath: string;
+  };
   consent: {
     summaryReviewed: boolean;
     termsAccepted: boolean;
@@ -90,6 +104,8 @@ export const INITIAL_BOOKING_FLOW_STATE: BookingFlowState = {
     vehicleName: "",
     vehicleLicensePlate: "",
     vehicleType: "",
+    engineCc: null,
+    selectedColor: null,
     pickupDate: "",
     pickupTime: "",
     returnDate: "",
@@ -109,7 +125,7 @@ export const INITIAL_BOOKING_FLOW_STATE: BookingFlowState = {
     additionalDriver: false,
     storageBox: false,
     cdw: false,
-    cdwPlan: "none",
+    cdwPlan: null,
   },
   customer: {
     fullName: "",
@@ -135,7 +151,11 @@ export const INITIAL_BOOKING_FLOW_STATE: BookingFlowState = {
     officeIdConfirmed: false,
   },
   deposit: {
-    depositMethod: "",
+    depositMethod: "in_person",
+  },
+  payment: {
+    mode: "stripe",
+    proofPath: "",
   },
   consent: {
     summaryReviewed: false,
@@ -159,6 +179,7 @@ export const INITIAL_RESERVATION_HOLD_STATE: ReservationHoldState = {
   vehicleId: null,
   vehicleSlug: null,
   vehicleType: null,
+  selectedColor: null,
   pickupDate: null,
   pickupTime: null,
   returnDate: null,

@@ -144,6 +144,7 @@ export function AdminVehicleTableUnitsExpand({
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500">
                 <th className="px-3 py-2.5 font-semibold">{tUnits("table.licensePlate")}</th>
+                <th className="px-3 py-2.5 font-semibold">{tUnits("table.color")}</th>
                 <th className="px-3 py-2.5 font-semibold">{tUnits("table.status")}</th>
                 <th className="px-3 py-2.5 font-semibold">{tUnits("table.active")}</th>
                 <th className="px-3 py-2.5 font-semibold">{tUnits("table.notes")}</th>
@@ -155,6 +156,11 @@ export function AdminVehicleTableUnitsExpand({
               {state.units.map((unit) => (
                 <tr key={unit.id} className="border-b border-slate-50 last:border-0">
                   <td className="px-3 py-2.5 font-mono font-semibold text-slate-900">{unit.licensePlate}</td>
+                  <td className="px-3 py-2.5 text-slate-700">
+                    {unit.color ?? (
+                      <span className="text-xs font-semibold text-amber-700">{tUnits("colorMissing")}</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2.5">
                     <span
                       className={[

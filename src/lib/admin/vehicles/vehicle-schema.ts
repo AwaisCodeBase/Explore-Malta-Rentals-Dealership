@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { VEHICLE_CATALOG_STATUSES, VEHICLE_TYPES } from "@/lib/admin/vehicles/types";
+import { isEngineCcValue, vehicleTypeUsesEngineCc } from "@/lib/vehicles/engine-cc";
 
 const optionalText = z
   .string()
@@ -30,8 +31,10 @@ export const adminVehicleWriteSchema = z.object({
     .max(120)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase letters, numbers, and hyphens"),
   vehicleType: z.enum(VEHICLE_TYPES as [string, ...string[]]),
+  engineCc: z.union([z.literal(50), z.literal(125), z.null()]).optional(),
   brand: optionalText,
   model: optionalText,
+  color: optionalText,
   shortDescription: z.string().trim().max(500).nullable().optional(),
   description: z.string().trim().max(10000).nullable().optional(),
   mainImageUrl: z.string().trim().max(2048).nullable().optional(),
@@ -45,6 +48,25 @@ export const adminVehicleWriteSchema = z.object({
     .number({ required_error: "Base daily rate is required", invalid_type_error: "Base daily rate is required" })
     .positive("Base daily rate must be greater than 0")
     .max(99999, "Base daily rate is too high"),
+}).superRefine((data, context) => {
+  if (vehicleTypeUsesEngineCc(data.vehicleType)) {
+    if (!isEngineCcValue(data.engineCc)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["engineCc"],
+        message: "Engine size must be 50cc or 125cc",
+      });
+    }
+    return;
+  }
+
+  if (data.engineCc != null) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["engineCc"],
+      message: "Engine size is only used for scooters and motorcycles",
+    });
+  }
 });
 
 export type AdminVehicleWriteInput = z.infer<typeof adminVehicleWriteSchema>;

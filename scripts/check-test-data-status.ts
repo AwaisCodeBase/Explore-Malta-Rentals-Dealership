@@ -20,7 +20,10 @@ async function main() {
     hotelPayments: await prisma.hotelMonthlySettlement.count(),
     hotelCodes: await prisma.hotelCode.count(),
     hotels: await prisma.hotelPartner.count(),
-    durationPricingRules: await prisma.durationPricingRule.count(),
+    durationPricingRulesTotal: await prisma.durationPricingRule.count(),
+    durationPricingRulesActive: await prisma.durationPricingRule.count({
+      where: { isActive: true },
+    }),
     typeLevelVehiclePricingRules: await prisma.vehiclePricingRule.count({
       where: { vehicleId: null },
     }),

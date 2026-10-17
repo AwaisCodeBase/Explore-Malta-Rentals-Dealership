@@ -27,6 +27,7 @@ import {
   INITIAL_RESERVATION_HOLD_STATE,
 } from "@/features/booking-flow/lib/types";
 import { buildBookingInitialState } from "@/features/booking-flow/lib/init-state";
+import { getPickupDeliveryResetForSunday } from "@/lib/booking/delivery-availability";
 import {
   createBookingFlowSchema,
   canAccessStep,
@@ -76,6 +77,8 @@ const SERVER_VALIDATED_PATHS = [
   "addons.helmetSize2",
   "addons.cdwPlan",
   "deposit.depositMethod",
+  "payment.mode",
+  "payment.proofPath",
   "consent.termsAccepted",
 ] as const satisfies readonly FieldPath<BookingFlowState>[];
 
@@ -101,6 +104,7 @@ function loadStoredReservationHold(): ReservationHoldState {
       vehicleId: parsed.vehicleId ?? null,
       vehicleSlug: parsed.vehicleSlug ?? null,
       vehicleType: parsed.vehicleType ?? null,
+      selectedColor: parsed.selectedColor ?? null,
       pickupDate: parsed.pickupDate ?? null,
       pickupTime: parsed.pickupTime ?? null,
       returnDate: parsed.returnDate ?? null,
@@ -149,6 +153,7 @@ type BookingFlowContextValue = {
   resetBookingForm: () => void;
   validateCurrentStep: () => Promise<boolean>;
   validateAllBookingFields: () => Promise<boolean>;
+  setManualFieldError: (path: FieldPath<BookingFlowState>, message: string) => void;
 };
 
 const BookingFlowContext = createContext<BookingFlowContextValue | null>(null);
@@ -160,6 +165,7 @@ type BookingFlowProviderProps = PropsWithChildren<{
     pickupTime?: string;
     returnDate?: string;
     returnTime?: string;
+    selectedColor?: string;
   };
 }>;
 
@@ -184,6 +190,7 @@ export function BookingFlowProvider({ children, initialVehicleSlug, initialRenta
       minRental: tVal("minRental"),
       maxRental: tVal("maxRental"),
       pickupAddressDelivery: tVal("pickupAddressDelivery"),
+      deliveryUnavailableSunday: tVal("deliveryUnavailableSunday"),
       dropoffAddressRequired: tVal("dropoffAddressRequired"),
       helmetSizesRequired: tVal("helmetSizesRequired"),
       additionalDriverName: tVal("additionalDriverName"),
@@ -200,6 +207,9 @@ export function BookingFlowProvider({ children, initialVehicleSlug, initialRenta
       passportUploadDelivery: tVal("passportUploadDelivery"),
       confirmDocumentsPickup: tVal("confirmDocumentsPickup"),
       depositMethodRequired: tVal("depositMethodRequired"),
+      paymentProofRequired: tVal("paymentProofRequired"),
+      colorRequired: tVal("colorRequired"),
+      pricingAcknowledgedRequired: tVal("pricingAcknowledgedRequired"),
       reviewFields: tVal("reviewFields"),
     }),
     [tVal],
@@ -306,6 +316,9 @@ export function BookingFlowProvider({ children, initialVehicleSlug, initialRenta
       if (restored.returnTime && !rental.returnTime) {
         rentalPatch.returnTime = restored.returnTime;
       }
+      if (restored.selectedColor && !rental.selectedColor) {
+        rentalPatch.selectedColor = restored.selectedColor;
+      }
 
       if (holdStillActive && holdMatchesVehicle) {
         if (restored.vehicleId) {
@@ -329,10 +342,24 @@ export function BookingFlowProvider({ children, initialVehicleSlug, initialRenta
         if (restored.returnTime) {
           rentalPatch.returnTime = restored.returnTime;
         }
+        if (restored.selectedColor) {
+          rentalPatch.selectedColor = restored.selectedColor;
+        }
       }
 
       if (Object.keys(rentalPatch).length > 0) {
-        form.setValue("rental", { ...rental, ...rentalPatch }, { shouldDirty: false, shouldValidate: false });
+        const updatedRental = { ...rental, ...rentalPatch };
+        form.setValue("rental", updatedRental, { shouldDirty: false, shouldValidate: false });
+
+        const delivery = form.getValues("delivery");
+        const deliveryReset = getPickupDeliveryResetForSunday(updatedRental.pickupDate, delivery);
+        if (deliveryReset) {
+          form.setValue(
+            "delivery",
+            { ...delivery, ...deliveryReset },
+            { shouldDirty: false, shouldValidate: false },
+          );
+        }
       }
     }, 0);
     return () => window.clearTimeout(timeoutId);
@@ -365,11 +392,39 @@ export function BookingFlowProvider({ children, initialVehicleSlug, initialRenta
   const updateSection = useCallback(
     <K extends keyof BookingFlowState>(section: K, value: Partial<BookingFlowState[K]>) => {
       const currentSection = form.getValues(section);
-      form.setValue(section, { ...currentSection, ...value }, {
+      const nextSection = { ...currentSection, ...value };
+      form.setValue(section, nextSection, {
         shouldDirty: true,
         shouldTouch: true,
         shouldValidate: true,
       });
+
+      const pickupDateToCheck =
+        section === "rental" &&
+        "pickupDate" in value &&
+        typeof value.pickupDate === "string"
+          ? value.pickupDate
+          : section === "delivery" &&
+              "pickupOption" in value &&
+              value.pickupOption === "delivery"
+            ? form.getValues("rental.pickupDate")
+            : null;
+
+      if (pickupDateToCheck) {
+        const delivery = form.getValues("delivery");
+        const deliveryReset = getPickupDeliveryResetForSunday(pickupDateToCheck, delivery);
+        if (deliveryReset) {
+          form.setValue(
+            "delivery",
+            { ...delivery, ...deliveryReset },
+            {
+              shouldDirty: true,
+              shouldTouch: true,
+              shouldValidate: true,
+            },
+          );
+        }
+      }
 
       setStepErrors((prev) => {
         if (!prev[activeStepId]) {
@@ -573,6 +628,13 @@ export function BookingFlowProvider({ children, initialVehicleSlug, initialRenta
 
   const validateAllBookingFields = useCallback(() => form.trigger(), [form]);
 
+  const setManualFieldError = useCallback(
+    (path: FieldPath<BookingFlowState>, message: string) => {
+      form.setError(path, { type: "manual", message });
+    },
+    [form],
+  );
+
   const value = useMemo<BookingFlowContextValue>(
     () => ({
       bookingFlowSchema,
@@ -608,6 +670,7 @@ export function BookingFlowProvider({ children, initialVehicleSlug, initialRenta
       resetBookingForm,
       validateCurrentStep,
       validateAllBookingFields,
+      setManualFieldError,
     }),
     [
       bookingFlowSchema,
@@ -643,6 +706,7 @@ export function BookingFlowProvider({ children, initialVehicleSlug, initialRenta
       resetBookingForm,
       validateCurrentStep,
       validateAllBookingFields,
+      setManualFieldError,
     ],
   );
 

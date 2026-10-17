@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { stripe } from "./stripe-client";
 import { prisma } from "@/lib/prisma";
 import { writePaymentAuditLog } from "./audit-service";
+import { syncPaidBookingAndSendConfirmation } from "./confirm-paid-booking";
 import type { CreateCheckoutSessionInput, CreateCheckoutSessionResult } from "./types";
 
 const CURRENCY = "eur";
@@ -253,6 +254,30 @@ export async function verifyCheckoutSession(sessionId: string): Promise<
     // Determine payment status from Stripe (authoritative) then fall back to DB
     const stripePaymentStatus = session.payment_status;
     const isPaid = stripePaymentStatus === "paid" || payment.stripeStatus === "SUCCEEDED";
+
+    // If Stripe already collected payment but the webhook never arrived, persist
+    // PAID status and send the confirmation email from this verifier.
+    if (stripePaymentStatus === "paid") {
+      const paymentIntentId =
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent && typeof session.payment_intent === "object"
+            ? session.payment_intent.id
+            : null;
+      try {
+        await syncPaidBookingAndSendConfirmation({
+          bookingId: payment.bookingId,
+          paymentIntentId,
+          checkoutSessionId: sessionId,
+        });
+      } catch (syncError) {
+        console.error("[payment-service] Failed to persist paid booking or send confirmation", {
+          sessionId,
+          bookingId: payment.bookingId,
+          error: syncError,
+        });
+      }
+    }
 
     // Extract receipt URL from the charge object if available
     let receiptUrl: string | null = null;

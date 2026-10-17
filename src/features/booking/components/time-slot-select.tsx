@@ -5,8 +5,14 @@ import { ChevronDown, Clock } from "lucide-react";
 import { forwardRef, useId, useState } from "react";
 import { TIME_SLOTS } from "@/features/booking/lib/time-slots";
 
-const triggerShell =
-  "flex w-full min-h-[3rem] cursor-pointer items-center gap-2 rounded-lg border border-slate-200/90 bg-white px-3.5 py-2 text-left text-sm font-medium text-slate-900 shadow-[0_10px_28px_-20px_rgba(15,23,42,0.35)] transition hover:border-slate-300 focus-visible:border-[var(--brand-blue)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue)]/25 data-[state=open]:border-[var(--brand-blue)] data-[state=open]:ring-2 data-[state=open]:ring-[var(--brand-blue)]/20";
+const triggerShell = [
+  "flex w-full min-h-12 cursor-pointer items-center gap-2 rounded-[var(--r-field)] border border-[var(--line)]",
+  "bg-[var(--surface-card)] px-3.5 py-2 text-left text-sm font-semibold tracking-[-0.01em] text-[var(--ink-900)]",
+  "shadow-[var(--elev-1)] transition-[border-color,box-shadow,background-color] duration-[var(--dur-fast)] ease-[var(--ease-standard)]",
+  "hover:border-[var(--line-strong)]",
+  "focus-visible:border-[var(--blue-500)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)]/30",
+  "data-[state=open]:border-[var(--blue-500)] data-[state=open]:ring-2 data-[state=open]:ring-[var(--blue-500)]/25",
+].join(" ");
 
 type TimeSlotSelectProps = Readonly<{
   id?: string;
@@ -48,10 +54,10 @@ export const TimeSlotSelect = forwardRef<HTMLButtonElement, TimeSlotSelectProps>
             className={[triggerShell, "justify-between", triggerClassName].filter(Boolean).join(" ")}
             onBlur={onBlur}
           >
-          <Clock className="h-4 w-4 shrink-0 text-[var(--brand-orange)]" aria-hidden />
+          <Clock className="h-4 w-4 shrink-0 text-[var(--orange-500)]" aria-hidden />
           <span className="min-w-0 flex-1 truncate tabular-nums">{value}</span>
           <ChevronDown
-            className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            className={`h-4 w-4 shrink-0 text-[var(--ink-400)] transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] ${open ? "rotate-180" : ""}`}
             aria-hidden
           />
         </button>
@@ -62,12 +68,12 @@ export const TimeSlotSelect = forwardRef<HTMLButtonElement, TimeSlotSelectProps>
           align="start"
           sideOffset={6}
           collisionPadding={16}
-          className="z-[100] max-h-[min(280px,calc(100dvh-8rem))] w-[var(--radix-popover-trigger-width)] min-w-[10rem] overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-1.5 shadow-[0_20px_50px_-20px_rgba(15,23,42,0.35)]"
+          className="z-[100] max-h-[min(280px,calc(100dvh-8rem))] w-[var(--radix-popover-trigger-width)] min-w-[10rem] overflow-hidden rounded-[var(--r-card)] border border-[var(--line)] bg-[var(--surface-card)] p-1.5 shadow-[var(--elev-4)]"
         >
           <div
             role="listbox"
             aria-labelledby={ariaLabelledBy}
-            className="max-h-[min(260px,calc(100dvh-9rem))] overflow-y-auto overscroll-contain py-0.5 [scrollbar-color:rgba(148,163,184,0.6)_transparent] [scrollbar-width:thin]"
+            className="max-h-[min(260px,calc(100dvh-9rem))] overflow-y-auto overscroll-contain py-0.5 [scrollbar-color:color-mix(in_srgb,var(--ink-400)_60%,transparent)_transparent] [scrollbar-width:thin]"
           >
             {slots.map((slot) => {
               const selected = slot === value;
@@ -78,10 +84,11 @@ export const TimeSlotSelect = forwardRef<HTMLButtonElement, TimeSlotSelectProps>
                   role="option"
                   aria-selected={selected}
                   className={[
-                    "flex w-full items-center rounded-xl px-3 py-2 text-left text-sm font-medium tabular-nums transition-colors",
+                    "flex w-full items-center rounded-[var(--r-field)] px-3 py-2 text-left text-sm tabular-nums",
+                    "transition-colors duration-[var(--dur-fast)] ease-[var(--ease-standard)]",
                     selected
-                      ? "bg-[color-mix(in_srgb,var(--brand-orange)_16%,white)] text-slate-900"
-                      : "text-slate-800 hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none",
+                      ? "bg-[color-mix(in_srgb,var(--orange-400)_18%,white)] font-semibold text-[var(--ink-900)]"
+                      : "font-medium text-[var(--ink-800)] hover:bg-[var(--surface-sunken)] focus-visible:bg-[var(--surface-sunken)] focus-visible:outline-none",
                   ].join(" ")}
                   onClick={() => {
                     onChange(slot);

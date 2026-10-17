@@ -2,6 +2,8 @@
 
 /** Earliest selectable day defaults to today (`minDate ?? today`); no fixed June-only floor. */
 
+import "react-day-picker/style.css";
+
 import { useEffect, useMemo, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { DayPicker, type DateRange } from "react-day-picker";
@@ -19,8 +21,9 @@ import {
 } from "@/features/booking/lib/booking-schema";
 import { useTranslations } from "next-intl";
 
+/* Matches the site field shell: white surface, hairline ring, blue focus ring. */
 const tripTriggerClass =
-  "mt-2 flex w-full min-h-[2.625rem] items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3.5 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.25)] transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue)]/40 focus-visible:ring-offset-0";
+  "mt-2 flex w-full min-h-[2.625rem] items-center justify-between gap-3 rounded-[var(--r-field)] border border-[var(--line)] bg-[var(--surface-card)] px-3.5 shadow-[var(--elev-1)] transition-[background-color,border-color,box-shadow] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface-card)]";
 
 export type TripDateSelectorProps = Readonly<{
   tripStart: Date;
@@ -64,7 +67,7 @@ export function TripDateSelector({
 
   return (
     <div className={className}>
-      <p className="text-xs font-semibold text-slate-500">{t("label")}</p>
+      <p className="type-eyebrow text-[var(--text-muted)]">{t("label")}</p>
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger asChild>
           <button
@@ -73,19 +76,29 @@ export function TripDateSelector({
             aria-label={t("ariaSummary", { summary: dateSummary })}
           >
             <span className="flex min-w-0 flex-1 items-center gap-2 text-left">
-              <CalendarDays className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
-              <span className="truncate text-sm font-semibold text-slate-800">
+              <CalendarDays
+                className="h-4 w-4 shrink-0 text-[var(--text-muted)]"
+                aria-hidden
+              />
+              <span
+                data-numeric
+                className="truncate text-sm font-semibold text-[var(--ink-800)]"
+              >
                 {dateSummary}
               </span>
             </span>
-            <span className="shrink-0 text-xs font-semibold text-slate-500">{t("change")}</span>
+            <span className="type-spec shrink-0 text-[var(--text-muted)]">
+              {t("change")}
+            </span>
           </button>
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Content
+            side="bottom"
             sideOffset={8}
-            align="start"
-            className="z-[100] rounded-2xl border border-slate-200 bg-white p-3 shadow-xl"
+            align="center"
+            collisionPadding={{ top: 72, right: 16, bottom: 16, left: 16 }}
+            className="z-[100] max-h-[var(--radix-popover-content-available-height)] w-max max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] p-2.5 shadow-[var(--elev-3)] sm:rounded-[var(--r-panel)] sm:p-3 sm:shadow-[inset_0_0_0_1px_var(--line-subtle),var(--elev-4)]"
           >
             <DayPicker
               mode="range"

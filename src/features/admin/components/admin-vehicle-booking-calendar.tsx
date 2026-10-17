@@ -23,6 +23,7 @@ import {
   isToday,
 } from "@/lib/admin/vehicles/booking-calendar-utils";
 import type { AdminVehicleBookingCalendarItem } from "@/lib/admin/vehicles/getAdminVehicleBookingsForCalendar";
+import { formatMaltaDateTime } from "@/lib/format-malta-datetime";
 
 type CalendarView = "week" | "month";
 
@@ -66,14 +67,7 @@ function formatBookingRange(
   booking: AdminVehicleBookingCalendarItem,
   locale: string,
 ): string {
-  const pickup = new Date(booking.pickupDateTime);
-  const returnAt = new Date(booking.returnDateTime);
-  const formatter = new Intl.DateTimeFormat(locale, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-
-  return `${formatter.format(pickup)} → ${formatter.format(returnAt)}`;
+  return `${formatMaltaDateTime(booking.pickupDateTime, locale)} → ${formatMaltaDateTime(booking.returnDateTime, locale)}`;
 }
 
 export function AdminVehicleBookingCalendar({ bookings }: AdminVehicleBookingCalendarProps) {

@@ -1,4 +1,5 @@
 import type { Prisma, VehicleType } from "@/generated/prisma/client";
+import type { VehicleColor } from "@/features/vehicles/data/vehicles";
 
 import { prisma } from "@/lib/prisma";
 import { findAvailableVehicleUnits } from "@/lib/vehicle-units";
@@ -16,6 +17,7 @@ export type CheckVehicleAvailabilityInput = {
   requestedStart: Date;
   requestedEnd: Date;
   vehicleType?: VehicleType;
+  color?: VehicleColor;
   excludeHoldReference?: string;
   excludeSessionKey?: string;
 };
@@ -78,6 +80,7 @@ export async function checkVehicleAvailability(
         vehicleId: input.vehicleId,
         requestedStart: input.requestedStart,
         requestedEnd: input.requestedEnd,
+        color: input.color,
         excludeHoldReference: input.excludeHoldReference,
         excludeSessionKey: input.excludeSessionKey,
       },

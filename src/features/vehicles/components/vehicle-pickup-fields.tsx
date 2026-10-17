@@ -14,9 +14,12 @@ import { loadMaltaLocationOptions } from "@/features/vehicles/lib/malta-pickup-l
 
 /** Shared shell for vehicle filter controls — matches the trip-date filter trigger styling. */
 export const vehicleFilterControlShellClass =
-  "mt-2 flex w-full min-w-0 min-h-[2.625rem] items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.25)] transition hover:border-slate-300 focus-within:ring-2 focus-within:ring-[var(--brand-blue)]/40 focus-within:ring-offset-0";
+  "mt-2 flex w-full min-w-0 min-h-[2.875rem] items-center gap-2 rounded-[var(--r-field)] border border-[var(--line)] bg-[var(--surface-card)] px-3.5 shadow-[var(--elev-1)] transition-[border-color,box-shadow] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:border-[var(--line-strong)] focus-within:border-[var(--blue-500)] focus-within:ring-2 focus-within:ring-[var(--blue-500)]/25";
 
 const fieldWrapClass = vehicleFilterControlShellClass;
+
+const fieldLabelClass =
+  "type-spec flex min-w-0 w-full flex-col text-[var(--text-muted)]";
 
 /** react-select menu + options — same look for location, type, and transmission. */
 export const vehicleFilterReactSelectStyles: StylesConfig<
@@ -44,16 +47,25 @@ export const vehicleFilterReactSelectStyles: StylesConfig<
   singleValue: (base) => ({
     ...base,
     margin: 0,
-    color: "#1e293b",
+    color: "var(--ink-900)",
     fontWeight: 600,
     fontSize: "0.875rem",
     lineHeight: 1.25,
+    letterSpacing: "-0.01em",
+  }),
+  input: (base) => ({
+    ...base,
+    margin: 0,
+    padding: 0,
+    color: "var(--ink-900)",
+    fontWeight: 600,
+    fontSize: "0.875rem",
   }),
   placeholder: (base) => ({
     ...base,
     margin: 0,
-    color: "#64748b",
-    fontWeight: 600,
+    color: "var(--ink-400)",
+    fontWeight: 500,
     fontSize: "0.875rem",
     lineHeight: 1.25,
   }),
@@ -61,41 +73,73 @@ export const vehicleFilterReactSelectStyles: StylesConfig<
   indicatorSeparator: () => ({ display: "none" }),
   dropdownIndicator: (base) => ({
     ...base,
-    color: "#64748b",
+    color: "var(--ink-500)",
     padding: "0 0 0 4px",
-    ":hover": { color: "#334155" },
+    transition: "color var(--dur-fast) var(--ease-standard)",
+    ":hover": { color: "var(--ink-800)" },
   }),
+  loadingIndicator: (base) => ({ ...base, color: "var(--ink-400)" }),
   menu: (base) => ({
     ...base,
-    borderRadius: 4,
-    border: "1px solid rgba(58,124,165,0.28)",
-    boxShadow: "0 20px 44px -25px rgba(15, 23, 42, 0.45)",
+    borderRadius: "var(--r-card)",
+    border: "1px solid var(--line-subtle)",
+    backgroundColor: "var(--surface-card)",
+    boxShadow: "var(--elev-5)",
     overflow: "hidden",
     zIndex: 9999,
-    marginTop: 8,
+    marginTop: 6,
+    padding: 0,
   }),
   menuList: (base) => ({
     ...base,
-    maxHeight: 280,
-    paddingTop: 4,
+    maxHeight: 260,
+    padding: "6px",
+  }),
+  noOptionsMessage: (base) => ({
+    ...base,
+    fontSize: "0.8125rem",
+    color: "var(--text-muted)",
+  }),
+  loadingMessage: (base) => ({
+    ...base,
+    fontSize: "0.8125rem",
+    color: "var(--text-muted)",
+  }),
+  groupHeading: (base) => ({
+    ...base,
+    fontSize: "0.6875rem",
+    fontWeight: 600,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    color: "var(--text-faint)",
+    paddingTop: 8,
     paddingBottom: 4,
   }),
   option: (base, state) => ({
     ...base,
+    borderRadius: "calc(var(--r-field) - 2px)",
     fontSize: "0.875rem",
-    fontWeight: 600,
+    fontWeight: state.isSelected ? 600 : 500,
+    letterSpacing: "-0.01em",
+    padding: "9px 12px",
+    marginBottom: 2,
     cursor: "pointer",
+    transition:
+      "background-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard)",
     backgroundColor: state.isSelected
-      ? "var(--brand-blue)"
+      ? "color-mix(in srgb, var(--orange-600) 10%, var(--surface-card))"
       : state.isFocused
-        ? "rgba(58, 124, 165, 0.12)"
-        : "#ffffff",
-    color: state.isSelected ? "#ffffff" : "#0f172a",
+        ? "var(--surface-soft)"
+        : "transparent",
+    color: "var(--ink-900)",
+    boxShadow: state.isSelected
+      ? "inset 0 0 0 1px color-mix(in srgb, var(--orange-600) 20%, var(--line))"
+      : "none",
     ":active": {
       ...base[":active"],
       backgroundColor: state.isSelected
-        ? "var(--brand-blue-strong)"
-        : "rgba(58, 124, 165, 0.18)",
+        ? "color-mix(in srgb, var(--orange-600) 14%, var(--surface-card))"
+        : "var(--surface-band)",
     },
   }),
   menuPortal: (base) => ({ ...base, zIndex: 9999 }),
@@ -113,11 +157,11 @@ export function VehiclePickupLocationField({
   const defaultLocationOptions = useMemo(() => [...locationOptions], []);
 
   return (
-    <label className="flex min-w-0 w-full flex-col text-xs font-semibold text-slate-500">
+    <label className={fieldLabelClass}>
       Pick-up location
       <div className={fieldWrapClass}>
         <MapPin
-          className="h-4 w-4 shrink-0 text-slate-600"
+          className="h-4 w-4 shrink-0 text-[var(--orange-500)]"
           aria-hidden
         />
         <AsyncSelect
@@ -166,7 +210,7 @@ export function VehiclePickupDateField({
   };
 
   return (
-    <label className="flex min-w-0 w-full flex-col text-xs font-semibold text-slate-500">
+    <label className={fieldLabelClass}>
       Pick-up date
       <div className={fieldWrapClass}>
         <DatePicker
@@ -187,7 +231,9 @@ export function VehiclePickupDateField({
                   minHeight: 36,
                   fontSize: "0.875rem",
                   fontWeight: 600,
-                  color: "#0f172a",
+                  letterSpacing: "-0.01em",
+                  fontVariantNumeric: "tabular-nums",
+                  color: "var(--ink-900)",
                   alignItems: "center",
                 },
                 "& .MuiInputBase-input": {
@@ -196,7 +242,7 @@ export function VehiclePickupDateField({
                   cursor: "pointer",
                 },
                 "& .MuiIconButton-root": {
-                  color: "#64748b",
+                  color: "var(--ink-500)",
                   p: 0,
                 },
                 "& .MuiSvgIcon-root": {
@@ -206,9 +252,9 @@ export function VehiclePickupDateField({
             },
             desktopPaper: {
               sx: {
-                borderRadius: "4px",
-                border: "1px solid rgba(58,124,165,0.32)",
-                boxShadow: "0 24px 48px -30px rgba(15,23,42,0.55)",
+                borderRadius: "var(--r-card)",
+                border: "1px solid var(--line)",
+                boxShadow: "var(--elev-4)",
               },
             },
           }}

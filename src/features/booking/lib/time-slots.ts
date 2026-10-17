@@ -20,6 +20,9 @@ export const BOOKING_TIME_SLOTS: readonly string[] = (() => {
   return out;
 })();
 
+/** Stable default for SSR/hydration; pair with {@link nextBookingSlotWithinHours} after mount. */
+export const BOOKING_PICKUP_TIME_FALLBACK = BOOKING_TIME_SLOTS[0] ?? "09:30";
+
 /** Next booking slot at least `bufferMinutes` ahead, restricted to {@link BOOKING_TIME_SLOTS}. */
 export function nextBookingSlotWithinHours(bufferMinutes = 90): string {
   const slots = BOOKING_TIME_SLOTS;

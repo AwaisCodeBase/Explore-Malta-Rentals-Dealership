@@ -158,7 +158,7 @@ export const BOOKING_VALIDATION_EXAMPLES: ExampleCase[] = [
         vehicleType: "ATV",
       },
       addons: {
-        cdwOption: "REDUCE_800_ATV",
+        cdwOption: "NO_CDW",
         helmetSize1: null,
         helmetSize2: null,
       },

@@ -6,7 +6,7 @@ import { HotelCodeField } from "@/features/booking-flow/components/hotel-code-fi
 
 export function OptionsDeliveryStep() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <PickupDropoffStep />
       <AddonsStep />
       <HotelCodeField />

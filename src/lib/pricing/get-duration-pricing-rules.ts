@@ -1,43 +1,41 @@
-import type { VehicleType } from "@/generated/prisma/client";
+import { PRICING_TIERS } from "@/lib/pricing/pricing-tiers";
 
-import {
-  mapDbDurationPricingRule,
-  type DurationPricingRuleDto,
-} from "@/lib/pricing/duration-pricing";
-import { prisma } from "@/lib/prisma";
+/** Static tier config returned by pricing APIs — not loaded from the database. */
+export type PricingTierDto = Readonly<{
+  key: string;
+  minDays: number;
+  maxDays: number | null;
+  discountPercent: number;
+  displayOrder: number;
+}>;
 
-export async function getDurationPricingRules(): Promise<DurationPricingRuleDto[]> {
-  const rules = await prisma.durationPricingRule.findMany({
-    where: { isActive: true },
-    orderBy: [{ vehicleType: "asc" }, { displayOrder: "asc" }, { minDays: "asc" }],
-    select: {
-      id: true,
-      vehicleType: true,
-      minDays: true,
-      maxDays: true,
-      discountPercent: true,
-      displayOrder: true,
-    },
-  });
+/** @deprecated Use {@link PricingTierDto} */
+export type DurationPricingRuleDto = PricingTierDto;
 
-  return rules.map(mapDbDurationPricingRule);
+function mapPricingTierToDto(
+  tier: (typeof PRICING_TIERS)[number],
+  displayOrder: number,
+): PricingTierDto {
+  return {
+    key: tier.key,
+    minDays: tier.minDays,
+    maxDays: tier.maxDays,
+    discountPercent: tier.discountPercent,
+    displayOrder,
+  };
 }
 
-export async function getDurationPricingRulesForType(
-  vehicleType: VehicleType,
-): Promise<DurationPricingRuleDto[]> {
-  const rules = await prisma.durationPricingRule.findMany({
-    where: { isActive: true, vehicleType },
-    orderBy: [{ displayOrder: "asc" }, { minDays: "asc" }],
-    select: {
-      id: true,
-      vehicleType: true,
-      minDays: true,
-      maxDays: true,
-      discountPercent: true,
-      displayOrder: true,
-    },
-  });
+/** Returns the static PRICING_TIERS configuration (not database rows). */
+export async function getPricingTiers(): Promise<PricingTierDto[]> {
+  return PRICING_TIERS.map((tier, index) => mapPricingTierToDto(tier, (index + 1) * 10));
+}
 
-  return rules.map(mapDbDurationPricingRule);
+/** @deprecated Use {@link getPricingTiers} — name retained for backward compatibility. */
+export async function getDurationPricingRules(): Promise<PricingTierDto[]> {
+  return getPricingTiers();
+}
+
+/** @deprecated Use {@link getPricingTiers} */
+export async function getDurationPricingRulesForType(): Promise<PricingTierDto[]> {
+  return getPricingTiers();
 }

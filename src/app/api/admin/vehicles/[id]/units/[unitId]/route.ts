@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
-  adminVehicleUnitWriteSchema,
+  adminVehicleUnitUpdateSchema,
   deleteAdminVehicleUnit,
   DuplicateVehicleUnitLicensePlateError,
   VehicleUnitHasActiveBookingError,
@@ -52,7 +52,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ success: false as const, message: "Invalid request body" }, { status: 400 });
     }
 
-    const parsed = adminVehicleUnitWriteSchema.safeParse(body);
+    const parsed = adminVehicleUnitUpdateSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { success: false as const, message: formatZodError(parsed.error) },

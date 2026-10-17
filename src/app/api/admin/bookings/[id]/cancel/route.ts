@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { formatZodError } from "@/lib/admin/bookings/format-zod-error";
 import { cancelBooking, cancelBookingSchema } from "@/lib/admin/bookings/lifecycle";
 import { AdminUnauthorizedError, requireAdminApi } from "@/lib/admin-auth";
+import { sendBookingCancellation } from "@/lib/email/sendBookingCancellation";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -39,7 +40,21 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    return NextResponse.json({ success: true as const, booking: result.booking });
+    const emailResult = await sendBookingCancellation({
+      to: result.booking.customerEmail,
+      subject: parsed.data.emailSubject,
+      body: parsed.data.emailBody,
+      bookingReference: result.booking.bookingReference,
+    });
+
+    return NextResponse.json({
+      success: true as const,
+      booking: result.booking,
+      emailSent: emailResult.success,
+      message: emailResult.success
+        ? undefined
+        : "The booking was cancelled, but the customer email could not be sent. Please contact the customer directly.",
+    });
   } catch (error) {
     if (error instanceof AdminUnauthorizedError) {
       return NextResponse.json({ success: false as const, message: "Unauthorized" }, { status: 401 });

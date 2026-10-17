@@ -7,20 +7,11 @@ import type {
   AdminVehicleListResult,
 } from "@/lib/admin/vehicles/types";
 import { prisma } from "@/lib/prisma";
-
-const vehicleRelationCountSelect = {
-  bookings: true,
-  reservationHolds: true,
-  availabilityBlocks: true,
-} as const;
-
-function canDeleteVehicle(counts: {
-  bookings: number;
-  reservationHolds: number;
-  availabilityBlocks: number;
-}): boolean {
-  return counts.bookings === 0 && counts.reservationHolds === 0 && counts.availabilityBlocks === 0;
-}
+import {
+  vehicleCanDelete,
+  vehicleDeleteBlockedReasons,
+  vehicleDeleteRelationCountSelect,
+} from "@/lib/admin/vehicles/vehicle-delete-errors";
 
 function normalizeSearchTerm(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
@@ -58,8 +49,10 @@ export async function listAdminVehicles(filters: AdminVehicleListFilters = {}): 
         name: true,
         slug: true,
         vehicleType: true,
+        engineCc: true,
         brand: true,
         model: true,
+        color: true,
         mainImageUrl: true,
         catalogStatus: true,
         isActive: true,
@@ -71,7 +64,7 @@ export async function listAdminVehicles(filters: AdminVehicleListFilters = {}): 
           select: { imageUrl: true },
         },
         _count: {
-          select: vehicleRelationCountSelect,
+          select: vehicleDeleteRelationCountSelect(),
         },
       },
     }),
@@ -89,8 +82,10 @@ export async function listAdminVehicles(filters: AdminVehicleListFilters = {}): 
         name: vehicle.name,
         slug: vehicle.slug,
         vehicleType: vehicle.vehicleType,
+        engineCc: vehicle.engineCc,
         brand: vehicle.brand,
         model: vehicle.model,
+        color: vehicle.color,
         mainImageUrl: vehicle.mainImageUrl ?? vehicle.images[0]?.imageUrl ?? null,
         catalogStatus: vehicle.catalogStatus,
         isActive: vehicle.isActive,
@@ -99,7 +94,10 @@ export async function listAdminVehicles(filters: AdminVehicleListFilters = {}): 
         totalUnits: counts.totalUnits,
         availableUnits: counts.availableUnits,
         bookingCount: vehicle._count.bookings,
-        canDelete: canDeleteVehicle(vehicle._count),
+        reservationHoldCount: vehicle._count.reservationHolds,
+        availabilityBlockCount: vehicle._count.availabilityBlocks,
+        canDelete: vehicleCanDelete(vehicle._count),
+        deleteBlockedReasons: vehicleDeleteBlockedReasons(vehicle._count),
       };
     }),
   };
@@ -113,8 +111,10 @@ export async function getAdminVehicleById(id: string): Promise<AdminVehicleDetai
       name: true,
       slug: true,
       vehicleType: true,
+      engineCc: true,
       brand: true,
       model: true,
+      color: true,
       shortDescription: true,
       description: true,
       mainImageUrl: true,
@@ -137,7 +137,7 @@ export async function getAdminVehicleById(id: string): Promise<AdminVehicleDetai
         },
       },
       _count: {
-        select: vehicleRelationCountSelect,
+        select: vehicleDeleteRelationCountSelect(),
       },
     },
   });
@@ -157,8 +157,10 @@ export async function getAdminVehicleById(id: string): Promise<AdminVehicleDetai
     name: vehicle.name,
     slug: vehicle.slug,
     vehicleType: vehicle.vehicleType,
+    engineCc: vehicle.engineCc,
     brand: vehicle.brand,
     model: vehicle.model,
+    color: vehicle.color,
     shortDescription: vehicle.shortDescription,
     description: vehicle.description,
     mainImageUrl: vehicle.mainImageUrl ?? vehicle.images[0]?.imageUrl ?? null,
@@ -171,7 +173,10 @@ export async function getAdminVehicleById(id: string): Promise<AdminVehicleDetai
     helmetIncludedCount: vehicle.helmetIncludedCount,
     supportsStorageBox: vehicle.supportsStorageBox,
     bookingCount: vehicle._count.bookings,
-    canDelete: canDeleteVehicle(vehicle._count),
+    reservationHoldCount: vehicle._count.reservationHolds,
+    availabilityBlockCount: vehicle._count.availabilityBlocks,
+    canDelete: vehicleCanDelete(vehicle._count),
+    deleteBlockedReasons: vehicleDeleteBlockedReasons(vehicle._count),
     images: vehicle.images.map((image) => ({
       id: image.id,
       imageUrl: image.imageUrl,

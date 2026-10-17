@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { differenceInCalendarDays, startOfDay } from "date-fns";
 import { Car, Gauge, Palette, Users } from "lucide-react";
 import Select, {
   components as selectComponents,
@@ -21,10 +20,9 @@ import {
   vehicleFilterReactSelectStyles,
 } from "@/features/vehicles/components/vehicle-pickup-fields";
 import { TripDateSelector } from "@/features/vehicles/components/trip-date-selector";
-import {
-  getIndicativeMotorcycleScooterDailyRateEur,
-  getIndicativeMotorcycleScooterTripTotalEur,
-} from "@/features/booking/lib/indicative-motorcycle-scooter-rates";
+import { formatPickupDateParam } from "@/features/vehicles/lib/booking-search-params";
+import { calculateCalendarRentalDays } from "@/lib/pricing/rental-duration";
+import { getPricingTierForDays } from "@/lib/pricing/pricing-tiers";
 
 type VehicleFiltersProps = Readonly<{
   pickupLocation: BookingOption | null;
@@ -63,7 +61,7 @@ function makeFilterDropdownIndicator(changeLabel: string) {
   ) {
     return (
       <selectComponents.DropdownIndicator {...props}>
-        <span className="shrink-0 text-xs font-semibold text-slate-500">
+        <span className="type-spec shrink-0 text-[var(--text-muted)]">
           {changeLabel}
         </span>
       </selectComponents.DropdownIndicator>
@@ -73,7 +71,7 @@ function makeFilterDropdownIndicator(changeLabel: string) {
 
 
 const filterCellClass =
-  "flex min-w-0 w-full flex-col text-xs font-semibold text-slate-500";
+  "type-eyebrow flex min-w-0 w-full flex-col text-[var(--text-muted)]";
 
 const filterShellClass = vehicleFilterControlShellClass;
 
@@ -93,14 +91,16 @@ function VehicleFilterToggle({
       htmlFor={switchId}
       className="inline-flex cursor-pointer items-center gap-3 select-none whitespace-nowrap"
     >
-      <span className="text-sm font-semibold leading-none text-slate-700">
+      <span className="text-sm font-semibold leading-none text-[var(--ink-800)]">
         {label}
       </span>
       <span
         className={[
-          "relative box-border inline-block h-7 w-12 shrink-0 self-center rounded-full p-0.5 align-middle transition-colors duration-200",
-          "focus-within:ring-2 focus-within:ring-[var(--brand-orange)] focus-within:ring-offset-2 focus-within:ring-offset-white",
-          checked ? "bg-[var(--brand-orange)]" : "bg-slate-300/85",
+          "relative box-border inline-block h-7 w-12 shrink-0 self-center rounded-full p-0.5 align-middle transition-colors duration-[var(--dur-base)] ease-[var(--ease-standard)]",
+          "focus-within:ring-2 focus-within:ring-[var(--blue-500)] focus-within:ring-offset-2 focus-within:ring-offset-white",
+          checked
+            ? "bg-[var(--orange-400)] shadow-[var(--elev-orange)]"
+            : "bg-[var(--ink-300)]",
         ].join(" ")}
       >
         <input
@@ -114,12 +114,12 @@ function VehicleFilterToggle({
         />
         <span
           aria-hidden
-          className="pointer-events-none absolute left-0.5 top-1/2 h-5 w-5 rounded-full bg-white shadow-[0_1px_3px_rgba(15,23,42,0.2)]"
+          className="pointer-events-none absolute left-0.5 top-1/2 h-5 w-5 rounded-full bg-white shadow-sm"
           style={{
             transform: checked
               ? "translate(1.5rem, -50%)"
               : "translate(0, -50%)",
-            transition: "transform 200ms ease-out",
+            transition: "transform var(--dur-base) var(--ease-out-expo)",
           }}
         />
       </span>
@@ -150,6 +150,11 @@ export function VehicleFilters({
 }: VehicleFiltersProps) {
   const t = useTranslations("VehicleFilters");
   const tCommon = useTranslations("Common");
+  const [selectMenuPortalTarget, setSelectMenuPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setSelectMenuPortalTarget(document.body);
+  }, []);
 
   const filterSelectComponents = useMemo(
     () => ({
@@ -217,22 +222,13 @@ export function VehicleFilters({
     return "grid w-full min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4";
   })();
 
-  const durationDays = useMemo(
-    () =>
-      Math.max(
-        1,
-        differenceInCalendarDays(
-          startOfDay(tripEnd),
-          startOfDay(tripStart),
-        ),
-      ),
-    [tripStart, tripEnd],
-  );
+  const durationDays = useMemo(() => {
+    const pickupDate = formatPickupDateParam(tripStart);
+    const returnDate = formatPickupDateParam(tripEnd);
+    return calculateCalendarRentalDays(pickupDate, returnDate) ?? 0;
+  }, [tripStart, tripEnd]);
 
-  const indicativeDailyEur =
-    getIndicativeMotorcycleScooterDailyRateEur(durationDays);
-  const indicativeTripTotalEur =
-    getIndicativeMotorcycleScooterTripTotalEur(durationDays);
+  const matchedTier = durationDays > 0 ? getPricingTierForDays(durationDays) : null;
 
   const dayWord = durationDays === 1 ? tCommon("day") : tCommon("days");
   const durationSummary = t("durationLine", { count: durationDays });
@@ -244,7 +240,7 @@ export function VehicleFilters({
     <section
       id="vehicle-trip-search"
       aria-label={t("ariaVehicleSearch")}
-      className="sticky top-18 z-20 scroll-mt-28 rounded-md border border-slate-200/75 bg-white/90 p-4 backdrop-blur-md md:p-5"
+      className="surface-panel sticky top-18 z-20 scroll-mt-28 p-4 md:p-5"
     >
       <div className={mainGridClass}>
         <div className="min-w-0">
@@ -279,9 +275,7 @@ export function VehicleFilters({
                 isSearchable={false}
                 styles={vehicleFilterReactSelectStyles}
                 components={filterSelectComponents}
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
+                menuPortalTarget={selectMenuPortalTarget}
                 menuPosition="fixed"
                 className="min-w-0 flex-1"
                 classNamePrefix="vehicle-filter-type"
@@ -315,9 +309,7 @@ export function VehicleFilters({
                 isSearchable={false}
                 styles={vehicleFilterReactSelectStyles}
                 components={filterSelectComponents}
-                menuPortalTarget={
-                  typeof document !== "undefined" ? document.body : null
-                }
+                menuPortalTarget={selectMenuPortalTarget}
                 menuPosition="fixed"
                 className="min-w-0 flex-1"
                 classNamePrefix="vehicle-filter-transmission"
@@ -351,9 +343,7 @@ export function VehicleFilters({
                   isSearchable={false}
                   styles={vehicleFilterReactSelectStyles}
                   components={filterSelectComponents}
-                  menuPortalTarget={
-                    typeof document !== "undefined" ? document.body : null
-                  }
+                  menuPortalTarget={selectMenuPortalTarget}
                   menuPosition="fixed"
                   className="min-w-0 flex-1"
                   classNamePrefix="vehicle-filter-seats"
@@ -386,9 +376,7 @@ export function VehicleFilters({
                   isSearchable={false}
                   styles={vehicleFilterReactSelectStyles}
                   components={filterSelectComponents}
-                  menuPortalTarget={
-                    typeof document !== "undefined" ? document.body : null
-                  }
+                  menuPortalTarget={selectMenuPortalTarget}
                   menuPosition="fixed"
                   className="min-w-0 flex-1"
                   classNamePrefix="vehicle-filter-color"
@@ -405,12 +393,13 @@ export function VehicleFilters({
               {pickupSuffix}
             </p>
             <p className="mt-0.5 text-xs text-slate-600 sm:text-sm">
-              {t("indicativeLine", {
-                tripEur: indicativeTripTotalEur,
-                dailyEur: indicativeDailyEur,
-                count: durationDays,
-                dayLabel: dayWord,
-              })}
+              {matchedTier
+                ? t("durationDiscountLine", {
+                    count: durationDays,
+                    dayLabel: dayWord,
+                    percent: matchedTier.discountPercent,
+                  })
+                : t("durationDiscountLineMax", { percent: 40 })}
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">

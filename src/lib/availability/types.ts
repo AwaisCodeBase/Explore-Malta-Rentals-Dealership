@@ -7,6 +7,7 @@ import type {
 } from "@/generated/prisma/index";
 
 export const BLOCKING_BOOKING_STATUSES = [
+  "PENDING_PAYMENT",
   "CONFIRMED",
   "VEHICLE_HANDED_OVER",
   "RETURNED",

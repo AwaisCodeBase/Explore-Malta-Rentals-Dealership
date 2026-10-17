@@ -36,16 +36,24 @@ const locationSelectStyles: StylesConfig<BookingOption, false, GroupBase<Booking
   singleValue: (base) => ({
     ...base,
     margin: 0,
-    color: "#0f172a",
+    color: "var(--ink-900)",
     fontWeight: 600,
     fontSize: "0.875rem",
     letterSpacing: "-0.01em",
   }),
+  input: (base) => ({
+    ...base,
+    margin: 0,
+    padding: 0,
+    color: "var(--ink-900)",
+    fontWeight: 600,
+    fontSize: "0.875rem",
+  }),
   placeholder: (base) => ({
     ...base,
     margin: 0,
-    color: "#64748b",
-    fontWeight: 600,
+    color: "var(--ink-400)",
+    fontWeight: 500,
     fontSize: "0.875rem",
     letterSpacing: "-0.01em",
   }),
@@ -58,15 +66,17 @@ const locationSelectStyles: StylesConfig<BookingOption, false, GroupBase<Booking
   }),
   dropdownIndicator: (base) => ({
     ...base,
-    color: "#64748b",
+    color: "var(--ink-500)",
     padding: 2,
-    ":hover": { color: "#334155" },
+    transition: "color var(--dur-fast) var(--ease-standard)",
+    ":hover": { color: "var(--ink-800)" },
   }),
+  loadingIndicator: (base) => ({ ...base, color: "var(--ink-400)" }),
   menu: (base) => ({
     ...base,
-    borderRadius: 8,
-    border: "1px solid rgba(58,124,165,0.28)",
-    boxShadow: "0 20px 44px -25px rgba(15, 23, 42, 0.45)",
+    borderRadius: "var(--r-card)",
+    border: "1px solid var(--line)",
+    boxShadow: "var(--elev-4)",
     overflow: "hidden",
     zIndex: 9999,
     marginTop: 8,
@@ -74,23 +84,45 @@ const locationSelectStyles: StylesConfig<BookingOption, false, GroupBase<Booking
   menuList: (base) => ({
     ...base,
     maxHeight: 300,
-    paddingTop: 4,
-    paddingBottom: 4,
+    padding: 6,
   }),
   option: (base, state) => ({
     ...base,
-    fontSize: "0.92rem",
-    background: state.isFocused ? "rgba(58,124,165,0.1)" : "#ffffff",
-    color: "#0f172a",
+    borderRadius: "var(--r-field)",
+    fontSize: "0.875rem",
+    fontWeight: 500,
     cursor: "pointer",
+    transition: "background-color var(--dur-fast) var(--ease-standard)",
+    background: state.isSelected
+      ? "var(--blue-500)"
+      : state.isFocused
+        ? "color-mix(in srgb, var(--blue-500) 10%, white)"
+        : "transparent",
+    color: state.isSelected ? "#ffffff" : "var(--ink-900)",
+    ":active": {
+      ...base[":active"],
+      background: state.isSelected
+        ? "var(--blue-600)"
+        : "color-mix(in srgb, var(--blue-500) 16%, white)",
+    },
+  }),
+  noOptionsMessage: (base) => ({
+    ...base,
+    fontSize: "0.8125rem",
+    color: "var(--text-muted)",
+  }),
+  loadingMessage: (base) => ({
+    ...base,
+    fontSize: "0.8125rem",
+    color: "var(--text-muted)",
   }),
   groupHeading: (base) => ({
     ...base,
-    fontSize: "0.7rem",
-    fontWeight: 700,
+    fontSize: "0.6875rem",
+    fontWeight: 600,
     letterSpacing: "0.08em",
     textTransform: "uppercase",
-    color: "#475569",
+    color: "var(--text-faint)",
     paddingTop: 8,
     paddingBottom: 4,
   }),
@@ -185,7 +217,7 @@ export function BookingLocationSelect({
   if (!isMounted) {
     return (
       <div
-        className="min-h-[3rem] flex-1 rounded-2xl border border-slate-200/90 bg-white/80 px-2"
+        className="skeleton min-h-[3rem] flex-1 rounded-[var(--r-field)]"
         aria-hidden
       />
     );

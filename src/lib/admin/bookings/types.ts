@@ -33,6 +33,7 @@ export type AdminBookingListItem = {
   pickupDateTime: string;
   returnDateTime: string;
   status: BookingStatus;
+  paymentStatus: PaymentStatus;
   depositMethod: DepositMethod;
   depositAmount: number;
   totalDueOnline: number;
@@ -78,6 +79,7 @@ export type AdminBookingDetail = {
   customerSpecialNotes: string | null;
   customerLicenseUploadPath: string | null;
   customerPassportUploadPath: string | null;
+  paymentProofUploadPath: string | null;
   customerWillPresentLicenseAtPickup: boolean;
   customerWillPresentIdAtPickup: boolean;
 
@@ -86,6 +88,7 @@ export type AdminBookingDetail = {
   vehicleUnitStatus: VehicleUnitStatus | null;
   vehicleName: string;
   vehicleLicensePlate: string | null;
+  vehicleColor: string | null;
   vehicleType: string;
   vehicleTypeSnapshot: string | null;
 

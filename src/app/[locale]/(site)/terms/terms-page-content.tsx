@@ -25,7 +25,7 @@ import {
 import { Container } from "@/components/ui/container";
 import { SITE_CONTACT, SITE_LOCATION_KICKER } from "@/lib/site-brand-copy";
 
-const LAST_UPDATED = "09 April 2026";
+const LAST_UPDATED = "20 August 2026";
 const WEBSITE_URL = "https://exploremaltarentals.com";
 
 type TermsSection = Readonly<{
@@ -40,34 +40,68 @@ function joinClasses(...classes: Array<string | false | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
+/**
+ * Long-form legal prose: comfortable measure, generous paragraph rhythm and
+ * list markers styled from the wrapper so the clause markup stays untouched.
+ */
+const LEGAL_PROSE_CLASS = [
+  "max-w-[68ch] space-y-5 text-[0.9375rem] leading-[1.78] text-[var(--text-secondary)] sm:text-base",
+  "[&_strong]:font-semibold [&_strong]:text-[var(--text-primary)]",
+  "[&_ul]:space-y-3 [&_ol]:space-y-3",
+  "[&_ul>li]:marker:text-orange-400",
+  "[&_ol>li]:marker:font-semibold [&_ol>li]:marker:text-[var(--text-faint)]",
+  "[&_li]:pl-1.5",
+].join(" ");
+
 function WarningBox({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-      <p className="flex items-start gap-2">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+    <div className="mt-7 max-w-[68ch] rounded-r-[var(--r-card)] border-l-[3px] border-l-orange-400 bg-orange-50/80 px-5 py-4 text-[0.9375rem] leading-[1.7] text-orange-950">
+      <p className="flex items-start gap-3">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" aria-hidden />
         <span>{children}</span>
       </p>
     </div>
   );
 }
 
-function SectionCard({ section }: Readonly<{ section: TermsSection }>) {
+/** Decorative clause number — the heading text itself is unchanged. */
+function SectionNumber({ index }: Readonly<{ index: number }>) {
+  return (
+    <span
+      aria-hidden
+      className="text-[0.6875rem] font-bold tabular-nums leading-none tracking-[0.14em] text-[var(--text-faint)]"
+    >
+      {String(index + 1).padStart(2, "0")}
+    </span>
+  );
+}
+
+function SectionCard({ section, index }: Readonly<{ section: TermsSection; index: number }>) {
   return (
     <section
       id={section.id}
-      className="scroll-mt-28 rounded-2xl border border-slate-200/90 bg-[var(--surface-card)] p-5 shadow-sm sm:p-6"
+      className="scroll-mt-[calc(var(--site-header-offset)+2rem)]"
       aria-labelledby={`${section.id}-title`}
     >
-      <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-slate-100 p-2.5 text-slate-700">{section.icon}</div>
-        <div>
-          <h2 id={`${section.id}-title`} className="text-xl font-semibold tracking-[-0.02em] text-slate-900">
+      <div className="flex items-start gap-4">
+        <div
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--r-field)] bg-[var(--surface-band)] text-[var(--ink-700)] ring-1 ring-inset ring-[var(--line-subtle)]"
+          aria-hidden
+        >
+          {section.icon}
+        </div>
+        <div className="min-w-0 pt-0.5">
+          <SectionNumber index={index} />
+          <h2
+            id={`${section.id}-title`}
+            className="type-h3 mt-2 text-[var(--text-primary)]"
+          >
             {section.title}
           </h2>
         </div>
       </div>
-      <div className="mt-4 space-y-3 text-sm leading-6 text-slate-700 sm:text-base">{section.content}</div>
-      {section.warning ? <WarningBox>{section.warning}</WarningBox> : null}
+      <div className={joinClasses("mt-6 pl-0 sm:pl-15", LEGAL_PROSE_CLASS)}>{section.content}</div>
+      <div className="sm:pl-15">{section.warning ? <WarningBox>{section.warning}</WarningBox> : null}</div>
     </section>
   );
 }
@@ -86,19 +120,28 @@ function DamageCostsTable() {
   ] as const;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200">
+    <div className="overflow-hidden rounded-[var(--r-card)] bg-[var(--surface-card)] shadow-[var(--elev-2)] ring-1 ring-inset ring-[var(--line-subtle)]">
       <table className="w-full border-collapse text-left text-sm">
-        <thead className="bg-slate-50 text-slate-800">
+        <thead className="bg-[var(--surface-band)]">
           <tr>
-            <th className="px-4 py-3 font-semibold">Damage type</th>
-            <th className="px-4 py-3 font-semibold">Estimated cost</th>
+            <th className="px-5 py-3.5 text-[0.6875rem] font-semibold uppercase leading-[1.2] tracking-[0.08em] text-[var(--text-muted)]">
+              Damage type
+            </th>
+            <th className="px-5 py-3.5 text-[0.6875rem] font-semibold uppercase leading-[1.2] tracking-[0.08em] text-[var(--text-muted)]">
+              Estimated cost
+            </th>
           </tr>
         </thead>
         <tbody>
           {rows.map(([type, cost]) => (
-            <tr key={type} className="border-t border-slate-200">
-              <td className="px-4 py-3 text-slate-700">{type}</td>
-              <td className="px-4 py-3 font-medium text-slate-900">{cost}</td>
+            <tr
+              key={type}
+              className="border-t border-[var(--line-subtle)] transition-colors duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:bg-[var(--surface-band)]/60"
+            >
+              <td className="px-5 py-3.5 text-[var(--text-secondary)]">{type}</td>
+              <td className="px-5 py-3.5 font-semibold tabular-nums text-[var(--text-primary)]">
+                {cost}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -118,7 +161,7 @@ export function TermsPageContent() {
           <>
             <ul className="list-disc space-y-1 pl-5">
               <li>
-                Minimum age: <strong>18 years</strong> for 50cc, <strong>21 years</strong> for 125cc and ATV/Quad.
+                Minimum age: <strong>21 years</strong> for all vehicles (50cc, 125cc, and ATV/Quad).
               </li>
               <li>
                 Valid driving licence required: <strong>AM</strong> for 50cc, <strong>A1/A2</strong> for 125cc.
@@ -135,7 +178,7 @@ export function TermsPageContent() {
         icon: <CalendarClock className="h-5 w-5" />,
         content: (
           <ul className="list-disc space-y-1 pl-5">
-            <li>Rentals are calculated on a 24-hour basis.</li>
+            <li>Rentals are calculated by day.</li>
             <li>
               Late return incurs <strong>EUR 20</strong> plus a <strong>full extra rental day</strong>.
             </li>
@@ -161,12 +204,7 @@ export function TermsPageContent() {
         icon: <HandCoins className="h-5 w-5" />,
         content: (
           <>
-            <p>Deposit is required at pickup (cash or card hold):</p>
-            <ul className="list-disc space-y-1 pl-5">
-              <li>50cc scooter: EUR 150</li>
-              <li>125cc scooter: EUR 250</li>
-              <li>ATV / Quad: EUR 250</li>
-            </ul>
+            <p>A refundable security deposit of <strong>EUR 250</strong> is required for all vehicles (cash or card hold at pickup).</p>
             <p>Deposit may be held for up to 7-10 days after return.</p>
           </>
         ),
@@ -498,8 +536,12 @@ export function TermsPageContent() {
             </div>
 
             <div className="hidden space-y-5 lg:block">
-              {sections.map((section) => (
-                <SectionCard key={`desktop-${section.id}`} section={section} />
+              {sections.map((section, index) => (
+                <SectionCard
+                  key={`desktop-${section.id}`}
+                  section={section}
+                  index={index}
+                />
               ))}
             </div>
 

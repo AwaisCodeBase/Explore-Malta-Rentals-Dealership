@@ -27,15 +27,14 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
   const t = await getTranslations("PrivacyPage");
 
   return (
-    <main className="mx-auto max-w-2xl px-5 py-16 sm:px-6 lg:px-8">
-      <p className="text-sm font-semibold text-[var(--brand-orange)]">{t("legalKicker")}</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-[var(--foreground)]">
-        {t("title")}
-      </h1>
-      <p className="mt-4 text-base leading-relaxed text-slate-600">{t("body")}</p>
+    <main className="mx-auto w-full max-w-2xl px-5 pt-[calc(var(--site-header-offset)+3rem)] pb-20 sm:px-6 sm:pt-[calc(var(--site-header-offset)+4rem)] sm:pb-24 lg:px-8 lg:pb-32">
+      <p className="type-eyebrow text-orange-600">{t("legalKicker")}</p>
+      <h1 className="type-h1 mt-3 text-[var(--text-primary)]">{t("title")}</h1>
+      <hr className="rule-fade mt-6" />
+      <p className="type-lead mt-6">{t("body")}</p>
       <Link
         href="/"
-        className="mt-8 inline-flex text-sm font-semibold text-slate-900 underline decoration-[var(--brand-orange)]/45 underline-offset-4 transition-colors hover:text-[var(--brand-orange-strong)] hover:underline hover:decoration-[var(--brand-orange)]"
+        className="mt-10 inline-flex text-sm font-semibold text-[var(--text-primary)] underline decoration-orange-400/45 underline-offset-4 transition-colors duration-[var(--dur-fast)] hover:text-orange-600 hover:decoration-orange-400"
       >
         {t("backToHome")}
       </Link>

@@ -1,22 +1,118 @@
 @import "tailwindcss";
-@import "react-day-picker/style.css";
+
+/* ============================================================================
+   DESIGN TOKENS
+   ========================================================================= */
 
 :root {
-  /* Page wash — clearly blue-tinted (not stark white) */
-  --background: #d0e4f3;
-  --foreground: #102235;
-  --brand-blue: #3a7ca5;
-  --brand-blue-strong: #2f6688;
-  --brand-orange: #ffa939;
-  --brand-orange-strong: #f0930f;
-  /* Section bands & cards — layered blues */
-  --surface-soft: #c4dff0;
-  --surface-elevated: #e4f0fa;
-  --surface-card: #f0f7fc;
-  /* Hero booking inputs */
-  --hero-field-bg: #f5faff;
+  /* ── Neutral ink ramp (cool Mediterranean stone) ───────────────────────── */
+  --ink-50: #f6f8fa;
+  --ink-100: #eaeff4;
+  --ink-200: #d6dfe8;
+  --ink-300: #b4c3d1;
+  --ink-400: #8598ab;
+  --ink-500: #5f7488;
+  --ink-600: #47596b;
+  --ink-700: #364554;
+  --ink-800: #223141;
+  --ink-900: #14222f;
+  --ink-950: #0a1420;
+
+  /* ── Brand blue ramp (anchored on the original #3a7ca5) ────────────────── */
+  --blue-50: #eef6fb;
+  --blue-100: #d8eaf5;
+  --blue-200: #b3d5e9;
+  --blue-300: #82b8d8;
+  --blue-400: #5598c1;
+  --blue-500: #3a7ca5;
+  --blue-600: #2f6688;
+  --blue-700: #28536e;
+  --blue-800: #24455b;
+  --blue-900: #223b4d;
+  --blue-950: #152634;
+
+  /* ── Brand orange ramp (anchored on the original #ffa939) ──────────────── */
+  --orange-50: #fff8ed;
+  --orange-100: #ffefd4;
+  --orange-200: #ffdba8;
+  --orange-300: #ffc271;
+  --orange-400: #ffa939;
+  --orange-500: #f9900f;
+  --orange-600: #e07408;
+  --orange-700: #b95509;
+  --orange-800: #94430f;
+  --orange-900: #783810;
+  --orange-950: #411a04;
+
+  /* ── Legacy brand aliases (kept so existing components keep working) ───── */
+  --brand-blue: var(--blue-500);
+  --brand-blue-strong: var(--blue-600);
+  --brand-orange: var(--orange-400);
+  --brand-orange-strong: var(--orange-500);
+
+  /* ── Surfaces ───────────────────────────────────────────────────────────
+     Bone-white canvas instead of the old flat blue wash. Section bands are
+     tonal rather than tinted, so photography and brand colour carry the page. */
+  --background: #fbfbfa;
+  --foreground: var(--ink-900);
+  --surface-page: #fbfbfa;
+  --surface-band: #f3f5f8;
+  --surface-card: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-soft: #f3f5f8;
+  --surface-sunken: #eef1f5;
+  --surface-inverse: var(--ink-950);
+  --hero-field-bg: #ffffff;
+
+  /* ── Hairlines ──────────────────────────────────────────────────────────
+     Alpha-based so borders sit on any surface without banding. */
+  --line-subtle: rgb(20 34 47 / 0.07);
+  --line: rgb(20 34 47 / 0.11);
+  --line-strong: rgb(20 34 47 / 0.18);
+  --line-inverse: rgb(255 255 255 / 0.12);
+
+  /* ── Text roles ─────────────────────────────────────────────────────────── */
+  --text-primary: var(--ink-900);
+  --text-secondary: var(--ink-600);
+  --text-muted: var(--ink-500);
+  --text-faint: var(--ink-400);
+
+  /* ── Elevation ──────────────────────────────────────────────────────────
+     Two-part shadows (tight contact + wide ambient) read as real depth;
+     single large blurs are the classic "cheap template" tell. */
+  --elev-1: 0 1px 2px rgb(16 34 47 / 0.05), 0 1px 3px -1px rgb(16 34 47 / 0.05);
+  --elev-2: 0 1px 2px rgb(16 34 47 / 0.04), 0 4px 10px -2px rgb(16 34 47 / 0.07);
+  --elev-3: 0 2px 4px -2px rgb(16 34 47 / 0.05), 0 10px 22px -6px rgb(16 34 47 / 0.10);
+  --elev-4: 0 4px 8px -4px rgb(16 34 47 / 0.06), 0 20px 40px -12px rgb(16 34 47 / 0.14);
+  --elev-5: 0 8px 16px -8px rgb(16 34 47 / 0.08), 0 36px 68px -20px rgb(16 34 47 / 0.20);
+  --elev-orange: 0 2px 6px -2px rgb(224 116 8 / 0.28), 0 14px 30px -10px rgb(224 116 8 / 0.42);
+  --elev-orange-lift: 0 4px 10px -2px rgb(224 116 8 / 0.32), 0 20px 42px -12px rgb(224 116 8 / 0.52);
+
+  /* ── Radii ──────────────────────────────────────────────────────────────── */
+  --r-field: 0.625rem;
+  --r-card: 1rem;
+  --r-panel: 1.25rem;
+  --r-feature: 1.75rem;
+
+  /* ── Motion ─────────────────────────────────────────────────────────────── */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dur-fast: 160ms;
+  --dur-base: 240ms;
+  --dur-slow: 420ms;
+  --dur-slower: 720ms;
+
+  /* ── Fluid type scale ───────────────────────────────────────────────────── */
+  --text-display: clamp(2.75rem, 1.55rem + 5.3vw, 5.5rem);
+  --text-h1: clamp(2.125rem, 1.35rem + 3.4vw, 3.75rem);
+  --text-h2: clamp(1.875rem, 1.35rem + 2.3vw, 2.875rem);
+  --text-h3: clamp(1.3125rem, 1.1rem + 0.95vw, 1.75rem);
+  --text-lead: clamp(1.0625rem, 1rem + 0.32vw, 1.1875rem);
+
   /*
-   * Fixed `SiteNavbar` stack height: safe-area + red bar + logo row + booking notice banner.
+   * Fixed `SiteNavbar` stack height: safe-area + logo/nav row.
    * Use for spacing page columns so content does not sit under the header.
    */
   /* Floating nav gap + red accent + logo/nav row + orange booking notice banner */
@@ -53,19 +149,80 @@ html.booking-banner-hidden {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-brand-orange: var(--brand-orange);
-  --color-brand-blue: var(--brand-blue);
+
+  --color-brand-orange: var(--orange-400);
+  --color-brand-blue: var(--blue-500);
+
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
+  --color-ink-500: var(--ink-500);
+  --color-ink-600: var(--ink-600);
+  --color-ink-700: var(--ink-700);
+  --color-ink-800: var(--ink-800);
+  --color-ink-900: var(--ink-900);
+  --color-ink-950: var(--ink-950);
+
+  --color-blue-50: var(--blue-50);
+  --color-blue-100: var(--blue-100);
+  --color-blue-200: var(--blue-200);
+  --color-blue-300: var(--blue-300);
+  --color-blue-400: var(--blue-400);
+  --color-blue-500: var(--blue-500);
+  --color-blue-600: var(--blue-600);
+  --color-blue-700: var(--blue-700);
+  --color-blue-800: var(--blue-800);
+  --color-blue-900: var(--blue-900);
+  --color-blue-950: var(--blue-950);
+
+  --color-orange-50: var(--orange-50);
+  --color-orange-100: var(--orange-100);
+  --color-orange-200: var(--orange-200);
+  --color-orange-300: var(--orange-300);
+  --color-orange-400: var(--orange-400);
+  --color-orange-500: var(--orange-500);
+  --color-orange-600: var(--orange-600);
+  --color-orange-700: var(--orange-700);
+  --color-orange-800: var(--orange-800);
+  --color-orange-900: var(--orange-900);
+  --color-orange-950: var(--orange-950);
+
+  --color-surface: var(--surface-card);
+  --color-band: var(--surface-band);
+  --color-sunken: var(--surface-sunken);
+
   --font-sans: var(--font-plus-jakarta-sans);
+  --font-display: var(--font-bricolage-grotesque);
   --font-mono: var(--font-plus-jakarta-sans);
-  --font-display: var(--font-plus-jakarta-sans);
+
+  /* Replace Tailwind's default single-blur shadows across the whole app. */
+  --shadow-2xs: var(--elev-1);
+  --shadow-xs: var(--elev-1);
+  --shadow-sm: var(--elev-2);
+  --shadow-md: var(--elev-3);
+  --shadow-lg: var(--elev-4);
+  --shadow-xl: var(--elev-4);
+  --shadow-2xl: var(--elev-5);
+
+  --ease-out-expo: var(--ease-out-expo);
+  --ease-out-quint: var(--ease-out-quint);
+  --ease-spring: var(--ease-spring);
 }
 
+/* Palette is intentionally identical in dark mode — the brand is a light,
+   sun-lit identity and the site has no dark theme. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #d0e4f3;
-    --foreground: #102235;
+    --background: #fbfbfa;
+    --foreground: var(--ink-900);
   }
 }
+
+/* ============================================================================
+   BASE
+   ========================================================================= */
 
 * {
   box-sizing: border-box;
@@ -83,7 +240,11 @@ body {
   overflow-x: clip;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-plus-jakarta-sans), sans-serif;
+  font-family: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui, sans-serif;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 @layer base {
@@ -91,22 +252,179 @@ body {
     color: inherit;
     text-decoration: none;
   }
+
+  /* Display face carries every heading; body face stays on prose and UI.
+     Non-Latin locales fall through to the system UI stack automatically. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-bricolage-grotesque), var(--font-plus-jakarta-sans),
+      ui-sans-serif, system-ui, sans-serif;
+    font-optical-sizing: auto;
+    text-wrap: balance;
+    letter-spacing: -0.025em;
+  }
+
+  h4,
+  h5,
+  h6 {
+    letter-spacing: -0.015em;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Prices, dates and spec figures should never reflow between states. */
+  :where(time, output, [data-numeric]) {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--blue-500);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--brand-orange) 45%, white);
-  color: #0f2233;
+  background: color-mix(in srgb, var(--orange-400) 42%, white);
+  color: var(--ink-950);
 }
 
-/* react-day-picker — align with brand */
-.rdp-root {
-  --rdp-accent-color: var(--brand-orange);
-  --rdp-accent-background-color: color-mix(in srgb, var(--brand-orange) 18%, white);
-  --rdp-range_middle-background-color: color-mix(in srgb, var(--brand-orange) 12%, white);
-  --rdp-range_start-background-color: var(--brand-orange);
-  --rdp-range_end-background-color: var(--brand-orange);
-  font-family: inherit;
+/* ============================================================================
+   TYPOGRAPHY UTILITIES
+   ========================================================================= */
+
+.type-display {
+  font-family: var(--font-bricolage-grotesque), var(--font-plus-jakarta-sans), sans-serif;
+  font-size: var(--text-display);
+  font-weight: 700;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
 }
+
+.type-h1 {
+  font-family: var(--font-bricolage-grotesque), var(--font-plus-jakarta-sans), sans-serif;
+  font-size: var(--text-h1);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+
+.type-h2 {
+  font-family: var(--font-bricolage-grotesque), var(--font-plus-jakarta-sans), sans-serif;
+  font-size: var(--text-h2);
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+}
+
+.type-h3 {
+  font-family: var(--font-bricolage-grotesque), var(--font-plus-jakarta-sans), sans-serif;
+  font-size: var(--text-h3);
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+}
+
+.type-lead {
+  font-size: var(--text-lead);
+  line-height: 1.62;
+  color: var(--text-secondary);
+}
+
+/* Odometer-style section eyebrow. */
+.type-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tracked uppercase micro-label used for specs and field captions. */
+.type-spec {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================================
+   SURFACE UTILITIES
+   ========================================================================= */
+
+/* Card with a hairline drawn as an inset ring so it never doubles up with
+   the shadow, plus a lift that keeps the contact shadow anchored. */
+.surface-card {
+  background: var(--surface-card);
+  border-radius: 0.75rem;
+  box-shadow:
+    inset 0 0 0 1px var(--line-subtle),
+    var(--elev-2);
+}
+
+@media (min-width: 640px) {
+  .surface-card {
+    border-radius: var(--r-card);
+  }
+}
+
+.surface-panel {
+  background: var(--surface-card);
+  border-radius: var(--r-panel);
+  box-shadow:
+    inset 0 0 0 1px var(--line-subtle),
+    var(--elev-3);
+}
+
+.lift {
+  transition:
+    transform var(--dur-slow) var(--ease-out-expo),
+    box-shadow var(--dur-slow) var(--ease-out-expo);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .lift:hover {
+    transform: translate3d(0, -4px, 0);
+    box-shadow:
+      inset 0 0 0 1px var(--line),
+      var(--elev-4);
+  }
+}
+
+/* Hairline divider that fades at both ends. */
+.rule-fade {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--line) 12%,
+    var(--line) 88%,
+    transparent
+  );
+}
+
+/* Very low-opacity grain, layered over dark photographic sections to stop
+   large gradients from banding on 8-bit displays. */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ============================================================================
+   MOTION
+   ========================================================================= */
 
 /* Testimonials: seamless horizontal loop (track is two identical halves) */
 @keyframes testimonial-marquee {
@@ -128,14 +446,41 @@ body {
   animation-play-state: paused;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .testimonial-marquee-track {
-    animation: none;
-    transform: none;
+/* Above-the-fold entrance. Pure CSS on purpose: JS-driven reveals ship
+   `opacity: 0` in the SSR HTML, which would hold back the hero's LCP until
+   hydration. Below the fold, use the `Reveal` / `Stagger` components instead. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1.5rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
   }
 }
 
-/* Final conversion CTA — staggered entrance (no Framer Motion) */
+.rise {
+  animation: rise-in 0.9s var(--ease-out-expo) both;
+}
+
+.rise-1 {
+  animation-delay: 0.05s;
+}
+.rise-2 {
+  animation-delay: 0.12s;
+}
+.rise-3 {
+  animation-delay: 0.19s;
+}
+.rise-4 {
+  animation-delay: 0.28s;
+}
+.rise-5 {
+  animation-delay: 0.38s;
+}
+
+/* Staggered entrance used by the closing CTA (no JS, runs on first paint). */
 @keyframes final-cta-fade-up {
   from {
     opacity: 0;
@@ -148,7 +493,7 @@ body {
 }
 
 .final-cta-fade-up {
-  animation: final-cta-fade-up 0.95s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: final-cta-fade-up 0.95s var(--ease-out-quint) both;
 }
 
 .final-cta-delay-1 {
@@ -170,11 +515,164 @@ body {
   animation-delay: 0.44s;
 }
 
+/* Shimmer for skeletons — reads as "loading" far better than a flat pulse. */
+@keyframes skeleton-sheen {
+  from {
+    background-position: -140% 0;
+  }
+  to {
+    background-position: 240% 0;
+  }
+}
+
+.skeleton {
+  background-color: var(--surface-sunken);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 255 255 / 0.75) 50%,
+    transparent 100%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: skeleton-sheen 1.6s var(--ease-standard) infinite;
+}
+
+/* ============================================================================
+   VIEW TRANSITIONS
+   ========================================================================= */
+
+::view-transition-old(root) {
+  animation: vt-exit 220ms var(--ease-standard) both;
+}
+
+::view-transition-new(root) {
+  animation: vt-enter 380ms var(--ease-out-expo) both;
+}
+
+@keyframes vt-exit {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+}
+
+/* ============================================================================
+   REDUCED MOTION
+   ========================================================================= */
+
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .testimonial-marquee-track {
+    animation: none;
+    transform: none;
+  }
+
+  .rise,
   .final-cta-fade-up {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+
+  .skeleton {
+    animation: none;
+  }
+
+  /* A 1ms duration (rather than `none`) keeps Safari from handing off before
+     the new view-transition snapshot commits. */
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 1ms !important;
+    animation-delay: 0s !important;
+  }
+}
+
+/* ============================================================================
+   THIRD-PARTY OVERRIDES
+   ========================================================================= */
+
+/* react-day-picker — quiet, compact range picker.
+   Doubled class beats the library stylesheet, which loads later. */
+.rdp-root.rdp-root {
+  --rdp-accent-color: var(--orange-600);
+  --rdp-accent-background-color: var(--orange-50);
+  --rdp-today-color: var(--orange-600);
+  --rdp-day-height: 2.25rem;
+  --rdp-day-width: 2.25rem;
+  --rdp-day_button-height: 1.875rem;
+  --rdp-day_button-width: 1.875rem;
+  --rdp-day_button-border-radius: 999px;
+  --rdp-selected-border: none;
+  --rdp-outside-opacity: 0.4;
+  --rdp-weekday-padding: 0.35rem 0;
+  --rdp-nav_button-height: 1.75rem;
+  --rdp-nav_button-width: 1.75rem;
+  --rdp-nav-height: 2.25rem;
+  --rdp-range_middle-background-color: color-mix(in srgb, var(--orange-400) 18%, white);
+  --rdp-range_middle-color: var(--ink-900);
+  --rdp-range_start-date-background-color: var(--orange-600);
+  --rdp-range_end-date-background-color: var(--orange-600);
+  --rdp-range_start-color: white;
+  --rdp-range_end-color: white;
+  font-family: inherit;
+  font-size: 0.8125rem;
+}
+
+.rdp-root .rdp-month_caption {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.rdp-root .rdp-weekday {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.rdp-root .rdp-selected {
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.rdp-root .rdp-chevron {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.rdp-root .rdp-day_button {
+  font-variant-numeric: tabular-nums;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+@media (min-width: 640px) {
+  .rdp-root.rdp-root {
+    --rdp-day-height: 2.5rem;
+    --rdp-day-width: 2.5rem;
+    --rdp-day_button-height: 2.125rem;
+    --rdp-day_button-width: 2.125rem;
+    --rdp-nav-height: 2.5rem;
+    font-size: 0.875rem;
+  }
+
+  .rdp-root .rdp-month_caption {
+    font-size: 0.9375rem;
   }
 }
 
@@ -732,7 +1230,7 @@ body {
 .site-navbar-shell {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 0.375rem;
   box-shadow:
     0 16px 48px -16px rgb(15 23 42 / 0.45),
@@ -744,6 +1242,7 @@ body {
   position: absolute;
   inset: 0;
   z-index: 0;
+  overflow: hidden;
   border-radius: inherit;
   background-color: rgb(71 85 105 / 0.3);
   -webkit-backdrop-filter: blur(18px) saturate(1.2);
@@ -1794,12 +2293,12 @@ body {
   }
 
   .vehicle-filters-rail::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--brand-blue) 32%, transparent);
+    background: color-mix(in srgb, var(--blue-500) 32%, transparent);
     border-radius: 100px;
   }
 
   .vehicle-filters-rail::-webkit-scrollbar-thumb:hover {
-    background: color-mix(in srgb, var(--brand-blue) 48%, transparent);
+    background: color-mix(in srgb, var(--blue-500) 48%, transparent);
   }
 }
 
@@ -1807,7 +2306,7 @@ body {
   @supports not selector(::-webkit-scrollbar-thumb) {
     .vehicle-filters-rail {
       scrollbar-width: thin;
-      scrollbar-color: color-mix(in srgb, var(--brand-blue) 30%, transparent)
+      scrollbar-color: color-mix(in srgb, var(--blue-500) 30%, transparent)
         transparent;
     }
   }
@@ -1837,12 +2336,12 @@ body {
   }
 
   .language-switcher-dropdown::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, #94a3b8 55%, transparent);
+    background: color-mix(in srgb, var(--ink-400) 55%, transparent);
     border-radius: 100px;
   }
 
   .language-switcher-dropdown::-webkit-scrollbar-thumb:hover {
-    background: color-mix(in srgb, #64748b 70%, transparent);
+    background: color-mix(in srgb, var(--ink-500) 70%, transparent);
   }
 }
 
@@ -1850,7 +2349,7 @@ body {
   @supports not selector(::-webkit-scrollbar-thumb) {
     .language-switcher-dropdown {
       scrollbar-width: thin;
-      scrollbar-color: color-mix(in srgb, #94a3b8 55%, transparent) transparent;
+      scrollbar-color: color-mix(in srgb, var(--ink-400) 55%, transparent) transparent;
     }
   }
 }

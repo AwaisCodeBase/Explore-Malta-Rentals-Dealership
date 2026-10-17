@@ -29,11 +29,19 @@ export async function GET(request: Request) {
       returnDateTime: true,
       totalDueOnline: true,
       paymentStatus: true,
+      status: true,
     },
   });
 
-  if (!booking || booking.paymentStatus === "PAID") {
-    return NextResponse.redirect(new URL(`/${locale}/booking?ref=${encodeURIComponent(bookingReference ?? "")}`, request.url));
+  if (
+    !booking ||
+    booking.paymentStatus === "PAID" ||
+    booking.status === "CANCELLED" ||
+    (booking.status !== "PENDING_PAYMENT" && booking.status !== "CONFIRMED")
+  ) {
+    return NextResponse.redirect(
+      new URL(`/${locale}/booking/payment/cancel?ref=${encodeURIComponent(bookingReference)}`, request.url),
+    );
   }
 
   const result = await createCheckoutSession({

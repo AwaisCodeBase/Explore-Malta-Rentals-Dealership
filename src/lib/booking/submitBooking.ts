@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { format } from "date-fns";
 
 import { Prisma, type VehicleType } from "@/generated/prisma/index";
+import { colorsMatch, parseVehicleColorValue } from "@/features/vehicles/lib/vehicle-color";
 import {
   checkVehicleAvailability,
   type AvailabilityDbClient,
@@ -15,8 +16,9 @@ import {
   insertBookingOccupancy,
   isVehicleUnitOccupancyExclusionError,
 } from "@/lib/vehicle-unit-occupancy";
-import { sendBookingConfirmation } from "@/lib/email/sendBookingConfirmation";
+import { deliverBookingConfirmationIfNeeded } from "@/lib/email/deliverBookingConfirmation";
 import { prisma } from "@/lib/prisma";
+import { isLicenseAllowedForEngine } from "@/lib/vehicles/engine-cc";
 import {
   calculateBookingPrice,
   pricingConfig,
@@ -24,8 +26,6 @@ import {
   type BookingPricingInput,
   type PricingCdwOption,
 } from "@/lib/pricing/calculate-booking-price";
-import { getDurationPricingRules } from "@/lib/pricing/get-duration-pricing-rules";
-import type { DurationPricingRuleDto } from "@/lib/pricing/duration-pricing";
 import { validateHotelCode, type ValidatedHotelCode } from "@/lib/hotel-codes";
 
 import { validateBookingPayload } from "./validateBookingPayload";
@@ -53,6 +53,7 @@ type ResolvedBookingVehicle = {
   vehicleUnitId?: string;
   vehicleNameSnapshot: string;
   vehicleLicensePlateSnapshot: string;
+  vehicleColorSnapshot: string | null;
   vehicleType: VehicleType;
   vehicleTypeSnapshot: VehicleType;
   baseDailyRate: number;
@@ -195,7 +196,6 @@ function toPricingInput(
 function computePricing(
   payload: NormalizedBookingPayload,
   vehicle: ResolvedBookingVehicle,
-  durationRules: DurationPricingRuleDto[],
   validatedHotelCode: ValidatedHotelCode | null,
 ): PricingComputation | null {
   const breakdown = calculateBookingPrice({
@@ -203,7 +203,6 @@ function computePricing(
     vehiclePricing: {
       baseDailyRate: vehicle.baseDailyRate,
       vehicleType: vehicle.vehicleType,
-      durationRules,
       supportsStorageBox: vehicle.supportsStorageBox,
     },
     hotelDiscount: validatedHotelCode
@@ -286,6 +285,7 @@ async function resolveBookingVehicle(payload: NormalizedBookingPayload): Promise
       id: true,
       name: true,
       vehicleType: true,
+      engineCc: true,
       baseDailyRate: true,
       isActive: true,
       supportsStorageBox: true,
@@ -310,6 +310,35 @@ async function resolveBookingVehicle(payload: NormalizedBookingPayload): Promise
     ]);
   }
 
+  if (
+    !isLicenseAllowedForEngine(
+      vehicle.vehicleType,
+      payload.customer.licenseCategory,
+      vehicle.engineCc,
+    )
+  ) {
+    throw new SubmitBookingValidationError([
+      { path: "customer.licenseCategory", message: "Invalid license category for selected vehicle" },
+    ]);
+  }
+
+  if (
+    payload.additionalDriver.enabled &&
+    payload.additionalDriver.licenseCategory &&
+    !isLicenseAllowedForEngine(
+      vehicle.vehicleType,
+      payload.additionalDriver.licenseCategory,
+      vehicle.engineCc,
+    )
+  ) {
+    throw new SubmitBookingValidationError([
+      {
+        path: "additionalDriver.licenseCategory",
+        message: "Invalid license category for selected vehicle",
+      },
+    ]);
+  }
+
   if (vehicle.baseDailyRate.toNumber() <= 0) {
     throw new SubmitBookingValidationError([
       { path: "rental.vehicleId", message: "Selected vehicle does not have a valid base daily rate" },
@@ -320,6 +349,7 @@ async function resolveBookingVehicle(payload: NormalizedBookingPayload): Promise
     vehicleId: vehicle.id,
     vehicleNameSnapshot: vehicle.name,
     vehicleLicensePlateSnapshot: "",
+    vehicleColorSnapshot: payload.selectedColor,
     vehicleType: vehicle.vehicleType,
     vehicleTypeSnapshot: vehicle.vehicleType,
     baseDailyRate: vehicle.baseDailyRate.toNumber(),
@@ -343,12 +373,17 @@ async function assertBookingStillAvailable(
   db: AvailabilityDbClient,
   holdContext?: HoldAvailabilityContext,
 ): Promise<void> {
+  const availabilityColor = payload.selectedColor
+    ? parseVehicleColorValue(payload.selectedColor) ?? undefined
+    : undefined;
+
   const availability = await checkVehicleAvailability(
     {
       vehicleId: vehicle.vehicleId,
       vehicleType: vehicle.vehicleType,
       requestedStart: payload.pickupDateTime,
       requestedEnd: payload.returnDateTime,
+      color: availabilityColor,
       excludeHoldReference: holdContext?.excludeHoldReference,
       excludeSessionKey: holdContext?.excludeSessionKey,
     },
@@ -357,9 +392,10 @@ async function assertBookingStillAvailable(
   );
 
   if (!availability.isAvailable) {
-    throw new AvailabilityConflictError(
-      "Selected vehicle is not available for the chosen dates",
-      {
+    const message = payload.selectedColor
+      ? "The selected color is not available for the chosen dates"
+      : "Selected vehicle is not available for the chosen dates";
+    throw new AvailabilityConflictError(message, {
         vehicleId: vehicle.vehicleId,
         vehicleType: vehicle.vehicleType,
         requestedStart: payload.pickupDateTime,
@@ -376,15 +412,27 @@ function mapBookingCreateData(
   vehicle: ResolvedBookingVehicle,
   termsVersionId: string | null,
 ): Prisma.BookingUncheckedCreateInput {
+  const isAlreadyPaid = payload.payment.mode === "ALREADY_PAID";
+  const requiresOnlinePayment = !isAlreadyPaid && pricing.breakdown.totalDueOnline > 0;
+  const depositAmount = pricing.breakdown.depositAmount;
+  const payableAmount = pricing.breakdown.subtotal + depositAmount;
+
   return {
     bookingReference,
-    status: "CONFIRMED",
-    paymentStatus: "PENDING",
-    securityDepositStatus: "PENDING",
+    // Already-paid hotel bookings are confirmed immediately.
+    // Online Stripe checkout soft-reserves until payment succeeds.
+    status: requiresOnlinePayment ? "PENDING_PAYMENT" : "CONFIRMED",
+    paymentStatus: isAlreadyPaid ? "PAID" : "PENDING",
+    securityDepositStatus: isAlreadyPaid ? "COLLECTED" : "PENDING",
+    paymentProofUploadPath: isAlreadyPaid ? payload.payment.proofPath : null,
+    paymentMethod: isAlreadyPaid ? "OTHER" : null,
+    paymentReceivedAmount: isAlreadyPaid ? payableAmount : null,
+    securityDepositCollectedAmount: isAlreadyPaid ? depositAmount : null,
     vehicleId: vehicle.vehicleId,
     vehicleUnitId: vehicle.vehicleUnitId ?? null,
     vehicleNameSnapshot: vehicle.vehicleNameSnapshot,
     vehicleLicensePlateSnapshot: vehicle.vehicleLicensePlateSnapshot,
+    vehicleColorSnapshot: vehicle.vehicleColorSnapshot,
     vehicleTypeSnapshot: vehicle.vehicleTypeSnapshot,
     termsVersionId,
     vehicleType: vehicle.vehicleType,
@@ -449,10 +497,10 @@ function mapBookingCreateData(
     dropoffFee: pricing.breakdown.dropoffFee,
     deliveryTotal: pricing.breakdown.deliveryTotal,
     subtotal: pricing.breakdown.subtotal,
-    depositAmount: pricing.breakdown.depositAmount,
-    depositMethod: payload.deposit.depositMethod,
-    totalDueOnline: pricing.breakdown.totalDueOnline,
-    totalDueLater: pricing.breakdown.totalDueLater,
+    depositAmount,
+    depositMethod: isAlreadyPaid ? "IN_PERSON" : payload.deposit.depositMethod,
+    totalDueOnline: isAlreadyPaid ? 0 : pricing.breakdown.totalDueOnline,
+    totalDueLater: isAlreadyPaid ? 0 : pricing.breakdown.totalDueLater,
     termsAccepted: payload.consent.termsAccepted,
     termsAcceptedAt: payload.consent.termsAcceptedAt,
     idempotencyKey: payload.idempotencyKey,
@@ -483,6 +531,7 @@ async function validateHoldForBooking(
       vehicleType: true,
       pickupDateTime: true,
       returnDateTime: true,
+      selectedColor: true,
       status: true,
       expiresAt: true,
     },
@@ -545,6 +594,28 @@ async function validateHoldForBooking(
       {
         path: "rental.pickupDate",
         message: "Booking date range must match the held reservation window",
+      },
+    ]);
+  }
+
+  if (
+    hold.selectedColor &&
+    payload.selectedColor &&
+    !colorsMatch(hold.selectedColor, payload.selectedColor)
+  ) {
+    throw new SubmitBookingValidationError([
+      {
+        path: "rental.selectedColor",
+        message: "Booking color does not match the held reservation",
+      },
+    ]);
+  }
+
+  if (hold.selectedColor && !payload.selectedColor) {
+    throw new SubmitBookingValidationError([
+      {
+        path: "rental.selectedColor",
+        message: "Color selection is required to match the held reservation",
       },
     ]);
   }
@@ -623,11 +694,15 @@ async function createBookingWithUniqueReference(
             }
 
             if (!assignedUnitId) {
+              const availabilityColor = payload.selectedColor
+                ? parseVehicleColorValue(payload.selectedColor) ?? undefined
+                : undefined;
               const assigned = await assignAvailableVehicleUnit(
                 {
                   vehicleId: vehicle.vehicleId,
                   requestedStart: payload.pickupDateTime,
                   requestedEnd: payload.returnDateTime,
+                  color: availabilityColor,
                   excludeHoldReference: holdForFinalization?.holdReference,
                   excludeSessionKey: holdForFinalization?.sessionKey,
                 },
@@ -799,29 +874,6 @@ async function resolveIdempotentBooking(
   return null;
 }
 
-async function updateEmailStatus(bookingId: string, wasSent: boolean) {
-  try {
-    await prisma.booking.update({
-      where: { id: bookingId },
-      data: wasSent
-        ? {
-            confirmationEmailStatus: "SENT",
-            confirmationEmailSentAt: new Date(),
-          }
-        : {
-            confirmationEmailStatus: "FAILED",
-            confirmationEmailSentAt: null,
-          },
-    });
-  } catch (statusError) {
-    console.error("[bookings] Failed to persist confirmation email status", {
-      bookingId,
-      status: wasSent ? "SENT" : "FAILED",
-      error: statusError,
-    });
-  }
-}
-
 export async function submitBooking(payload: BookingSubmissionInput): Promise<SubmitBookingResponse> {
   const validation = validateBookingPayload(payload);
   if (!validation.success) {
@@ -845,12 +897,6 @@ export async function submitBooking(payload: BookingSubmissionInput): Promise<Su
     return idempotentResult;
   }
 
-  const durationRules = await getDurationPricingRules();
-  if (durationRules.length === 0) {
-    throw new SubmitBookingValidationError([
-      { path: "pricing", message: "Duration pricing rules are not configured" },
-    ]);
-  }
   const requireHoldReference = Boolean(validation.data.holdReference);
   if (!requireHoldReference) {
     await assertBookingStillAvailable(
@@ -871,7 +917,7 @@ export async function submitBooking(payload: BookingSubmissionInput): Promise<Su
     validatedHotelCode = hotelResult.data;
   }
 
-  const pricing = computePricing(validation.data, resolvedVehicle, durationRules, validatedHotelCode);
+  const pricing = computePricing(validation.data, resolvedVehicle, validatedHotelCode);
   if (!pricing) {
     throw new SubmitBookingValidationError([
       { path: "pricing", message: "Unable to calculate booking price" },
@@ -887,22 +933,14 @@ export async function submitBooking(payload: BookingSubmissionInput): Promise<Su
     requireHoldReference,
   );
 
-  const totalDueOnline = pricing.breakdown.totalDueOnline;
+  const totalDueOnline =
+    validation.data.payment.mode === "ALREADY_PAID" ? 0 : pricing.breakdown.totalDueOnline;
 
   // Only send confirmation email immediately when no online payment is required.
-  // When Stripe payment is involved, the webhook fires the email after payment succeeds.
+  // When Stripe payment is involved, the webhook or success-page verifier
+  // sends the email after payment succeeds.
   if (totalDueOnline <= 0) {
-    const emailResult = await sendBookingConfirmation(booking);
-    if (emailResult.success) {
-      await updateEmailStatus(booking.id, true);
-    } else {
-      console.error("[bookings] Confirmation email was not sent", {
-        bookingId: booking.id,
-        bookingReference: booking.bookingReference,
-        reason: emailResult.reason,
-      });
-      await updateEmailStatus(booking.id, false);
-    }
+    await deliverBookingConfirmationIfNeeded(booking.id);
   }
 
   return {

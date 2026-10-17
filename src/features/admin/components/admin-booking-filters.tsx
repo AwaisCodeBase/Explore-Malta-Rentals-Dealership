@@ -82,6 +82,7 @@ export function AdminBookingFilters({ locale, vehicles, partners }: AdminBooking
           className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[#3a7ca5]/40 focus:ring-2 focus:ring-[#3a7ca5]/15"
         >
           <option value="">{t("allStatuses")}</option>
+          <option value="PENDING_PAYMENT">{t("pendingPayment")}</option>
           <option value="CONFIRMED">{t("confirmed")}</option>
           <option value="VEHICLE_HANDED_OVER">{t("vehicleHandedOver")}</option>
           <option value="RETURNED">{t("returned")}</option>

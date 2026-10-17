@@ -11,14 +11,12 @@ import type { AdminVehicleBookingCalendarItem } from "@/lib/admin/vehicles/getAd
 import {
   buildDurationPricingPreview,
   roundPricingAmount,
-  type DurationPricingRuleDto,
 } from "@/lib/pricing/duration-pricing";
 
 type AdminVehicleDetailViewProps = Readonly<{
   locale: string;
   vehicle: AdminVehicleDetail;
   bookings: AdminVehicleBookingCalendarItem[];
-  durationRules: DurationPricingRuleDto[];
 }>;
 
 function formatPrice(value: number | null): string {
@@ -52,14 +50,9 @@ export async function AdminVehicleDetailView({
   locale,
   vehicle,
   bookings,
-  durationRules,
 }: AdminVehicleDetailViewProps) {
   const t = await getTranslations({ locale, namespace: "Admin.vehicles" });
-  const durationPreview = buildDurationPricingPreview(
-    vehicle.baseDailyRate,
-    vehicle.vehicleType,
-    durationRules,
-  );
+  const durationPreview = buildDurationPricingPreview(vehicle.baseDailyRate);
 
   return (
     <div className="space-y-5">
@@ -111,11 +104,22 @@ export async function AdminVehicleDetailView({
                 <DetailField label={t("form.slug")} value={vehicle.slug} />
                 <DetailField label={t("form.vehicleType")} value={t(`vehicleTypes.${vehicle.vehicleType}`)} />
                 <DetailField
+                  label={t("form.engineCc")}
+                  value={
+                    vehicle.engineCc === 50
+                      ? t("form.engineCc50")
+                      : vehicle.engineCc === 125
+                        ? t("form.engineCc125")
+                        : "—"
+                  }
+                />
+                <DetailField
                   label={t("table.totalUnits")}
                   value={t("units.counts", { total: vehicle.totalUnits, available: vehicle.availableUnits })}
                 />
                 <DetailField label={t("form.brand")} value={vehicle.brand ?? "—"} />
                 <DetailField label={t("form.model")} value={vehicle.model ?? "—"} />
+                <DetailField label={t("form.color")} value={vehicle.color ?? "—"} />
                 <DetailField label={t("form.catalogStatus")} value={t(`catalogStatus.${vehicle.catalogStatus}`)} />
                 <DetailField
                   label={t("form.isActive")}

@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { AlreadyPaidProofModal } from "@/features/booking-flow/components/already-paid-proof-modal";
 import { StepShell } from "@/features/booking-flow/components/step-shell";
 import { useBookingFlow } from "@/features/booking-flow/context/booking-flow-context";
-import { useDurationPricingRules } from "@/features/pricing/lib/use-duration-pricing-rules";
-import { useVehicles } from "@/features/vehicles/lib/use-vehicles";
+import { useVehicle, useVehicles } from "@/features/vehicles/lib/use-vehicles";
 import {
   calculateBookingPrice,
   formatEur,
@@ -13,32 +14,97 @@ import {
 } from "@/lib/pricing/calculate-booking-price";
 import { buildBookingPaymentSummary } from "@/lib/booking/build-booking-payment-summary";
 
+/** Receipt row: label left, value right, hairline separated by the parent `divide-y`. */
+const rowClass = "flex flex-wrap items-baseline justify-between gap-x-6 gap-y-0.5 py-2.5";
+const labelClass = "text-[var(--text-secondary)]";
+const valueClass = "text-right font-medium tabular-nums text-[var(--text-primary)]";
+
+/** Selection-card treatment shared with the insurance plan options. */
+const depositOptionBase =
+  "relative flex flex-col gap-1 rounded-[var(--r-card)] border p-3.5 text-left transition duration-[var(--dur-base)] ease-[var(--ease-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
+const depositOptionSelected =
+  "border-blue-400 bg-blue-50/70 ring-2 ring-blue-500/25 shadow-[var(--elev-2)]";
+const depositOptionIdle =
+  "border-[var(--line)] bg-[var(--surface-card)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)]";
+
+function DepositOptionCheck() {
+  return (
+    <span
+      className="absolute right-3 top-3 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-white"
+      aria-hidden
+    >
+      <Check className="h-2.5 w-2.5" strokeWidth={4} />
+    </span>
+  );
+}
+
 export function BookingSummaryStep() {
   const t = useTranslations("BookingWizard.bookingSummary");
   const tCommon = useTranslations("Common");
-  const { state, updateSection } = useBookingFlow();
-  const { vehicles } = useVehicles();
-  const { rules: durationRules } = useDurationPricingRules();
-  const selectedVehicle = useMemo(() => {
-    if (!state.rental.vehicleId) {
+  const { state, reservationHold, updateSection, bookingSessionId, getFieldError } = useBookingFlow();
+  const [proofModalOpen, setProofModalOpen] = useState(false);
+
+  const isAlreadyPaid = state.payment.mode === "already_paid";
+  const paymentProofError = getFieldError("payment.proofPath");
+
+  const rentalWindow = useMemo(() => {
+    const { pickupDate, pickupTime, returnDate, returnTime } = state.rental;
+    if (!pickupDate.trim() || !pickupTime.trim() || !returnDate.trim() || !returnTime.trim()) {
       return null;
     }
-    return vehicles.find((vehicle) => vehicle.id === state.rental.vehicleId) ?? null;
-  }, [state.rental.vehicleId, vehicles]);
+    return {
+      pickupDate: pickupDate.trim(),
+      pickupTime: pickupTime.trim(),
+      returnDate: returnDate.trim(),
+      returnTime: returnTime.trim(),
+      sessionKey: reservationHold.sessionKey?.trim() || undefined,
+    };
+  }, [
+    reservationHold.sessionKey,
+    state.rental.pickupDate,
+    state.rental.pickupTime,
+    state.rental.returnDate,
+    state.rental.returnTime,
+  ]);
+
+  const { vehicles } = useVehicles({ rentalWindow });
+  const incomingSlug = state.rental.vehicleSlug?.trim() ?? "";
+  const { vehicle: slugVehicle } = useVehicle(incomingSlug);
+
+  const selectedVehicle = useMemo(() => {
+    if (state.rental.vehicleId) {
+      const byId = vehicles.find((vehicle) => vehicle.id === state.rental.vehicleId);
+      if (byId) {
+        return byId;
+      }
+    }
+    if (incomingSlug) {
+      const bySlug = vehicles.find((vehicle) => vehicle.slug === incomingSlug);
+      if (bySlug) {
+        return bySlug;
+      }
+    }
+    return slugVehicle;
+  }, [incomingSlug, slugVehicle, state.rental.vehicleId, vehicles]);
 
   const pricing = useMemo(
     () => {
-      if (!selectedVehicle || selectedVehicle.baseDailyRate <= 0 || durationRules.length === 0) {
+      if (!selectedVehicle || selectedVehicle.baseDailyRate <= 0) {
+        return null;
+      }
+
+      const vehicleType = state.rental.vehicleType || selectedVehicle.apiVehicleType;
+      if (!vehicleType) {
         return null;
       }
 
       return calculateBookingPrice({
         rental: {
           vehicle: {
-            id: state.rental.vehicleId ?? undefined,
-            slug: state.rental.vehicleSlug,
-            name: state.rental.vehicleName,
-            type: state.rental.vehicleType,
+            id: state.rental.vehicleId || selectedVehicle.id,
+            slug: state.rental.vehicleSlug || selectedVehicle.slug,
+            name: state.rental.vehicleName || selectedVehicle.name,
+            type: vehicleType,
           },
           pickupDate: state.rental.pickupDate,
           returnDate: state.rental.returnDate,
@@ -67,7 +133,6 @@ export function BookingSummaryStep() {
         vehiclePricing: {
           baseDailyRate: selectedVehicle.baseDailyRate,
           vehicleType: selectedVehicle.apiVehicleType,
-          durationRules,
           supportsStorageBox: selectedVehicle.supportsStorageBox,
         },
         hotelDiscount:
@@ -76,30 +141,40 @@ export function BookingSummaryStep() {
             : undefined,
       });
     },
-    [durationRules, selectedVehicle, state],
+    [selectedVehicle, state],
   );
-
-  useEffect(() => {
-    if (state.deposit.depositMethod !== "in_person") {
-      updateSection("deposit", { depositMethod: "in_person" });
-    }
-  }, [state.deposit.depositMethod, updateSection]);
 
   const paymentSummary = useMemo(() => {
     if (!pricing) {
       return null;
     }
 
+    if (isAlreadyPaid) {
+      return {
+        bookingChargesTotal: pricing.subtotal,
+        securityDeposit: pricing.depositAmount,
+        securityDepositDueAtPickup: false,
+        amountPayableOnline: 0,
+        amountDueAtPickupLater: 0,
+        totalCustomerLiability: pricing.subtotal + pricing.depositAmount,
+      };
+    }
+
     return buildBookingPaymentSummary({
       subtotal: pricing.subtotal,
       depositAmount: pricing.depositAmount,
-      depositMethod: "in_person",
+      depositMethod: state.deposit.depositMethod || "in_person",
       totalDueOnline: pricing.totalDueOnline,
       totalDueLater: pricing.totalDueLater,
     });
-  }, [pricing]);
+  }, [pricing, state.deposit.depositMethod, isAlreadyPaid]);
 
-  const cdwLabel = pricing ? getCdwLabel(pricing.cdwOptionApplied) : "-";
+  const cdwLabel =
+    state.addons.cdwPlan === null
+      ? t("insuranceNotSelected")
+      : pricing
+        ? getCdwLabel(pricing.cdwOptionApplied)
+        : "-";
   const addOnList = [
     t("cdwLine", { label: cdwLabel }),
     t("addDriverLine", {
@@ -114,53 +189,100 @@ export function BookingSummaryStep() {
     }`,
   ];
 
+  function selectStripeDeposit(method: "in_person" | "online") {
+    updateSection("deposit", { depositMethod: method });
+    updateSection("payment", { mode: "stripe", proofPath: "" });
+  }
+
+  function selectAlreadyPaid() {
+    updateSection("payment", { mode: "already_paid" });
+    setProofModalOpen(true);
+  }
+
+  const payInPersonSelected = !isAlreadyPaid && state.deposit.depositMethod !== "online";
+  const payOnlineSelected = !isAlreadyPaid && state.deposit.depositMethod === "online";
+
   return (
     <StepShell title={t("shellTitle")} description={t("shellDescription")}>
       <div className="space-y-4">
-        <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-700">
-          <p className="text-sm font-semibold text-slate-900">{t("section1")}</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>
-              {t("vehicleSelected")}{" "}
-              {state.rental.vehicleName || state.rental.vehicleId || t("categoryOnly")}
+        {/* ── Trip details ──────────────────────────────────────────────── */}
+        <section className="surface-card p-4 text-sm sm:p-5">
+          <p className="type-spec text-[var(--text-muted)]">{t("section1")}</p>
+          <ul className="mt-3 divide-y divide-[var(--line-subtle)]">
+            <li className={rowClass}>
+              <span className={labelClass}>{t("vehicleSelected")}</span>
+              <span className={valueClass}>
+                {state.rental.vehicleName || state.rental.vehicleId || t("categoryOnly")}
+              </span>
             </li>
-            <li>
-              {t("rentalDates")} {state.rental.pickupDate || "-"} {state.rental.pickupTime || ""} {t("to")}{" "}
-              {state.rental.returnDate || "-"} {state.rental.returnTime || ""}
+            <li className={rowClass}>
+              <span className={labelClass}>{t("rentalDates")}</span>
+              <span className={valueClass}>
+                {state.rental.pickupDate || "-"} {state.rental.pickupTime || ""} {t("to")}{" "}
+                {state.rental.returnDate || "-"} {state.rental.returnTime || ""}
+              </span>
             </li>
-            <li>
-              {t("billableDuration")}{" "}
-              {pricing ? t("dayCount", { count: pricing.rentalDays }) : "-"}
-              {pricing ? t("actualHours", { hours: pricing.actualDurationHours.toFixed(1) }) : ""}
+            <li className={rowClass}>
+              <span className={labelClass}>{t("billableDuration")}</span>
+              <span className={valueClass}>
+                {pricing ? t("dayCount", { count: pricing.rentalDays }) : "-"}
+                {pricing ? t("actualHours", { hours: pricing.actualDurationHours.toFixed(1) }) : ""}
+              </span>
             </li>
-            <li>
-              {t("pickupMethod")} {state.delivery.pickupOption}
+            <li className={rowClass}>
+              <span className={labelClass}>{t("pickupMethod")}</span>
+              <span className={valueClass}>{state.delivery.pickupOption}</span>
             </li>
-            <li>
-              {t("pickupAddress")} {state.delivery.pickupAddress || "-"}
+            <li className={rowClass}>
+              <span className={labelClass}>{t("pickupAddress")}</span>
+              <span className={valueClass}>{state.delivery.pickupAddress || "-"}</span>
             </li>
-            <li>
-              {t("dropoffMethod")} {state.delivery.dropoffOption}
+            <li className={rowClass}>
+              <span className={labelClass}>{t("dropoffMethod")}</span>
+              <span className={valueClass}>{state.delivery.dropoffOption}</span>
             </li>
-            <li>
-              {t("dropoffAddress")} {state.delivery.dropoffAddress || "-"}
+            <li className={rowClass}>
+              <span className={labelClass}>{t("dropoffAddress")}</span>
+              <span className={valueClass}>{state.delivery.dropoffAddress || "-"}</span>
             </li>
             {addOnList.map((line) => (
-              <li key={line}>{line}</li>
+              <li key={line} className={`${rowClass} tabular-nums text-[var(--text-secondary)]`}>
+                {line}
+              </li>
             ))}
           </ul>
-        </div>
+        </section>
 
-        <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-700">
-          <p className="text-sm font-semibold text-slate-900">{t("section2")}</p>
+        {/* ── Charges ───────────────────────────────────────────────────── */}
+        <section className="surface-card p-4 text-sm sm:p-5">
+          <p className="type-spec text-[var(--text-muted)]">{t("section2")}</p>
           {pricing ? (
             <>
-              <ul className="mt-2 list-disc space-y-1 pl-5">
-                <li>
-                  {t("rentalCost")} {formatEur(pricing.rentalCost)}
+              <ul className="mt-3 divide-y divide-[var(--line-subtle)]">
+                <li className={rowClass}>
+                  <span className={labelClass}>{t("baseDailyRate")}</span>
+                  <span className={valueClass}>{formatEur(pricing.baseDailyRate)}/day</span>
+                </li>
+                <li className={rowClass}>
+                  <span className={labelClass}>{t("rentalDuration")}</span>
+                  <span className={valueClass}>
+                    {t("dayCount", { count: pricing.rentalDays })} ({pricing.tierRange})
+                  </span>
+                </li>
+                {pricing.durationDiscountPercent > 0 ? (
+                  <li className={`${rowClass} font-medium tabular-nums text-emerald-700`}>
+                    {t("durationDiscount", {
+                      percent: pricing.durationDiscountPercent,
+                      rate: formatEur(pricing.appliedDailyRate),
+                    })}
+                  </li>
+                ) : null}
+                <li className={rowClass}>
+                  <span className={labelClass}>{t("rentalCost")}</span>
+                  <span className={valueClass}>{formatEur(pricing.rentalCost)}</span>
                 </li>
                 {pricing.hotelDiscountAmount > 0 ? (
-                  <li>
+                  <li className={`${rowClass} font-medium tabular-nums text-emerald-700`}>
                     {t("hotelDiscount", {
                       percent: pricing.hotelDiscountPercent,
                       amount: formatEur(pricing.hotelDiscountAmount),
@@ -168,7 +290,7 @@ export function BookingSummaryStep() {
                     })}
                   </li>
                 ) : null}
-                <li>
+                <li className={`${rowClass} tabular-nums text-[var(--text-secondary)]`}>
                   {t("deliveryLine", {
                     total: formatEur(pricing.deliveryTotal),
                     pickup: formatEur(pricing.deliveryFee),
@@ -179,84 +301,221 @@ export function BookingSummaryStep() {
                         : "",
                   })}
                 </li>
-                <li>
-                  {t("cdwCost")} {formatEur(pricing.cdwCost)}
+                <li className={rowClass}>
+                  <span className={labelClass}>{t("cdwCost")}</span>
+                  <span className={valueClass}>{formatEur(pricing.cdwCost)}</span>
                 </li>
-                <li>
-                  {t("addDriverCost")} {formatEur(pricing.additionalDriverCost)}
+                <li className={rowClass}>
+                  <span className={labelClass}>{t("addDriverCost")}</span>
+                  <span className={valueClass}>{formatEur(pricing.additionalDriverCost)}</span>
                 </li>
-                <li>
-                  {t("storageCost")} {formatEur(pricing.storageBoxCost)}
+                <li className={rowClass}>
+                  <span className={labelClass}>{t("storageCost")}</span>
+                  <span className={valueClass}>{formatEur(pricing.storageBoxCost)}</span>
                 </li>
               </ul>
-              <p className="mt-3 font-semibold text-slate-900">
-                {t("bookingChargesTotal")} {formatEur(pricing.subtotal)}
+              <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t-2 border-[var(--line-strong)] pt-3">
+                <p className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+                  {t("bookingChargesTotal")}
+                </p>
+                <p className="text-lg font-bold tabular-nums tracking-[-0.02em] text-[var(--text-primary)]">
+                  {formatEur(pricing.subtotal)}
+                </p>
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
+                {t("bookingChargesExcludesDepositNote")}
               </p>
-              <p className="mt-1 text-xs text-slate-500">{t("bookingChargesExcludesDepositNote")}</p>
             </>
           ) : (
-            <p className="mt-2 text-xs text-slate-500">{t("pricingPending")}</p>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 text-sm text-slate-700">
-          <p className="text-sm font-semibold text-slate-900">{t("section3")}</p>
-
-          <div className="mt-3">
-            <p className="font-semibold text-slate-900">{t("securityDepositMethod")}</p>
-            <p className="mt-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-              {t("paySecurityDepositAtPickup")}
+            <p className="mt-3 text-xs leading-relaxed text-[var(--text-muted)]">
+              {t("pricingPending")}
             </p>
+          )}
+        </section>
+
+        {/* ── Deposit + payment ─────────────────────────────────────────── */}
+        <section className="rounded-[var(--r-panel)] border border-blue-200 bg-blue-50/50 p-4 text-sm sm:p-5">
+          <p className="type-spec text-blue-700">{t("section3")}</p>
+
+          <div className="mt-4">
+            <p className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+              {t("securityDepositMethod")}
+            </p>
+            <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={() => selectStripeDeposit("in_person")}
+                className={`${depositOptionBase} ${
+                  payInPersonSelected ? depositOptionSelected : depositOptionIdle
+                }`}
+              >
+                {payInPersonSelected ? <DepositOptionCheck /> : null}
+                <span
+                  className={`pr-5 text-sm font-semibold tracking-[-0.01em] ${
+                    payInPersonSelected ? "text-blue-800" : "text-[var(--text-primary)]"
+                  }`}
+                >
+                  {t("payInPersonPickup")}
+                </span>
+                <span className="text-xs leading-relaxed text-[var(--text-secondary)]">
+                  {t("payAtPickupDescription")}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => selectStripeDeposit("online")}
+                className={`${depositOptionBase} ${
+                  payOnlineSelected ? depositOptionSelected : depositOptionIdle
+                }`}
+              >
+                {payOnlineSelected ? <DepositOptionCheck /> : null}
+                <span
+                  className={`pr-5 text-sm font-semibold tracking-[-0.01em] ${
+                    payOnlineSelected ? "text-blue-800" : "text-[var(--text-primary)]"
+                  }`}
+                >
+                  {t("payOnlineNow")}
+                </span>
+                <span className="text-xs leading-relaxed text-[var(--text-secondary)]">
+                  {t("payOnlineDescription")}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={selectAlreadyPaid}
+                className={`${depositOptionBase} ${
+                  isAlreadyPaid ? depositOptionSelected : depositOptionIdle
+                }`}
+              >
+                {isAlreadyPaid ? <DepositOptionCheck /> : null}
+                <span
+                  className={`pr-5 text-sm font-semibold tracking-[-0.01em] ${
+                    isAlreadyPaid ? "text-blue-800" : "text-[var(--text-primary)]"
+                  }`}
+                >
+                  {t("alreadyPaid")}
+                </span>
+                <span className="text-xs leading-relaxed text-[var(--text-secondary)]">
+                  {t("alreadyPaidDescription")}
+                </span>
+              </button>
+            </div>
+            {isAlreadyPaid && state.payment.proofPath ? (
+              <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200">
+                <Check className="h-3 w-3 shrink-0" strokeWidth={3} aria-hidden />
+                {t("alreadyPaidProofAttached", { name: state.payment.proofPath })}
+              </p>
+            ) : null}
+            {paymentProofError ? (
+              <p
+                className="mt-2.5 rounded-[var(--r-field)] border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700"
+                role="alert"
+              >
+                {paymentProofError}
+              </p>
+            ) : null}
           </div>
 
           {paymentSummary ? (
-            <div className="mt-4 space-y-2 rounded-lg border border-slate-200 bg-white px-3 py-3">
-              <p className="font-semibold text-slate-900">{t("paymentSummaryTitle")}</p>
-              <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
-                <span>{t("bookingChargesTotal")}</span>
-                <span className="font-medium tabular-nums text-slate-900">
-                  {formatEur(paymentSummary.bookingChargesTotal)}
-                </span>
-              </div>
-              <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
-                <span>
-                  {paymentSummary.securityDepositDueAtPickup
-                    ? t("securityDepositDueAtPickup")
-                    : t("securityDeposit")}
-                </span>
-                <span className="font-medium tabular-nums text-slate-900">
-                  {formatEur(paymentSummary.securityDeposit)}
-                </span>
-              </div>
-              <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
-                <span>{t("amountDueAtPickupLater")}</span>
-                <span className="font-medium tabular-nums text-slate-900">
-                  {formatEur(paymentSummary.amountDueAtPickupLater)}
-                </span>
-              </div>
-              <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 border-t border-slate-200 pt-2 font-semibold text-slate-900">
-                <span>{t("totalCustomerLiability")}</span>
-                <span className="tabular-nums">{formatEur(paymentSummary.totalCustomerLiability)}</span>
+            <div className="surface-card mt-4 px-4 py-3.5">
+              <p className="type-spec text-[var(--text-muted)]">{t("paymentSummaryTitle")}</p>
+              <dl className="mt-2 divide-y divide-[var(--line-subtle)]">
+                <div className={rowClass}>
+                  <dt className={labelClass}>{t("bookingChargesTotal")}</dt>
+                  <dd className={valueClass}>{formatEur(paymentSummary.bookingChargesTotal)}</dd>
+                </div>
+                <div className={rowClass}>
+                  <dt className={labelClass}>
+                    {paymentSummary.securityDepositDueAtPickup
+                      ? t("securityDepositDueAtPickup")
+                      : t("securityDeposit")}
+                  </dt>
+                  <dd className={valueClass}>{formatEur(paymentSummary.securityDeposit)}</dd>
+                </div>
+                {isAlreadyPaid ? (
+                  <div className={`${rowClass} font-semibold text-emerald-700`}>
+                    <dt className="flex items-center gap-1.5">
+                      <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                      {t("alreadyPaidSummaryLabel")}
+                    </dt>
+                    <dd className="text-right tabular-nums">
+                      {formatEur(paymentSummary.totalCustomerLiability)}
+                    </dd>
+                  </div>
+                ) : (
+                  <>
+                    <div className={`${rowClass} font-semibold text-emerald-700`}>
+                      <dt className="flex items-center gap-1.5">
+                        <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                        {t("payNowOnlineStripe")}
+                      </dt>
+                      <dd className="text-right tabular-nums">
+                        {formatEur(paymentSummary.amountPayableOnline ?? 0)}
+                      </dd>
+                    </div>
+                    <div className={rowClass}>
+                      <dt className={labelClass}>{t("amountDueAtPickupLater")}</dt>
+                      <dd className={valueClass}>
+                        {formatEur(paymentSummary.amountDueAtPickupLater)}
+                      </dd>
+                    </div>
+                  </>
+                )}
+              </dl>
+              <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t-2 border-[var(--line-strong)] pt-3">
+                <p className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+                  {t("totalCustomerLiability")}
+                </p>
+                <p className="text-lg font-bold tabular-nums tracking-[-0.02em] text-[var(--text-primary)]">
+                  {formatEur(paymentSummary.totalCustomerLiability)}
+                </p>
               </div>
             </div>
           ) : null}
 
-          <p className="mt-3 text-xs text-slate-600">{t("securityDepositHelperText")}</p>
-          <p className="mt-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-            {t("depositAtPickupNote")}
+          <p className="mt-3 text-xs leading-relaxed text-[var(--text-secondary)]">
+            {t("securityDepositHelperText")}
           </p>
-        </div>
+          {isAlreadyPaid ? (
+            <p className="mt-2.5 rounded-[var(--r-field)] border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-relaxed text-emerald-800">
+              {t("alreadyPaidNote")}
+            </p>
+          ) : state.deposit.depositMethod !== "online" ? (
+            <p className="mt-2.5 rounded-[var(--r-field)] border border-[var(--line)] bg-[var(--surface-card)] px-3.5 py-2.5 text-sm leading-relaxed text-[var(--text-secondary)]">
+              {t("depositAtPickupNote")}
+            </p>
+          ) : (
+            <p className="mt-2.5 rounded-[var(--r-field)] border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-relaxed text-emerald-800">
+              {t("depositOnlineNote")}
+            </p>
+          )}
+        </section>
       </div>
 
-      <label className="mt-4 flex items-start gap-2 text-sm text-slate-700">
+      <label className="mt-4 flex cursor-pointer items-start gap-2.5 rounded-[var(--r-card)] border border-[var(--line)] bg-[var(--surface-card)] px-4 py-3.5 text-sm leading-relaxed text-[var(--text-secondary)] shadow-[var(--elev-1)] transition duration-[var(--dur-fast)] hover:border-[var(--line-strong)] has-[:checked]:border-blue-400 has-[:checked]:bg-blue-50/60 has-[:checked]:ring-2 has-[:checked]:ring-blue-500/20 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 has-[:focus-visible]:ring-offset-2">
         <input
           type="checkbox"
           checked={state.consent.summaryReviewed}
           onChange={(event) => updateSection("consent", { summaryReviewed: event.target.checked })}
-          className="mt-0.5 h-4 w-4"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded-sm accent-[var(--blue-500)] focus:outline-none"
         />
         <span>{t("reviewCheckbox")}</span>
       </label>
+
+      <AlreadyPaidProofModal
+        isOpen={proofModalOpen}
+        bookingSessionId={bookingSessionId}
+        proofPath={state.payment.proofPath}
+        onProofPathChange={(path) => updateSection("payment", { proofPath: path })}
+        onCancel={() => {
+          setProofModalOpen(false);
+          if (!state.payment.proofPath.trim()) {
+            updateSection("payment", { mode: "stripe", proofPath: "" });
+            updateSection("deposit", { depositMethod: state.deposit.depositMethod || "in_person" });
+          }
+        }}
+        onConfirm={() => setProofModalOpen(false)}
+      />
     </StepShell>
   );
 }

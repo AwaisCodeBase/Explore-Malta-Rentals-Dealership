@@ -1,6 +1,7 @@
 import type { VehicleCatalogStatus, VehicleType } from "@/generated/prisma/client";
 
 import type { AdminVehicleUnitDto } from "@/lib/admin/vehicle-units/types";
+import type { VehicleDeleteBlockedReason } from "@/lib/admin/vehicles/vehicle-delete-errors";
 
 export type AdminVehicleImageDto = {
   id?: string;
@@ -15,8 +16,10 @@ export type AdminVehicleListItem = {
   name: string;
   slug: string;
   vehicleType: VehicleType;
+  engineCc: number | null;
   brand: string | null;
   model: string | null;
+  color: string | null;
   mainImageUrl: string | null;
   catalogStatus: VehicleCatalogStatus;
   isActive: boolean;
@@ -25,7 +28,10 @@ export type AdminVehicleListItem = {
   totalUnits: number;
   availableUnits: number;
   bookingCount: number;
+  reservationHoldCount: number;
+  availabilityBlockCount: number;
   canDelete: boolean;
+  deleteBlockedReasons: VehicleDeleteBlockedReason[];
 };
 
 export type AdminVehicleDetail = AdminVehicleListItem & {

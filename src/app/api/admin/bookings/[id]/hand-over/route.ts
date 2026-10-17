@@ -18,6 +18,8 @@ function lifecycleConflictMessage(reason: string): string {
       return "Selected vehicle unit does not belong to this booking vehicle.";
     case "vehicle_unit_not_assignable":
       return "Selected vehicle unit is not available for handover.";
+    case "occupancy_conflict":
+      return "Selected vehicle unit is already reserved for overlapping dates.";
     default:
       return "Unable to perform this action.";
   }

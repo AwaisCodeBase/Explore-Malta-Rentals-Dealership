@@ -2,12 +2,14 @@ import {
   INITIAL_BOOKING_FLOW_STATE,
   type BookingFlowState,
 } from "@/features/booking-flow/lib/types";
+import { formatVehicleColorLabel, parseVehicleColorValue } from "@/features/vehicles/lib/vehicle-color";
 
 type InitialRentalState = {
   pickupDate?: string;
   pickupTime?: string;
   returnDate?: string;
   returnTime?: string;
+  selectedColor?: string;
 };
 
 function cloneInitialState(): BookingFlowState {
@@ -24,6 +26,27 @@ function cloneInitialState(): BookingFlowState {
   };
 }
 
+function normalizeInitialColor(raw?: string): string | null {
+  if (!raw?.trim()) {
+    return null;
+  }
+  return parseVehicleColorValue(raw) ?? formatVehicleColorLabel(raw) ?? raw.trim();
+}
+
+function applyInitialRental(next: BookingFlowState, initialRental?: InitialRentalState) {
+  if (!initialRental) {
+    return;
+  }
+  next.rental.pickupDate = initialRental.pickupDate ?? "";
+  next.rental.pickupTime = initialRental.pickupTime ?? "";
+  next.rental.returnDate = initialRental.returnDate ?? "";
+  next.rental.returnTime = initialRental.returnTime ?? "";
+  const color = normalizeInitialColor(initialRental.selectedColor);
+  if (color) {
+    next.rental.selectedColor = color;
+  }
+}
+
 export function buildBookingInitialState(
   selectedVehicleSlug?: string,
   initialRental?: InitialRentalState,
@@ -31,21 +54,11 @@ export function buildBookingInitialState(
   const next = cloneInitialState();
 
   if (!selectedVehicleSlug) {
-    if (initialRental) {
-      next.rental.pickupDate = initialRental.pickupDate ?? "";
-      next.rental.pickupTime = initialRental.pickupTime ?? "";
-      next.rental.returnDate = initialRental.returnDate ?? "";
-      next.rental.returnTime = initialRental.returnTime ?? "";
-    }
+    applyInitialRental(next, initialRental);
     return next;
   }
 
   next.rental.vehicleSlug = selectedVehicleSlug;
-  if (initialRental) {
-    next.rental.pickupDate = initialRental.pickupDate ?? "";
-    next.rental.pickupTime = initialRental.pickupTime ?? "";
-    next.rental.returnDate = initialRental.returnDate ?? "";
-    next.rental.returnTime = initialRental.returnTime ?? "";
-  }
+  applyInitialRental(next, initialRental);
   return next;
 }

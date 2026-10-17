@@ -32,7 +32,7 @@ export async function cancelBooking(
     return { ok: false, reason: "not_found" };
   }
 
-  if (existing.status !== "CONFIRMED") {
+  if (existing.status !== "CONFIRMED" && existing.status !== "PENDING_PAYMENT") {
     return { ok: false, reason: "invalid_status" };
   }
 

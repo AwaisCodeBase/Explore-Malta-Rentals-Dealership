@@ -1,7 +1,7 @@
 "use client";
 
 import * as Popover from "@radix-ui/react-popover";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { DocumentUploadField } from "@/features/booking-flow/components/document-upload-field";
@@ -13,8 +13,21 @@ import {
   type LicenseCategory,
 } from "@/features/booking-flow/lib/license-categories";
 
-const inputClass =
-  "mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-[var(--brand-blue)] focus:ring-2 focus:ring-[var(--brand-blue)]/20";
+const fieldBase =
+  "mt-1.5 min-h-12 w-full rounded-[var(--r-field)] border bg-[var(--surface-card)] px-3.5 py-2.5 text-sm text-[var(--text-primary)] shadow-[var(--elev-1)] outline-none transition duration-[var(--dur-fast)] placeholder:text-[var(--text-faint)] disabled:cursor-not-allowed disabled:bg-[var(--surface-sunken)] disabled:text-[var(--text-faint)] disabled:shadow-none";
+const fieldIdle =
+  "border-[var(--line)] hover:border-[var(--line-strong)] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25";
+const fieldError =
+  "border-red-400 ring-2 ring-red-500/20 focus:border-red-500 focus:ring-red-500/25";
+
+function fieldClass(invalid: boolean) {
+  return `${fieldBase} ${invalid ? fieldError : fieldIdle}`;
+}
+
+const captionClass = "type-spec block text-[var(--text-muted)]";
+const errorClass = "mt-1.5 block text-xs font-medium text-red-600";
+const popoverContentClass =
+  "z-[100] w-[var(--radix-popover-trigger-width)] rounded-[var(--r-card)] border border-[var(--line)] bg-[var(--surface-card)] p-1.5 shadow-[var(--elev-4)]";
 
 export function CustomerDetailsStep() {
   const t = useTranslations("BookingWizard.customer");
@@ -24,8 +37,9 @@ export function CustomerDetailsStep() {
   const allowedLicenseOptions = getAllowedLicenseCategories(
     state.rental.vehicleType,
     state.rental.vehicleId,
+    state.rental.engineCc,
   );
-  const licenseCategoryHint = getLicenseCategoryHint(state.rental.vehicleType);
+  const licenseCategoryHint = getLicenseCategoryHint(state.rental.vehicleType, state.rental.engineCc);
   const licenseCategoryOptions = [
     { value: "", label: t("selectCategory") },
     ...allowedLicenseOptions.map((option) => ({ value: option, label: option })),
@@ -52,99 +66,99 @@ export function CustomerDetailsStep() {
   return (
     <StepShell title={t("shellTitle")} description={t("shellDescription")}>
       <div className="grid gap-4 sm:grid-cols-2">
-        <p className="sm:col-span-2 text-sm font-semibold text-slate-900">{t("lead")}</p>
-        <label className="text-sm font-medium text-slate-700">
-          {t("fullName")}
+        <p className="type-spec sm:col-span-2 text-[var(--text-faint)]">{t("lead")}</p>
+        <label className="block">
+          <span className={captionClass}>{t("fullName")}</span>
           <input
             type="text"
             name="customer.fullName"
             data-field="customer.fullName"
             value={state.customer.fullName}
             onChange={(event) => updateSection("customer", { fullName: event.target.value })}
-            className={`${inputClass} ${isFieldInvalid("customer.fullName") ? "border-red-500 focus:border-red-500 focus:ring-red-200" : ""}`}
+            className={fieldClass(isFieldInvalid("customer.fullName"))}
             placeholder={t("fullNamePh")}
           />
           {getFieldError("customer.fullName") ? (
-            <span className="mt-1 block text-xs text-red-600">{getFieldError("customer.fullName")}</span>
+            <span className={errorClass}>{getFieldError("customer.fullName")}</span>
           ) : null}
         </label>
 
-        <label className="text-sm font-medium text-slate-700">
-          {t("phone")}
+        <label className="block">
+          <span className={captionClass}>{t("phone")}</span>
           <input
             type="tel"
             name="customer.phone"
             data-field="customer.phone"
             value={state.customer.phone}
             onChange={(event) => updateSection("customer", { phone: event.target.value })}
-            className={`${inputClass} ${isFieldInvalid("customer.phone") ? "border-red-500 focus:border-red-500 focus:ring-red-200" : ""}`}
+            className={fieldClass(isFieldInvalid("customer.phone"))}
             placeholder={t("phonePh")}
           />
           {getFieldError("customer.phone") ? (
-            <span className="mt-1 block text-xs text-red-600">{getFieldError("customer.phone")}</span>
+            <span className={errorClass}>{getFieldError("customer.phone")}</span>
           ) : null}
         </label>
 
-        <label className="text-sm font-medium text-slate-700">
-          {t("email")}
+        <label className="block">
+          <span className={captionClass}>{t("email")}</span>
           <input
             type="email"
             name="customer.email"
             data-field="customer.email"
             value={state.customer.email}
             onChange={(event) => updateSection("customer", { email: event.target.value })}
-            className={`${inputClass} ${isFieldInvalid("customer.email") ? "border-red-500 focus:border-red-500 focus:ring-red-200" : ""}`}
+            className={fieldClass(isFieldInvalid("customer.email"))}
             placeholder={t("emailPh")}
             suppressHydrationWarning
           />
           {getFieldError("customer.email") ? (
-            <span className="mt-1 block text-xs text-red-600">{getFieldError("customer.email")}</span>
+            <span className={errorClass}>{getFieldError("customer.email")}</span>
           ) : null}
         </label>
 
-        <label className="text-sm font-medium text-slate-700">
-          {t("nationality")}
+        <label className="block">
+          <span className={captionClass}>{t("nationality")}</span>
           <input
             type="text"
             name="customer.nationality"
             data-field="customer.nationality"
             value={state.customer.nationality}
             onChange={(event) => updateSection("customer", { nationality: event.target.value })}
-            className={`${inputClass} ${isFieldInvalid("customer.nationality") ? "border-red-500 focus:border-red-500 focus:ring-red-200" : ""}`}
+            className={fieldClass(isFieldInvalid("customer.nationality"))}
             placeholder={t("nationalityPh")}
           />
           {getFieldError("customer.nationality") ? (
-            <span className="mt-1 block text-xs text-red-600">{getFieldError("customer.nationality")}</span>
+            <span className={errorClass}>{getFieldError("customer.nationality")}</span>
           ) : null}
         </label>
 
-        <label className="text-sm font-medium text-slate-700">
-          {t("dateOfBirth")}
+        <label className="block">
+          <span className={captionClass}>{t("dateOfBirth")}</span>
           <input
             type="date"
             name="customer.dateOfBirth"
             data-field="customer.dateOfBirth"
             value={state.customer.dateOfBirth}
             onChange={(event) => updateSection("customer", { dateOfBirth: event.target.value })}
-            className={`${inputClass} ${isFieldInvalid("customer.dateOfBirth") ? "border-red-500 focus:border-red-500 focus:ring-red-200" : ""}`}
+            className={`${fieldClass(isFieldInvalid("customer.dateOfBirth"))} tabular-nums`}
           />
           {getFieldError("customer.dateOfBirth") ? (
-            <span className="mt-1 block text-xs text-red-600">{getFieldError("customer.dateOfBirth")}</span>
+            <span className={errorClass}>{getFieldError("customer.dateOfBirth")}</span>
           ) : null}
         </label>
 
-        <label className="text-sm font-medium text-slate-700">
-          {t("licenseCategory")}
+        <label className="block">
+          <span className={captionClass}>{t("licenseCategory")}</span>
           <Popover.Root open={licenseMenuOpen} onOpenChange={setLicenseMenuOpen}>
             <Popover.Trigger asChild>
               <button
                 type="button"
                 aria-haspopup="listbox"
-                className={`${inputClass} flex items-center justify-between`}
+                className={`${fieldClass(isFieldInvalid("customer.licenseCategory"))} flex items-center justify-between text-left`}
               >
                 <span>{selectedLicenseCategoryOption.label}</span>
                 <ChevronDown
-                  className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${
+                  className={`h-4 w-4 shrink-0 text-[var(--text-faint)] transition-transform duration-[var(--dur-fast)] ${
                     licenseMenuOpen ? "rotate-180" : ""
                   }`}
                   aria-hidden
@@ -156,7 +170,7 @@ export function CustomerDetailsStep() {
                 side="bottom"
                 align="start"
                 sideOffset={6}
-                className="z-[100] w-[var(--radix-popover-trigger-width)] rounded-md border border-slate-200 bg-white p-1 shadow-[0_20px_40px_-24px_rgba(15,23,42,0.35)]"
+                className={popoverContentClass}
               >
                 <div role="listbox" className="max-h-64 overflow-y-auto">
                   {licenseCategoryOptions.map((option) => {
@@ -167,10 +181,10 @@ export function CustomerDetailsStep() {
                         type="button"
                         role="option"
                         aria-selected={selected}
-                        className={`flex w-full items-center rounded-md px-3 py-2 text-left text-sm transition ${
+                        className={`flex w-full items-center justify-between gap-2 rounded-[var(--r-field)] px-3 py-2.5 text-left text-sm transition duration-[var(--dur-fast)] ${
                           selected
-                            ? "bg-[var(--brand-blue)]/10 text-slate-900"
-                            : "text-slate-700 hover:bg-slate-50"
+                            ? "bg-blue-50 font-semibold text-blue-800"
+                            : "text-[var(--text-secondary)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]"
                         }`}
                         onClick={() => {
                           updateSection("customer", {
@@ -180,6 +194,9 @@ export function CustomerDetailsStep() {
                         }}
                       >
                         {option.label}
+                        {selected ? (
+                          <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} aria-hidden />
+                        ) : null}
                       </button>
                     );
                   })}
@@ -187,34 +204,44 @@ export function CustomerDetailsStep() {
               </Popover.Content>
             </Popover.Portal>
           </Popover.Root>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1.5 text-xs leading-relaxed text-[var(--text-muted)]">
             {licenseCategoryHint}
           </p>
           {getFieldError("customer.licenseCategory") ? (
-            <p className="mt-1 text-xs text-red-600">{getFieldError("customer.licenseCategory")}</p>
+            <p className="mt-1.5 text-xs font-medium text-red-600">
+              {getFieldError("customer.licenseCategory")}
+            </p>
           ) : null}
         </label>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-200 p-4">
-        <p className="text-sm font-semibold text-slate-900">{t("licenseHeading")}</p>
-        <p className="mt-1 border-b border-slate-200 pb-2 text-xs text-slate-600">
+      <div className="surface-card mt-4 p-4 sm:p-5">
+        <p className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+          {t("licenseHeading")}
+        </p>
+        <p className="mt-1 pb-3 text-xs leading-relaxed text-[var(--text-secondary)]">
           {t("pickupContext")}{" "}
-          <span className="font-semibold">
+          <span className="font-semibold text-[var(--text-primary)]">
             {requiresUploads ? t("requestDelivery") : t("collectFromOffice")}
           </span>
           .
         </p>
-        <div className="mt-2">
+        <hr className="rule-fade" />
+        <div className="mt-3">
           <span
-            className={`flex items-center gap-2 text-sm font-medium ${
-              requiresUploads ? "text-slate-700 opacity-100" : "text-slate-400 opacity-50"
+            className={`flex items-center gap-2.5 text-sm font-medium ${
+              requiresUploads ? "text-[var(--text-primary)]" : "text-[var(--text-faint)]"
             }`}
           >
-            <input type="radio" checked={requiresUploads} readOnly />
+            <input
+              type="radio"
+              checked={requiresUploads}
+              readOnly
+              className="h-4 w-4 shrink-0 accent-[var(--blue-500)]"
+            />
             {t("deliveryLicenseUpload")}
           </span>
-          <div className={`mt-2 ${!requiresUploads ? "pointer-events-none opacity-50" : ""}`}>
+          <div className={`mt-2.5 ${!requiresUploads ? "pointer-events-none opacity-50" : ""}`}>
             <DocumentUploadField
               label={t("driversLicenceLabel")}
               category="customer_license"
@@ -227,18 +254,24 @@ export function CustomerDetailsStep() {
             />
           </div>
           {getFieldError("customer.driverLicenseUpload") ? (
-            <span className="mt-1 block text-xs text-red-600">
-              {getFieldError("customer.driverLicenseUpload")}
-            </span>
+            <span className={errorClass}>{getFieldError("customer.driverLicenseUpload")}</span>
           ) : null}
         </div>
 
-        <div className="mt-3 flex flex-col gap-1 border-t border-slate-200 pt-3 text-sm text-slate-700">
-          <span className="flex items-center gap-2">
-            <input type="radio" checked={!requiresUploads} readOnly />
-            <span>{t("officeLicenseConfirm")}</span>
+        <div className="mt-4 flex flex-col gap-1.5 border-t border-[var(--line-subtle)] pt-4 text-sm text-[var(--text-primary)]">
+          <span className="flex items-center gap-2.5">
+            <input
+              type="radio"
+              checked={!requiresUploads}
+              readOnly
+              className="h-4 w-4 shrink-0 accent-[var(--blue-500)]"
+            />
+            <span className="font-medium">{t("officeLicenseConfirm")}</span>
           </span>
-          <label htmlFor="customer-license-confirmation" className="flex cursor-pointer items-center gap-2 pl-7">
+          <label
+            htmlFor="customer-license-confirmation"
+            className="flex cursor-pointer items-center gap-2.5 pl-7"
+          >
             <input
               id="customer-license-confirmation"
               type="checkbox"
@@ -249,33 +282,46 @@ export function CustomerDetailsStep() {
               onChange={(event) =>
                 updateSection("customer", { licenseConfirmationCheckbox: event.target.checked })
               }
+              className="h-4 w-4 shrink-0 rounded-sm accent-[var(--blue-500)] disabled:cursor-not-allowed"
             />
-            <span className={requiresUploads ? "text-slate-400" : ""}>
+            <span
+              className={
+                requiresUploads ? "text-[var(--text-faint)]" : "text-[var(--text-secondary)]"
+              }
+            >
               {t("confirmPresentLicense")}
             </span>
           </label>
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-200 p-4">
-        <p className="text-sm font-semibold text-slate-900">{t("passportHeading")}</p>
-        <p className="mt-1 border-b border-slate-200 pb-2 text-xs text-slate-600">
+      <div className="surface-card mt-4 p-4 sm:p-5">
+        <p className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
+          {t("passportHeading")}
+        </p>
+        <p className="mt-1 pb-3 text-xs leading-relaxed text-[var(--text-secondary)]">
           {t("pickupContext")}{" "}
-          <span className="font-semibold">
+          <span className="font-semibold text-[var(--text-primary)]">
             {requiresUploads ? t("requestDelivery") : t("collectFromOffice")}
           </span>
           .
         </p>
-        <div className="mt-2">
+        <hr className="rule-fade" />
+        <div className="mt-3">
           <span
-            className={`flex items-center gap-2 text-sm font-medium ${
-              requiresUploads ? "text-slate-700 opacity-100" : "text-slate-400 opacity-50"
+            className={`flex items-center gap-2.5 text-sm font-medium ${
+              requiresUploads ? "text-[var(--text-primary)]" : "text-[var(--text-faint)]"
             }`}
           >
-            <input type="radio" checked={requiresUploads} readOnly />
+            <input
+              type="radio"
+              checked={requiresUploads}
+              readOnly
+              className="h-4 w-4 shrink-0 accent-[var(--blue-500)]"
+            />
             {t("deliveryPassportUpload")}
           </span>
-          <div className={`mt-2 ${!requiresUploads ? "pointer-events-none opacity-50" : ""}`}>
+          <div className={`mt-2.5 ${!requiresUploads ? "pointer-events-none opacity-50" : ""}`}>
             <DocumentUploadField
               label={t("passportNationalIdLabel")}
               category="customer_passport"
@@ -288,17 +334,23 @@ export function CustomerDetailsStep() {
             />
           </div>
           {getFieldError("customer.passportUpload") ? (
-            <span className="mt-1 block text-xs text-red-600">
-              {getFieldError("customer.passportUpload")}
-            </span>
+            <span className={errorClass}>{getFieldError("customer.passportUpload")}</span>
           ) : null}
         </div>
-        <div className="mt-3 flex flex-col gap-1 border-t border-slate-200 pt-3 text-sm text-slate-700">
-          <span className="flex items-center gap-2">
-            <input type="radio" checked={!requiresUploads} readOnly />
-            <span>{t("officePassportConfirm")}</span>
+        <div className="mt-4 flex flex-col gap-1.5 border-t border-[var(--line-subtle)] pt-4 text-sm text-[var(--text-primary)]">
+          <span className="flex items-center gap-2.5">
+            <input
+              type="radio"
+              checked={!requiresUploads}
+              readOnly
+              className="h-4 w-4 shrink-0 accent-[var(--blue-500)]"
+            />
+            <span className="font-medium">{t("officePassportConfirm")}</span>
           </span>
-          <label htmlFor="customer-passport-confirmation" className="flex cursor-pointer items-center gap-2 pl-7">
+          <label
+            htmlFor="customer-passport-confirmation"
+            className="flex cursor-pointer items-center gap-2.5 pl-7"
+          >
             <input
               id="customer-passport-confirmation"
               type="checkbox"
@@ -309,8 +361,13 @@ export function CustomerDetailsStep() {
               onChange={(event) =>
                 updateSection("customer", { idConfirmationCheckbox: event.target.checked })
               }
+              className="h-4 w-4 shrink-0 rounded-sm accent-[var(--blue-500)] disabled:cursor-not-allowed"
             />
-            <span className={requiresUploads ? "text-slate-400" : ""}>
+            <span
+              className={
+                requiresUploads ? "text-[var(--text-faint)]" : "text-[var(--text-secondary)]"
+              }
+            >
               {t("confirmPresentId")}
             </span>
           </label>
@@ -318,14 +375,14 @@ export function CustomerDetailsStep() {
       </div>
 
       <div className="mt-4">
-        <label className="text-sm font-medium text-slate-700">
-          {t("specialNotes")}
+        <label className="block">
+          <span className={captionClass}>{t("specialNotes")}</span>
           <textarea
             value={state.customer.specialNotes}
             onChange={(event) => updateSection("customer", { specialNotes: event.target.value })}
             rows={4}
             placeholder={t("specialNotesPlaceholder")}
-            className={`${inputClass} min-h-24`}
+            className={`${fieldClass(false)} min-h-24 leading-relaxed`}
           />
         </label>
       </div>

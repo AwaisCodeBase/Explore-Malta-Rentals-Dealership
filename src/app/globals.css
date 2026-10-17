@@ -2399,8 +2399,10 @@ body {
 
 /*
  * Mobile / tablet: footer is much taller than the landscape wallpaper.
- * Stretching 100% 100% warps the crosses into vertical streaks.
- * Keep artwork proportional at the bottom; navy gradient fills the rest.
+ * Stretching 100% 100% warps the crosses into vertical streaks;
+ * cover crops the side crosses on a narrow viewport.
+ * Sit a full-width proportional strip at the bottom (both crosses visible);
+ * navy gradient fills the tall content area above.
  */
 @media (max-width: 1023px) {
   .site-footer__background {
@@ -2409,9 +2411,10 @@ body {
     bottom: 0;
     top: auto;
     width: 100%;
-    height: min(42vh, 28rem);
-    max-height: 55%;
-    background-size: cover;
+    height: auto;
+    aspect-ratio: 1920 / 1200;
+    max-height: min(38vh, 20rem);
+    background-size: 100% 100%;
     background-position: center bottom;
   }
 
@@ -2420,11 +2423,12 @@ body {
     position: absolute;
     inset-inline: 0;
     top: 0;
-    height: 55%;
+    height: 70%;
     background: linear-gradient(
       180deg,
       #050814 0%,
-      rgb(5 8 20 / 0.85) 35%,
+      rgb(5 8 20 / 0.92) 28%,
+      rgb(5 8 20 / 0.35) 70%,
       transparent 100%
     );
     pointer-events: none;
@@ -2433,9 +2437,9 @@ body {
   .site-footer__background::after {
     background: linear-gradient(
       180deg,
-      rgb(5 8 20 / 0.55) 0%,
-      rgb(0 0 0 / 0.12) 55%,
-      rgb(0 0 0 / 0.28) 100%
+      rgb(5 8 20 / 0.4) 0%,
+      rgb(0 0 0 / 0.08) 50%,
+      rgb(0 0 0 / 0.2) 100%
     );
   }
 }

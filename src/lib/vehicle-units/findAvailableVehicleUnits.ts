@@ -355,9 +355,11 @@ export async function batchFindAvailableVehicleUnits(
 
   const legacySlotsByVehicle = new Map<string, number>();
   for (const row of legacyBookings) {
+    if (!row.vehicleId) continue;
     legacySlotsByVehicle.set(row.vehicleId, (legacySlotsByVehicle.get(row.vehicleId) ?? 0) + 1);
   }
   for (const row of legacyHolds) {
+    if (!row.vehicleId) continue;
     legacySlotsByVehicle.set(row.vehicleId, (legacySlotsByVehicle.get(row.vehicleId) ?? 0) + 1);
   }
 

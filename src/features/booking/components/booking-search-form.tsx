@@ -28,10 +28,12 @@ import {
 import { calculateCalendarRentalDays } from "@/lib/pricing/rental-duration";
 import Select, {
   components as selectComponents,
+  type CSSObjectWithLabel,
   type DropdownIndicatorProps,
   type GroupBase,
   type MenuProps,
 } from "react-select";
+import type {} from "react-select/base";
 import {
   CalendarDays,
   ChevronDown,
@@ -236,10 +238,16 @@ function optionByValue(
   return options.find((option) => option.value === value) ?? options[0]!;
 }
 
-type BookingSearchSelectExtraProps = {
-  /** Field shell (icon + control + CHANGE) — menu must match this box, not the inner Select. */
-  menuAnchorRef?: RefObject<HTMLDivElement | null>;
-};
+/** Field shell (icon + control + CHANGE) — menu must match this box, not the inner Select. */
+declare module "react-select/base" {
+  export interface Props<
+    Option,
+    IsMulti extends boolean,
+    Group extends GroupBase<Option>,
+  > {
+    menuAnchorRef?: RefObject<HTMLDivElement | null>;
+  }
+}
 
 /**
  * react-select ports the menu to `document.body` and sizes it to the inner control
@@ -260,8 +268,7 @@ function BookingSearchMenu(
     placement,
   } = props;
 
-  const anchorEl = (props.selectProps as BookingSearchSelectExtraProps)
-    .menuAnchorRef?.current;
+  const anchorEl = props.selectProps.menuAnchorRef?.current;
   const baseStyle = getStyles("menu", props) as CSSProperties;
   const gap = 6;
   const openUp = placement === "top";
@@ -607,7 +614,7 @@ export function BookingSearchForm({
       styles: {
         ...vehicleFilterReactSelectStyles,
         // Portal wrapper is only a mount point; real geometry comes from BookingSearchMenu.
-        menuPortal: (base) => ({
+        menuPortal: (base: CSSObjectWithLabel): CSSObjectWithLabel => ({
           ...base,
           left: 0,
           top: 0,

@@ -19,7 +19,7 @@ export type BatchGetAvailableColorsInput = {
 };
 
 function groupUnitsByColorForVehicle(
-  units: Array<{ color: string | null }>,
+  units: ReadonlyArray<{ color: string | null }>,
 ): AvailableColorDto[] {
   const counts = new Map<string, { label: string; count: number }>();
 

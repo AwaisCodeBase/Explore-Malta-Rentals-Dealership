@@ -1784,7 +1784,8 @@
         "cancelDialog": {
           "title": "Cancel booking",
           "description": "Cancel booking {reference} and release the assigned vehicle unit.",
-          "refundPayment": "Mark payment as refunded",
+          "paidPaymentNotice": "This booking is marked paid. Cancelling does not refund the customer. Issue any Stripe rental refund separately (ADMIN only) after cancellation if needed.",
+          "emailRefundWarning": "Do not promise a refund in this email unless a Stripe refund has already been issued. Cancellation alone does not refund the customer.",
           "depositOutcome": "Security deposit outcome",
           "depositUnchanged": "Leave deposit status unchanged",
           "note": "Cancellation note",

@@ -1,9 +1,8 @@
+import type { Prisma, PrismaClient } from "@/generated/prisma/index";
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
-import { getAdminBookingById } from "@/lib/admin/bookings/getAdminBookingById";
 import type { CancelBookingInput } from "@/lib/admin/bookings/lifecycle/booking-lifecycle-schema";
+import { resolvePaymentStatusOnCancel } from "@/lib/admin/bookings/lifecycle/resolve-payment-status-on-cancel";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
-import { deleteOccupancyForBooking } from "@/lib/vehicle-unit-occupancy";
-import { prisma } from "@/lib/prisma";
 
 export type CancelBookingResult =
   | { ok: true; booking: AdminBookingDetail }
@@ -12,12 +11,37 @@ export type CancelBookingResult =
       reason: "not_found" | "invalid_status";
     };
 
+type CancelBookingDb = {
+  booking: Pick<PrismaClient["booking"], "findUnique">;
+  $transaction: PrismaClient["$transaction"];
+};
+
+type OccupancyTx = Pick<Prisma.TransactionClient, "$executeRaw" | "$executeRawUnsafe">;
+
+/** Optional overrides for unit tests — production callers omit this. */
+export type CancelBookingDeps = {
+  db?: CancelBookingDb;
+  getBookingDetail?: (bookingId: string) => Promise<AdminBookingDetail | null>;
+  deleteOccupancyForBooking?: (tx: OccupancyTx, bookingId: string) => Promise<void>;
+};
+
 export async function cancelBooking(
   bookingId: string,
   input: CancelBookingInput,
   adminUserId: string,
+  deps: CancelBookingDeps = {},
 ): Promise<CancelBookingResult> {
-  const existing = await prisma.booking.findUnique({
+  const db =
+    deps.db ??
+    ((await import("@/lib/prisma")).prisma as unknown as CancelBookingDb);
+  const loadDetail =
+    deps.getBookingDetail ??
+    (await import("@/lib/admin/bookings/getAdminBookingById")).getAdminBookingById;
+  const deleteOccupancy =
+    deps.deleteOccupancyForBooking ??
+    (await import("@/lib/vehicle-unit-occupancy")).deleteOccupancyForBooking;
+
+  const existing = await db.booking.findUnique({
     where: { id: bookingId },
     select: {
       id: true,
@@ -36,10 +60,10 @@ export async function cancelBooking(
     return { ok: false, reason: "invalid_status" };
   }
 
-  let nextPaymentStatus = existing.paymentStatus;
-  if (input.refundPayment && existing.paymentStatus === "PAID") {
-    nextPaymentStatus = "REFUNDED";
-  }
+  const nextPaymentStatus = resolvePaymentStatusOnCancel(
+    existing.paymentStatus,
+    input.refundPayment,
+  );
 
   let nextDepositStatus = existing.securityDepositStatus;
   if (input.depositOutcome === "REFUNDED" && existing.securityDepositStatus === "COLLECTED") {
@@ -48,7 +72,7 @@ export async function cancelBooking(
     nextDepositStatus = "DEDUCTED";
   }
 
-  await prisma.$transaction(async (tx) => {
+  await db.$transaction(async (tx) => {
     await tx.booking.update({
       where: { id: bookingId },
       data: {
@@ -71,7 +95,7 @@ export async function cancelBooking(
       });
     }
 
-    await deleteOccupancyForBooking(tx, bookingId);
+    await deleteOccupancy(tx, bookingId);
 
     await recordBookingStatusChange(tx, {
       bookingId,
@@ -82,7 +106,7 @@ export async function cancelBooking(
     });
   });
 
-  const booking = await getAdminBookingById(bookingId);
+  const booking = await loadDetail(bookingId);
   if (!booking) {
     return { ok: false, reason: "not_found" };
   }

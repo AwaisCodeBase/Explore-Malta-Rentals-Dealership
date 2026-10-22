@@ -56,6 +56,14 @@ const nextConfig: NextConfig = {
         source: "/favicon.ico",
         destination: "/explore%20malta%20rentals%20logo%20favicon.png",
       },
+      {
+        source: "/design-renewal",
+        destination: "/design-renewal/Explore-Malta-Rentals-design-renewal.html",
+      },
+      {
+        source: "/design-renewal/",
+        destination: "/design-renewal/Explore-Malta-Rentals-design-renewal.html",
+      },
       ...publicAssetRewrites,
     ];
   },

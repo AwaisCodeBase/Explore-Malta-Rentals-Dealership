@@ -15,7 +15,7 @@ export const ROUTE_PATH =
 
 /** Handwritten swoosh inspired by the Rentals script mark. */
 export const RENTALS_SWOOSH_PATH =
-  "M 584 98 C 612 108, 636 90, 660 98 S 684 104, 702 95";
+  "M 552 98 C 580 108, 604 90, 628 98 S 652 104, 670 95";
 
 /** Angular star fragment — abstract brand accent, not the logo mark. */
 export const ACCENT_SHARD_PATH = "M 0 0 L 14 38 L 3 42 Z";

@@ -1298,12 +1298,13 @@ body {
 }
 
 .hero-aquatico-heading {
-  font-weight: 300;
-  font-synthesis: weight;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  line-height: 1.05;
-  font-size: clamp(1.5rem, 5.5vw, 2.25rem);
+  font-family: var(--font-bricolage-grotesque), var(--font-plus-jakarta-sans), sans-serif;
+  font-weight: 800;
+  font-synthesis: none;
+  font-variation-settings: "opsz" 96;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  font-size: clamp(2.5rem, 10vw, 3.25rem);
 }
 
 .hero-aquatico-heading__line {
@@ -1313,24 +1314,20 @@ body {
 
 @media (min-width: 768px) {
   .hero-aquatico-heading {
-    letter-spacing: 0.14em;
-    line-height: 1;
-    font-size: clamp(2rem, 5vw, 3.5rem);
+    line-height: 0.95;
+    font-size: clamp(3.25rem, 7vw, 4.5rem);
   }
 }
 
 @media (min-width: 1024px) {
   .hero-aquatico-heading {
-    letter-spacing: 0.16em;
-    line-height: 0.95;
-    font-size: clamp(2.25rem, 4.5vw, 4.25rem);
+    line-height: 0.92;
+    font-size: clamp(4rem, 6vw, 5.75rem);
   }
 }
 
 .hero-display-accent {
   color: color-mix(in srgb, var(--brand-orange) 88%, white);
-  font-weight: 300;
-  font-synthesis: weight;
   text-shadow: 0 1px 18px rgba(0, 0, 0, 0.32);
 }
 
@@ -2652,10 +2649,11 @@ html:has(.home-preloader-boundary[data-preloader-active="true"]) {
 
 .landing-preloader__title-base,
 .landing-preloader__title-fill {
-  font-family: var(--font-plus-jakarta-sans), "Plus Jakarta Sans", sans-serif;
+  font-family: var(--font-bricolage-grotesque), var(--font-plus-jakarta-sans), sans-serif;
+  font-optical-sizing: auto;
   font-size: clamp(2rem, 6.8vw, 4rem);
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-weight: 800;
+  letter-spacing: -0.045em;
 }
 
 .landing-preloader__title-base {
@@ -2669,14 +2667,6 @@ html:has(.home-preloader-boundary[data-preloader-active="true"]) {
 .landing-preloader--animated .landing-preloader__center,
 .landing-preloader--animated .landing-preloader__footer {
   opacity: 0;
-}
-
-.landing-preloader__title-script {
-  font-family: "Segoe Script", "Snell Roundhand", "Apple Chancery", cursive;
-  font-size: 1.08em;
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: 0.01em;
 }
 
 .landing-preloader__title-base .landing-preloader__title-malta {

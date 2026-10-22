@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Explore Malta Rentals — Design renewal</title>
+  <style>
+    :root {
+      --ink: #1a1c1f;
+      --muted: #5c6168;
+      --line: #e4e1da;
+      --paper: #f6f4ef;
+      --card: #fffcf7;
+      --orange: #e36a12;
+      --orange-soft: #fff1e6;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      font-size: 17px;
+      line-height: 1.6;
+    }
+    img { max-width: 100%; display: block; }
+    a { color: var(--orange); }
+    .wrap { width: min(1080px, calc(100% - 40px)); margin: 0 auto; }
+    header.mast {
+      padding: 64px 0 36px;
+      border-bottom: 1px solid var(--line);
+    }
+    .kicker {
+      margin: 0 0 12px;
+      color: var(--orange);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(2.2rem, 4vw, 3.4rem);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      font-weight: 720;
+    }
+    .lede {
+      max-width: 42rem;
+      margin: 18px 0 0;
+      font-size: 1.15rem;
+      color: var(--muted);
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 22px;
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    section { padding: 56px 0; }
+    h2 {
+      margin: 0 0 14px;
+      font-size: clamp(1.6rem, 2.4vw, 2rem);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+    h3 { margin: 0 0 8px; font-size: 1.05rem; letter-spacing: -0.02em; }
+    p { margin: 0 0 14px; }
+    .prose { max-width: 44rem; }
+    .points {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .point {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px 18px 16px;
+    }
+    .point strong { display: block; margin-bottom: 6px; letter-spacing: -0.02em; }
+    .point p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+    .compare { margin-top: 28px; }
+    .compare + .compare { margin-top: 42px; }
+    .pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    figure { margin: 0; }
+    figure img {
+      width: 100%;
+      height: auto;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #111;
+    }
+    figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .why { margin-top: 12px; max-width: 44rem; }
+    .gallery {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 22px;
+    }
+    .gallery figure img {
+      height: auto;
+      background: #0e1014;
+    }
+    .gallery figcaption {
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+    .gallery figcaption strong { color: var(--ink); }
+    .phones {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 22px 18px;
+      margin-top: 22px;
+      align-items: start;
+    }
+    .phones figure img {
+      height: auto;
+      background: #111;
+    }
+    .close {
+      background: #16181c;
+      color: #f4f1ea;
+      border-radius: 20px;
+      padding: 32px 28px;
+    }
+    .close p { color: #d5d0c6; max-width: 40rem; }
+    .close a { color: #ffb067; }
+    footer.note {
+      padding: 10px 0 48px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    @media (max-width: 800px) {
+      .points, .pair, .gallery, .phones { grid-template-columns: 1fr; }
+      figure img, .gallery figure img, .phones figure img { height: auto; }
+    }
+    @media print {
+      body { background: white; }
+      header.mast, section { break-inside: auto; }
+      .compare, .gallery figure, .point { break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="mast">
+    <div class="wrap">
+      <p class="kicker">Design renewal · October 2026</p>
+      <h1>A public face that matches the standard of the business.</h1>
+      <p class="lede">
+        The site already takes bookings, speaks to visitors in many languages, and makes Pietà easy to find.
+        The renewal is the part a guest sees before any of that: the first impression, the fleet, the price, and the close.
+        This note shows the live site beside the new experience, and the images chosen for it.
+      </p>
+      <div class="meta">
+        <span>Live today: exploremaltarentals.com</span>
+        <span>Prepared for Explore Malta Rentals</span>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="wrap">
+      <h2>What this changes for a guest</h2>
+      <div class="prose">
+        <p>
+          A visitor comparing Malta rentals decides in the first screen whether the company looks ready to take a deposit, hand over a helmet, and be there if the plan changes. The current site is clear and it works. It also opens like a form. The renewal opens like a rental company a guest would trust on an international shortlist.
+        </p>
+        <p>
+          Nothing underneath has been swapped out. Prices, pickup from Pietà, hotel delivery, the fleet, the languages, WhatsApp, and the booking steps stay. The change is how that offer is presented, from the homepage through the vehicles page, the rates, and the footer.
+        </p>
+      </div>
+      <div class="points">
+        <article class="point">
+          <strong>Attention, then the form</strong>
+          <p>The first screen now sells the fleet and the name. Dates come on the next beat, once the guest has a reason to stay.</p>
+        </article>
+        <article class="point">
+          <strong>One company, every page</strong>
+          <p>Home, vehicles, rates, and the footer now share one visual world: the islands, the fleet, and the blue and red of the mark.</p>
+        </article>
+        <article class="point">
+          <strong>Less doubt before a booking</strong>
+          <p>Engine size, the three steps, included kit, and longer-stay savings are visible without a hunt through the page.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>The opening second</h2>
+      <div class="prose">
+        <p>
+          Before the homepage appears, the name fills the screen. Malta is in the red of the mark, Rentals is in the script of the logo, and a thin route line draws across the dark. A percentage counts up, then the page opens. It is a short, deliberate start, the kind a guest expects from a brand that looks after the details.
+        </p>
+      </div>
+      <div class="compare">
+        <figure>
+          <img src="/design-renewal/screenshots/loader.jpg" alt="Opening loader: Explore Malta Rentals on black, with the name filling in and the progress count" />
+          <figcaption>Renewal · Opening</figcaption>
+        </figure>
+        <p class="why">
+          The live site opens straight onto the page. The renewal introduces the company first, then the fleet. It plays once, on the way in.
+        </p>
+      </div>
+
+      <h2>Live site and the renewal</h2>
+      <p class="prose">Screens below are the public site as it is today, next to the renewal.</p>
+
+      <div class="compare">
+        <div class="pair">
+          <figure class="tall">
+            <img src="/design-renewal/screenshots/live-home-hero.jpg" alt="Current homepage: headline over a rider photo, with the booking form already on screen" />
+            <figcaption>Live · Homepage</figcaption>
+          </figure>
+          <figure class="tall">
+            <img src="/design-renewal/screenshots/new-home-hero.jpg" alt="Renewed homepage: full-screen showroom, Explore Malta Your Way, Book now, and Pietà" />
+            <figcaption>Renewal · Homepage</figcaption>
+          </figure>
+        </div>
+        <p class="why">
+          Today the search starts in the same view as the headline, so the photograph never gets a full moment. The renewal gives the opening screen to three bikes in a lit bay, the sign on the wall, and one action: Book now. Pietà stays in the corner. The dark bar and the language control sit in the same frame, which is how an international rental brand holds a page together.
+        </p>
+      </div>
+
+      <div class="compare">
+        <figure>
+          <img src="/design-renewal/screenshots/new-home-video.jpg" alt="Watch our video opens the film on the screen in the showroom, with the headline still in place" />
+          <figcaption>Renewal · Watch our video</figcaption>
+        </figure>
+        <p class="why">
+          Watch our video stays on this screen. The showroom remains, and the film plays on the screen on the wall, with a close control. The guest can see the ride and still book from the same view. The live homepage has no film on the opening screen.
+        </p>
+      </div>
+
+      <div class="compare">
+        <div class="pair">
+          <figure class="tall">
+            <img src="/design-renewal/screenshots/live-home-hero.jpg" alt="Current search sitting inside the homepage hero" />
+            <figcaption>Live · Search inside the hero</figcaption>
+          </figure>
+          <figure class="tall">
+            <img src="/design-renewal/screenshots/new-home-booking.jpg" alt="Renewed availability search on an illustrated map of Gozo and Malta" />
+            <figcaption>Renewal · Availability on the island map</figcaption>
+          </figure>
+        </div>
+        <p class="why">
+          The search itself is the same useful tool: Pietà or another address, scooter, motorcycle, bicycle or ATV, dates, times, and a clear line that there are no hidden charges. On the renewal it sits on a map of Malta, Gozo and Comino. Choosing a bike reads as planning a route across the islands. The summary under the button still states the length of the trip and the pickup before the guest searches.
+        </p>
+      </div>
+
+      <div class="compare">
+        <div class="pair">
+          <figure>
+            <img src="/design-renewal/screenshots/live-home-fleet.jpg" alt="Current fleet: two white cards for 50cc and 125cc bikes" />
+            <figcaption>Live · Choose your ride</figcaption>
+          </figure>
+          <figure>
+            <img src="/design-renewal/screenshots/new-home-fleet.jpg" alt="Renewed fleet: one scooter in red and blue light, with 125cc and 50cc as a simple switch" />
+            <figcaption>Renewal · Choose your ride</figcaption>
+          </figure>
+        </div>
+        <p class="why">
+          Today the two categories sit in matching catalogue cards. They explain the difference, and they look like a template. The renewal shows one bike at a time, in the red and blue of the logo, with a simple switch between 125cc and 50cc. A guest who is not a rider can see the machine and the reason to pick it, then go straight to that part of the fleet.
+        </p>
+      </div>
+
+      <div class="compare">
+        <div class="pair">
+          <figure>
+            <img src="/design-renewal/screenshots/live-services.jpg" alt="Live services and benefits: a compact grid of five promise cards" />
+            <figcaption>Live · Services and benefits</figcaption>
+          </figure>
+          <figure>
+            <img src="/design-renewal/screenshots/new-services.jpg" alt="Renewed services and benefits: large title, icon row, and the same five promises as full cards" />
+            <figcaption>Renewal · Services and benefits</figcaption>
+          </figure>
+        </div>
+        <p class="why">
+          Same promises on both sides: easy pickup, helmets and phone holders, flexible dates, tourist support, and hotel delivery. Today they sit in a compact grid. In the renewal each promise has its own card, and the icons run through the title so a guest can read the offer before they read the detail.
+        </p>
+      </div>
+
+      <div class="compare">
+        <figure>
+          <img src="/design-renewal/screenshots/new-three-steps.jpg" alt="Three steps to the open road: choose your bike, select pickup and return, ride and explore" />
+          <figcaption>Renewal · Three steps to the open road</figcaption>
+        </figure>
+        <p class="why">
+          The live homepage does not have this section. After the fleet it goes straight to services. The renewal puts the path in between: choose the bike, set pickup and return, then ride. Hotel delivery is named in the second step, so a first-time guest knows what happens after they book.
+        </p>
+      </div>
+
+      <div class="compare">
+        <div class="pair">
+          <figure>
+            <img src="/design-renewal/screenshots/live-closing.jpg" alt="Live closing line, Malta is waiting, centred on a plain dark panel" />
+            <figcaption>Live · Closing line</figcaption>
+          </figure>
+          <figure>
+            <img src="/design-renewal/screenshots/new-closing.jpg" alt="Renewed closing line set across the fleet under the Explore Malta Rentals sign" />
+            <figcaption>Renewal · Closing line</figcaption>
+          </figure>
+        </div>
+        <p class="why">
+          The line is the same: “Malta is waiting, make it yours.” Today it sits in the centre of an empty dark panel. In the renewal it is set across the scooters and ATVs, under the sign, so the guest sees the fleet at the moment they are asked to start.
+        </p>
+      </div>
+
+      <div class="compare">
+        <div class="pair">
+          <figure class="tall">
+            <img src="/design-renewal/screenshots/live-vehicles.jpg" alt="Current vehicles page: filters beside a logo banner and the search form" />
+            <figcaption>Live · Vehicles</figcaption>
+          </figure>
+          <figure class="tall">
+            <img src="/design-renewal/screenshots/new-vehicles.jpg" alt="Renewed vehicles page: headline over the island map, with the same search" />
+            <figcaption>Renewal · Vehicles</figcaption>
+          </figure>
+        </div>
+        <p class="why">
+          The vehicles page is where a serious guest compares engine size, colour and dates. Today it opens as a filter column and a logo bar. The renewal opens with the same map as the homepage and a direct headline: find the ride, compare, lock the dates. Transparent pricing is stated before the form. The search behaviour is familiar. The page now looks like part of the same company as the homepage.
+        </p>
+      </div>
+
+      <div class="compare">
+        <figure class="tall">
+          <img src="/design-renewal/screenshots/new-booking-rates.jpg" alt="Rates at a glance on the booking page, with longer-stay discounts of 20, 28 and 40 percent" />
+          <figcaption>Renewal · Booking page, rates at a glance</figcaption>
+        </figure>
+        <p class="why">
+          The booking itself stays a clear sequence: rental details, options and delivery, guest information, then review and confirm. A returning guest can still load a booking with the reference and email. What the renewal adds on this page is a setting for the price. Longer hires are shown as a plain offer — 20% from 7 days, 28% from 14, 40% from 21 — on a night scene, with the note that the final figure depends on the vehicle, the season and availability. A longer stay looks like a reason to book more days, which is better for the business than a table left on a blank background.
+        </p>
+      </div>
+
+      <div class="compare">
+        <div class="pair">
+          <figure>
+            <img src="/design-renewal/screenshots/live-footer.jpg" alt="Current footer: logo, link columns, newsletter and contact on a flat dark background" />
+            <figcaption>Live · Footer</figcaption>
+          </figure>
+          <figure>
+            <img src="/design-renewal/screenshots/new-footer.jpg" alt="Renewed footer: Pietà map, contact details and the name set large on a blue and red field" />
+            <figcaption>Renewal · Footer</figcaption>
+          </figure>
+        </div>
+        <p class="why">
+          The footer is where a cautious guest checks that the company is real. Both versions carry the Pietà address, email, WhatsApp, the map, the newsletter, and the legal links. The renewal places the map in the blue and red geometry of the logo and sets the name large along the bottom. It closes like a brand, and it still tells the guest exactly where to go: 42, Triq il-Marina, Pietà.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>On a phone</h2>
+      <div class="prose">
+        <p>
+          Most guests will open this on a phone, often after they land or from a hotel room. The renewal does not shrink the desktop page. The picture, the type, and the placement change so the same offer stays easy to read and easy to tap.
+        </p>
+        <p>
+          The wide showroom is the desktop opening. On a phone the opening is the coast toward Valletta, with the scooter large in the frame and the route marks still visible. The headline, Book now, and Watch our video stack in one column with space around each. Pietà stays in reach. Menu and Book now sit in the top bar, so the next action is never buried in a row of small links.
+        </p>
+      </div>
+      <div class="phones">
+        <figure>
+          <img src="/design-renewal/screenshots/mobile-hero.jpg" alt="Phone homepage: scooter on the coast toward Valletta, with Book now and Watch our video stacked below the headline" />
+          <figcaption>Phone · Homepage</figcaption>
+        </figure>
+        <figure>
+          <img src="/design-renewal/screenshots/mobile-menu.png" alt="Phone menu: numbered list from Home to Services, with the language row along the bottom" />
+          <figcaption>Phone · Menu</figcaption>
+        </figure>
+        <figure>
+          <img src="/design-renewal/screenshots/mobile-vehicles.png" alt="Phone vehicles page: the island map with the search stacked in one column" />
+          <figcaption>Phone · Vehicles search</figcaption>
+        </figure>
+        <figure>
+          <img src="/design-renewal/screenshots/mobile-fleet.png" alt="Phone fleet cards: scooter photo, price per day, and Book now with room to tap" />
+          <figcaption>Phone · Fleet</figcaption>
+        </figure>
+      </div>
+      <p class="why">
+        The menu opens as a full list, numbered from Home through Services, with the languages in one row at the bottom. A guest does not pinch or hunt. On the vehicles page the map stays, and the search becomes a single column: pickup, drop-off, dates, times, then Search. The fleet cards keep the photo, the price, and Book now large enough to use with a thumb. The result is the same company as the desktop site, with more room on the smaller screen.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>The images, and the job of each one</h2>
+      <p class="prose">
+        These scenes were composed for the brand. They are there to show a looked-after fleet and Malta as the trip, on desktop and on a phone. They are brand pictures for the website, separate from a photo of the shopfront on Triq il-Marina.
+      </p>
+      <div class="gallery">
+        <figure>
+          <img src="/hero-section/background-2.png" alt="Showroom with three scooters and the Explore Malta Rentals sign" />
+          <figcaption><strong>Homepage, desktop.</strong> The opening scene. Three machines, a working bay, and the sign. This is the picture a guest sees before they are asked for a date.</figcaption>
+        </figure>
+        <figure>
+          <img src="/hero-section/background.png" alt="Scooter on a coastal road at sunset, with Valletta and a route map" />
+          <figcaption><strong>Homepage, phone.</strong> A scooter on the coast toward Valletta, with a route across the islands. The small screen gets the destination, rather than a reduced copy of the showroom.</figcaption>
+        </figure>
+        <figure>
+          <img src="/form%20background%202.png" alt="Illustrated map of Malta, Gozo and Comino" />
+          <figcaption><strong>Search on the homepage, and the vehicles page.</strong> Malta, Gozo and Comino, so the form feels like planning the days, on both pages a guest uses to choose a bike.</figcaption>
+        </figure>
+        <figure>
+          <img src="/choose-us-images/125cc.png" alt="125cc scooter in red and blue studio light" />
+          <figcaption><strong>Fleet, 125cc.</strong> The step-up ride, shown alone so the choice is obvious. The same red and blue run through the navigation, the rates, and the footer.</figcaption>
+        </figure>
+        <figure>
+          <img src="/choose-us-images/50cc.png" alt="50cc scooter in red and blue studio light" />
+          <figcaption><strong>Fleet, 50cc.</strong> The easier bike, in the same setting. Switching category changes the machine, and the page stays calm.</figcaption>
+        </figure>
+        <figure>
+          <img src="/warehouse.png" alt="Scooters and ATVs lined up under a neon Explore Malta Rentals sign" />
+          <figcaption><strong>Closing section.</strong> Scooters and ATVs together, under the sign. The last ask on the homepage has the whole offer in view.</figcaption>
+        </figure>
+        <figure>
+          <img src="/rate-at-glance.png" alt="Night exterior used behind the rates table" />
+          <figcaption><strong>Booking page, rates.</strong> A quiet night frontage behind the discount table, so the savings read as an offer on the booking page.</figcaption>
+        </figure>
+        <figure>
+          <img src="/footer-background.png" alt="Deep blue field with a blue star and a red star" />
+          <figcaption><strong>Footer.</strong> The two colours of the logo, held as a field behind the map, the address, and the name. The site ends on the mark.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Why this is the right move for the business</h2>
+      <div class="prose">
+        <p>
+          Guests arriving from abroad already have a habit of judging a rental company by the site: if it looks assembled, they assume the handover will be too. Explore Malta Rentals is a local operator with a real address, a real fleet, included helmets, hotel delivery where it applies, and someone on WhatsApp. The renewal makes that visible in the order a guest actually looks.
+        </p>
+        <p>
+          They see the standard of the fleet. They see the islands they came for. They see that 50cc and 125cc are a simple choice. They see the three steps, so the deposit has a story. They see that a longer booking is worth more. They see Pietà on a map before they leave. That sequence is what turns a cautious comparison into a booking with a smaller company, instead of a reflex click toward a larger international name.
+        </p>
+        <p>
+          The site already serves an international guest list through its languages. The renewal gives that audience a single, consistent face: dark navigation, one orange action, the same map on the pages where people decide, and a footer that still proves the company is in Pietà.
+        </p>
+        <p>
+          The practical offer is unchanged, which is the point. A guest who books does not have to learn a new process. You do not have to relearn the operation. The public site finally looks like the company you already run.
+        </p>
+      </div>
+      <div class="close" style="margin-top: 28px;">
+        <h2>Recommendation</h2>
+        <p>
+          Approve this direction and we put it on the live site. The current site at
+          <a href="https://www.exploremaltarentals.com/en">exploremaltarentals.com</a>
+          stays as it is until you do. Bookings, prices, languages and pickup rules carry over with the new face.
+        </p>
+        <p>
+          Open this file in a browser. If you want a copy to forward, use the browser’s print command and save it as a PDF. The comparisons and the images above are the renewal.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">
+    <div class="wrap">Explore Malta Rentals · design renewal · October 2026</div>
+  </footer>
+</body>
+</html>

@@ -21,6 +21,11 @@ function isProtectedAdminApiPath(pathname: string): boolean {
 export default function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Static shareable HTML (public/design-renewal) — skip locale prefixing
+  if (pathname === "/design-renewal" || pathname.startsWith("/design-renewal/")) {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/api/admin/")) {
     if (isProtectedAdminApiPath(pathname)) {
       const sessionToken = request.cookies.get(ADMIN_SESSION_COOKIE)?.value?.trim();
@@ -47,7 +52,7 @@ export default function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next|_vercel|.*\\..*).*)",
+    "/((?!api|_next|_vercel|design-renewal|.*\\..*).*)",
     "/api/admin/:path*",
   ],
 };

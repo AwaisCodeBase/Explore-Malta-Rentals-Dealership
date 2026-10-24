@@ -18,6 +18,7 @@ export type AdminBookingListFilters = {
   year?: number;
   pickupFrom?: string;
   pickupTo?: string;
+  returnDate?: string;
   page?: number;
   pageSize?: number;
 };

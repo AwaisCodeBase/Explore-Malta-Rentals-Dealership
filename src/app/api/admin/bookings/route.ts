@@ -26,6 +26,7 @@ export async function GET(request: Request) {
       year: searchParams.get("year") ?? undefined,
       pickupFrom: searchParams.get("pickupFrom") ?? undefined,
       pickupTo: searchParams.get("pickupTo") ?? undefined,
+      returnDate: searchParams.get("returnDate") ?? undefined,
       page: searchParams.get("page") ?? undefined,
       pageSize: searchParams.get("pageSize") ?? undefined,
     });
@@ -47,6 +48,7 @@ export async function GET(request: Request) {
       year: parsed.data.year,
       pickupFrom: parsed.data.pickupFrom,
       pickupTo: parsed.data.pickupTo,
+      returnDate: parsed.data.returnDate,
       page: parsed.data.page,
       pageSize: parsed.data.pageSize,
     });

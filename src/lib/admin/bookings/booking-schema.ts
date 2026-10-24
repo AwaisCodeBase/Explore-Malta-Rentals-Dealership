@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { maltaCalendarDayRange } from "@/lib/admin/bookings/extension-calendar-days";
+
 const bookingStatusSchema = z.enum([
   "PENDING_PAYMENT",
   "CONFIRMED",
@@ -21,6 +23,11 @@ export const adminBookingListQuerySchema = z.object({
   year: z.coerce.number().int().min(2000).max(currentYear + 1).optional(),
   pickupFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   pickupTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  returnDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .refine((value) => maltaCalendarDayRange(value) !== null, "Invalid calendar date")
+    .optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
 });

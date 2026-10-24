@@ -1,6 +1,8 @@
 import { defaultTimeZone } from "@/i18n/routing";
 import { MAX_BILLABLE_RENTAL_DAYS, calculateCalendarRentalDays } from "@/lib/pricing/rental-duration";
 
+const CALENDAR_DATE_KEY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
 /** YYYY-MM-DD in the business timezone. */
 export function maltaCalendarDateKey(date: Date): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -9,6 +11,20 @@ export function maltaCalendarDateKey(date: Date): string {
     month: "2-digit",
     day: "2-digit",
   }).format(date);
+}
+
+/** True for a real YYYY-MM-DD calendar day, including leap days. */
+export function isMaltaCalendarDateKey(value: string): boolean {
+  const match = CALENDAR_DATE_KEY.exec(value);
+  if (!match) {
+    return false;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const probe = new Date(Date.UTC(year, month - 1, day));
+  return probe.getUTCFullYear() === year && probe.getUTCMonth() === month - 1 && probe.getUTCDate() === day;
 }
 
 /**
@@ -98,6 +114,24 @@ export function maltaDateTimeToUtc(dateKey: string, time: string): Date | null {
   }
 
   return result;
+}
+
+/**
+ * Half-open Europe/Malta calendar day: [local midnight, next local midnight).
+ * Matches the date shown by `formatMaltaDateTime`, including DST days.
+ */
+export function maltaCalendarDayRange(dateKey: string): { start: Date; end: Date } | null {
+  if (!isMaltaCalendarDateKey(dateKey)) {
+    return null;
+  }
+
+  const start = maltaDateTimeToUtc(dateKey, "00:00");
+  const end = maltaDateTimeToUtc(addMaltaCalendarDays(dateKey, 1), "00:00");
+  if (!start || !end || end.getTime() <= start.getTime()) {
+    return null;
+  }
+
+  return { start, end };
 }
 
 export type ExtensionBlockInstant = {

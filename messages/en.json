@@ -1563,6 +1563,7 @@
         "allYears": "All years",
         "pickupFrom": "Pickup from",
         "pickupTo": "Pickup to",
+        "returnDate": "Return date",
         "apply": "Apply filters",
         "applying": "Applying…",
         "clear": "Clear",

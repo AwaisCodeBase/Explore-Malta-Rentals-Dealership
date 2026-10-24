@@ -21,6 +21,7 @@ type AdminBookingsPageProps = Readonly<{
     year?: string;
     pickupFrom?: string;
     pickupTo?: string;
+    returnDate?: string;
     page?: string;
   }>;
 }>;
@@ -65,6 +66,7 @@ export default async function AdminBookingsPage({ params, searchParams }: AdminB
     year: parseOptionalInt(query.year),
     pickupFrom: query.pickupFrom,
     pickupTo: query.pickupTo,
+    returnDate: query.returnDate,
     page: parseOptionalInt(query.page) ?? 1,
   };
 
@@ -84,6 +86,7 @@ export default async function AdminBookingsPage({ params, searchParams }: AdminB
     year: query.year,
     pickupFrom: query.pickupFrom,
     pickupTo: query.pickupTo,
+    returnDate: query.returnDate,
     page: query.page,
   };
 

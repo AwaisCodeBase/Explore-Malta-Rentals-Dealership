@@ -1803,7 +1803,7 @@
             "CONFIRMED": {
               "title": "Confirmed: reservation active",
               "description": "The booking is accepted and a physical unit is reserved. For online payments, money has already been confirmed by Stripe. Security deposit may still be collected at pickup depending on the customer's choice.",
-              "nextStep": "When the customer arrives for pickup or the vehicle is delivered, record the handover. If the booking will not go ahead, cancel it to release the unit."
+              "nextStep": "When the customer arrives for pickup or the vehicle is delivered, record the handover. If they want a different model before handover, change the booked vehicle. If the booking will not go ahead, cancel it to release the unit."
             },
             "VEHICLE_HANDED_OVER": {
               "title": "Vehicle handed over — rental in progress",
@@ -1849,6 +1849,10 @@
             "extend": {
               "summary": "Keep the same vehicle for a later return time.",
               "effects": "Moves the return time later when that unit is free. Extra days use this booking's original daily rate. Delivery, storage, and the deposit are unchanged."
+            },
+            "changeVehicle": {
+              "summary": "Change the booked bike model before the customer takes the vehicle.",
+              "effects": "Keeps this booking, the customer, and the dates. The replacement model must be free for the whole rental. A reserved unit is released and a unit of the new model is reserved. The agreed price stays unless you apply the new model's rate. Card payments are not charged or refunded."
             }
           },
           "effectsLabel": "Result"
@@ -1859,7 +1863,8 @@
           "complete": "Complete booking",
           "cancel": "Cancel booking",
           "restore": "Restore booking",
-          "extend": "Extend booking"
+          "extend": "Extend booking",
+          "changeVehicle": "Change vehicle"
         },
         "extend": {
           "title": "Extend booking",
@@ -1901,6 +1906,43 @@
           "unchangedCharges": "Delivery and storage box charges stay as they are.",
           "available": "The assigned unit is free for this extension.",
           "confirm": "Confirm extension"
+        },
+        "changeVehicle": {
+          "title": "Change vehicle",
+          "description": "Change the booked model for {reference} without creating a new booking.",
+          "currentTitle": "Current vehicle",
+          "newTitle": "Replacement vehicle",
+          "vehicle": "Vehicle",
+          "color": "Color",
+          "unit": "Assigned unit",
+          "dates": "Rental period",
+          "loading": "Checking which models are free for these dates…",
+          "noAlternatives": "No other active models have a free unit for this rental period.",
+          "selectVehicle": "Select a vehicle",
+          "selectColor": "Select an available color",
+          "noColorRequired": "This model has no color choice for these dates.",
+          "perDay": "/day",
+          "priceMode": "Booking price",
+          "keepPrice": "Keep the agreed price",
+          "keepPriceHint": "The customer keeps the price already on this booking.",
+          "applyPrice": "Apply the new model's rate",
+          "applyPriceHint": "Recalculate the rental from the new model's current daily rate and this booking's length. Insurance, delivery, and the deposit stay as they are.",
+          "applyDisabled": "This booking was extended, so the agreed price stays.",
+          "previewTitle": "Change preview",
+          "currentPrice": "Current price",
+          "calculatedPrice": "New calculated price",
+          "difference": "Price difference",
+          "finalPrice": "Final booking price",
+          "keepFinal": "(keep existing)",
+          "applyFinal": "(new model rate)",
+          "assignedLater": "A unit will be assigned at handover",
+          "available": "This model is available for the full rental period.",
+          "typeNote": "This is a different vehicle type. Insurance priced for the original type stays unchanged.",
+          "paymentNote": "Card payments are not charged or refunded.",
+          "duesNote": "Amounts due on this booking are updated. Card payments are not charged or refunded.",
+          "preview": "Checking availability and price…",
+          "emptySelection": "Choose a replacement model to see the price and unit.",
+          "confirm": "Confirm vehicle change"
         },
         "handOver": {
           "title": "Hand over vehicle",

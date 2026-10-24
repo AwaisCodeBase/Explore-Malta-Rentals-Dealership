@@ -52,6 +52,7 @@ async function findUnitsBlockedByOccupancy(
   requestedEnd: Date,
   excludeHoldReference?: string,
   excludeSessionKey?: string,
+  excludeBookingId?: string,
 ): Promise<Set<string>> {
   if (unitIds.length === 0) {
     return new Set();
@@ -84,6 +85,9 @@ async function findUnitsBlockedByOccupancy(
 
   for (const row of rows) {
     if (row.bookingId) {
+      if (excludeBookingId && row.bookingId === excludeBookingId) {
+        continue;
+      }
       if (!row.booking || (BLOCKING_BOOKING_STATUSES as readonly string[]).includes(row.booking.status)) {
         blockedUnitIds.add(row.vehicleUnitId);
       }
@@ -150,6 +154,7 @@ export async function findAvailableVehicleUnits(
     excludedHoldOwners.push({ sessionKey: input.excludeSessionKey });
   }
 
+  const excludedBooking = input.excludeBookingId ? { id: { not: input.excludeBookingId } } : {};
   const [occupancyBlockedUnitIds, bookedUnitRows, heldUnitRows, legacyBookingCount, legacyHoldCount] =
     await Promise.all([
       findUnitsBlockedByOccupancy(
@@ -159,9 +164,11 @@ export async function findAvailableVehicleUnits(
         input.requestedEnd,
         input.excludeHoldReference,
         input.excludeSessionKey,
+        input.excludeBookingId,
       ),
       db.booking.findMany({
         where: {
+          ...excludedBooking,
           status: { in: [...BLOCKING_BOOKING_STATUSES] },
           vehicleUnitId: { in: unitIds },
           ...overlapWhere,
@@ -181,6 +188,7 @@ export async function findAvailableVehicleUnits(
       }),
       db.booking.findMany({
         where: {
+          ...excludedBooking,
           status: { in: [...BLOCKING_BOOKING_STATUSES] },
           vehicleId: input.vehicleId,
           vehicleUnitId: null,

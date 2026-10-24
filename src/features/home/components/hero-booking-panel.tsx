@@ -16,7 +16,7 @@ import {
   vehicleTypeOptions,
 } from "@/features/home/data/hero-booking-options";
 import { SITE_SURFACE_RADIUS } from "@/components/site-shell";
-import { TRIP_MIN_SPAN_DAYS } from "@/features/booking/lib/booking-schema";
+import { DEFAULT_TRIP_SPAN_DAYS } from "@/features/booking/lib/booking-schema";
 import {
   vehicleFilterControlShellClass,
   vehicleFilterReactSelectStyles,
@@ -88,7 +88,7 @@ export function HeroBookingPanel() {
   const [vehicleTypeValue, setVehicleTypeValue] = useState(() => vehicleTypeOptions[0]!.value);
   const [pickupDate, setPickupDate] = useState<Date>(DEFAULT_HERO_PICKUP_DATE);
   const [returnDate, setReturnDate] = useState<Date>(() =>
-    addDays(DEFAULT_HERO_PICKUP_DATE, TRIP_MIN_SPAN_DAYS),
+    addDays(DEFAULT_HERO_PICKUP_DATE, DEFAULT_TRIP_SPAN_DAYS),
   );
   const [returnElsewhere, setReturnElsewhere] = useState(false);
   const [hotelDelivery, setHotelDelivery] = useState(true);

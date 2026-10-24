@@ -1,4 +1,3 @@
-import { differenceInHours, parse } from "date-fns";
 import type { FieldPath } from "react-hook-form";
 import { z } from "zod";
 import { BOOKING_FLOW_STEPS, type BookingFlowStepId } from "@/features/booking-flow/lib/steps";
@@ -7,8 +6,9 @@ import { isLicenseAllowedForVehicle } from "@/features/booking-flow/lib/license-
 import type { BookingFlowState } from "@/features/booking-flow/lib/types";
 import { isPickupDeliveryAllowedForDate } from "@/lib/booking/delivery-availability";
 import {
-  calculateCalendarRentalDays,
+  calculateRentalDuration,
   MAX_BILLABLE_RENTAL_DAYS,
+  MINIMUM_BILLABLE_RENTAL_DAYS,
 } from "@/lib/pricing/rental-duration";
 
 export type BookingValidationMessages = Readonly<{
@@ -50,15 +50,6 @@ export type BookingValidationMessages = Readonly<{
   paymentProofRequired: string;
   reviewFields: string;
 }>;
-
-function parseDateTime(date: string, time: string) {
-  if (!date || !time) {
-    return null;
-  }
-
-  const parsed = parse(`${date} ${time}`, "yyyy-MM-dd HH:mm", new Date());
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
 
 function hasText(value: string) {
   return value.trim().length > 0;
@@ -154,25 +145,26 @@ export function createBookingFlowSchema(m: BookingValidationMessages): z.ZodType
       });
     }
 
-    const pickup = parseDateTime(state.rental.pickupDate, state.rental.pickupTime);
-    const dropoff = parseDateTime(state.rental.returnDate, state.rental.returnTime);
+    if (
+      state.rental.pickupDate &&
+      state.rental.pickupTime &&
+      state.rental.returnDate &&
+      state.rental.returnTime
+    ) {
+      const duration = calculateRentalDuration(
+        state.rental.pickupDate,
+        state.rental.pickupTime,
+        state.rental.returnDate,
+        state.rental.returnTime,
+      );
 
-    if (pickup && dropoff) {
-      const rentalHours = differenceInHours(dropoff, pickup);
-
-      if (rentalHours < 24) {
+      if (!duration || duration.billableDays < MINIMUM_BILLABLE_RENTAL_DAYS) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
           message: m.minRental,
           path: ["rental", "returnTime"],
         });
-      }
-
-      const billableDays = calculateCalendarRentalDays(
-        state.rental.pickupDate,
-        state.rental.returnDate,
-      );
-      if (billableDays !== null && billableDays > MAX_BILLABLE_RENTAL_DAYS) {
+      } else if (duration.billableDays > MAX_BILLABLE_RENTAL_DAYS) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
           message: m.maxRental,

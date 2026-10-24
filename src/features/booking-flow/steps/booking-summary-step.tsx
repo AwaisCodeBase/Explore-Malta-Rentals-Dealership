@@ -225,8 +225,19 @@ export function BookingSummaryStep() {
             <li className={rowClass}>
               <span className={labelClass}>{t("billableDuration")}</span>
               <span className={valueClass}>
-                {pricing ? t("dayCount", { count: pricing.rentalDays }) : "-"}
-                {pricing ? t("actualHours", { hours: pricing.actualDurationHours.toFixed(1) }) : ""}
+                {pricing ? (
+                  <>
+                    {t("actualHours", {
+                      hours: Number.isInteger(pricing.actualDurationHours)
+                        ? String(pricing.actualDurationHours)
+                        : String(pricing.actualDurationHours),
+                    })}
+                    {" · "}
+                    {t("dayCount", { count: pricing.rentalDays })}
+                  </>
+                ) : (
+                  "-"
+                )}
               </span>
             </li>
             <li className={rowClass}>

@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import Image from "next/image";
 import { addDays } from "date-fns";
-import { TRIP_MIN_SPAN_DAYS } from "@/features/booking/lib/booking-schema";
+import { DEFAULT_TRIP_SPAN_DAYS } from "@/features/booking/lib/booking-schema";
 import { useSearchParams } from "next/navigation";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -62,7 +62,7 @@ import {
 /** Tailwind `lg` — sidebar rail visible; hero omits seats/color there. */
 const LG_MIN_PX = 1024;
 const DEFAULT_PICKUP_DATE = new Date(2026, 5, 12);
-const DEFAULT_RETURN_DATE = addDays(DEFAULT_PICKUP_DATE, TRIP_MIN_SPAN_DAYS);
+const DEFAULT_RETURN_DATE = addDays(DEFAULT_PICKUP_DATE, DEFAULT_TRIP_SPAN_DAYS);
 /** Listing filters do not collect times; defaults align availability with a sensible day window. */
 const DEFAULT_LISTING_PICKUP_TIME = "09:00";
 const DEFAULT_LISTING_DROPOFF_TIME = "09:00";
@@ -160,7 +160,7 @@ function VehicleListingShellInner({
     parsePickupDateParam(dropoffDateParam);
   const initialReturn = parsedReturn
     ? clampTripEndDate(initialPickup, parsedReturn)
-    : addDays(initialPickup, TRIP_MIN_SPAN_DAYS);
+    : addDays(initialPickup, DEFAULT_TRIP_SPAN_DAYS);
   const initialLocation: BookingOption | null = locationParam
     ? { value: `url:${locationParam}`, label: locationParam }
     : null;
@@ -317,7 +317,7 @@ function VehicleListingShellInner({
     if (pu) {
       setPickupDate(pu);
       setReturnDate(
-        ret ? clampTripEndDate(pu, ret) : addDays(pu, TRIP_MIN_SPAN_DAYS),
+        ret ? clampTripEndDate(pu, ret) : addDays(pu, DEFAULT_TRIP_SPAN_DAYS),
       );
     }
   }, [

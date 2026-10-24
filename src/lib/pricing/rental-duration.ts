@@ -2,6 +2,9 @@ import { differenceInCalendarDays, differenceInMinutes, parse } from "date-fns";
 
 export const MAX_BILLABLE_RENTAL_DAYS = 28;
 
+/** Shortest chargeable rental. Positive duration never bills as zero days. */
+export const MINIMUM_BILLABLE_RENTAL_DAYS = 1;
+
 export type RentalDurationBreakdown = Readonly<{
   actualDurationMinutes: number;
   actualDurationHours: number;
@@ -90,15 +93,16 @@ export function calculateRentalDuration(
     return null;
   }
 
-  const billableDays = calculateCalendarRentalDays(pickupDate, returnDate);
-  if (billableDays === null) {
+  const calendarDays = calculateCalendarRentalDays(pickupDate, returnDate);
+  if (calendarDays === null) {
     return null;
   }
 
   return {
     actualDurationMinutes,
     actualDurationHours: Number((actualDurationMinutes / 60).toFixed(2)),
-    billableDays,
+    // Pricing quantity only. Occupancy keeps the real pickup and return instants.
+    billableDays: Math.max(calendarDays, MINIMUM_BILLABLE_RENTAL_DAYS),
   };
 }
 

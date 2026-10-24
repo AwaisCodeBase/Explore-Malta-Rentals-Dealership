@@ -5,8 +5,9 @@ import {
   SUNDAY_PICKUP_DELIVERY_ERROR_MESSAGE,
 } from "@/lib/booking/delivery-availability";
 import {
-  calculateCalendarRentalDays,
+  calculateRentalDuration,
   MAX_BILLABLE_RENTAL_DAYS,
+  MINIMUM_BILLABLE_RENTAL_DAYS,
 } from "@/lib/pricing/rental-duration";
 
 import {
@@ -351,29 +352,23 @@ export const bookingSubmissionSchema = z
     }
 
     const diffMs = differenceInMilliseconds(returnDateTime, pickupDateTime);
-    const diffHours = diffMs / (60 * 60 * 1000);
+    const duration =
+      diffMs > 0
+        ? calculateRentalDuration(
+            payload.rental.pickupDate,
+            payload.rental.pickupTime,
+            payload.rental.returnDate,
+            payload.rental.returnTime,
+          )
+        : null;
 
-    if (diffMs <= 0) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["rental", "returnDate"],
-        message: "Pickup date and time must be before return date and time",
-      });
-    }
-
-    if (diffHours < 24) {
+    if (!duration || duration.billableDays < MINIMUM_BILLABLE_RENTAL_DAYS) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["rental", "returnTime"],
-        message: "Minimum rental is 24 hours",
+        message: "The return time must be later than the pickup time.",
       });
-    }
-
-    const billableDays = calculateCalendarRentalDays(
-      payload.rental.pickupDate,
-      payload.rental.returnDate,
-    );
-    if (billableDays !== null && billableDays > MAX_BILLABLE_RENTAL_DAYS) {
+    } else if (duration.billableDays > MAX_BILLABLE_RENTAL_DAYS) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["rental", "returnDate"],

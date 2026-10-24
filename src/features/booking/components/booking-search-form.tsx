@@ -25,7 +25,10 @@ import {
   parse,
   startOfDay,
 } from "date-fns";
-import { calculateCalendarRentalDays } from "@/lib/pricing/rental-duration";
+import {
+  calculateCalendarRentalDays,
+  MINIMUM_BILLABLE_RENTAL_DAYS,
+} from "@/lib/pricing/rental-duration";
 import Select, {
   components as selectComponents,
   type CSSObjectWithLabel,
@@ -392,7 +395,7 @@ export function BookingSearchForm({
         dropoffTimeWindow: tForm("dropoffTimeWindow"),
         alternateAddressDetail: tForm("alternateAddressDetail"),
         dropoffAddressDetail: tForm("dropoffAddressDetail"),
-        tripMinDays: tForm("tripMinDays", { min: TRIP_MIN_SPAN_DAYS }),
+        tripMinDays: tForm("tripMinDays", { min: MINIMUM_BILLABLE_RENTAL_DAYS }),
         tripMaxDays: tForm("tripMaxDays", { max: TRIP_MAX_SPAN_DAYS }),
         dropoffAfterPickup: tForm("dropoffAfterPickup"),
       }),
@@ -432,6 +435,7 @@ export function BookingSearchForm({
     handleSubmit,
     watch,
     setValue,
+    trigger,
     formState: { errors, isSubmitting },
   } = form;
 
@@ -463,6 +467,8 @@ export function BookingSearchForm({
   /* eslint-disable react-hooks/incompatible-library -- react-hook-form watch() */
   const pickupDate = watch("pickupDate");
   const dropoffDate = watch("dropoffDate");
+  const pickupTime = watch("pickupTime");
+  const dropoffTime = watch("dropoffTime");
   const alternatePickupRequested = watch("alternatePickupRequested");
   const alternatePickupAddress = watch("alternatePickupAddress");
   const differentDropoff = watch("differentDropoff");
@@ -473,6 +479,15 @@ export function BookingSearchForm({
   const seatsValue = watch("seats");
   const colorValue = watch("color");
   /* eslint-enable react-hooks/incompatible-library */
+
+  const skipInitialTripCheck = useRef(true);
+  useEffect(() => {
+    if (skipInitialTripCheck.current) {
+      skipInitialTripCheck.current = false;
+      return;
+    }
+    void trigger("dropoffDate");
+  }, [dropoffDate, dropoffTime, pickupDate, pickupTime, trigger]);
 
   const activeAdvancedFilterCount = useMemo(() => {
     let count = 0;
@@ -1175,11 +1190,14 @@ export function BookingSearchForm({
                           to = addDays(from, TRIP_MAX_SPAN_DAYS);
                         }
                         setValue("pickupDate", format(from, "yyyy-MM-dd"), {
-                          shouldValidate: true,
+                          shouldDirty: true,
+                          shouldValidate: false,
                         });
                         setValue("dropoffDate", format(to, "yyyy-MM-dd"), {
-                          shouldValidate: true,
+                          shouldDirty: true,
+                          shouldValidate: false,
                         });
+                        void trigger("dropoffDate");
                       }}
                       disabled={{ before: minFrom }}
                     />
@@ -1187,7 +1205,7 @@ export function BookingSearchForm({
                 </Popover.Portal>
               </Popover.Root>
               <p className="mt-1.5 text-xs tabular-nums text-[var(--text-muted)]">
-                {tSearch("tripLengthNote", { min: TRIP_MIN_SPAN_DAYS, max: TRIP_MAX_SPAN_DAYS })}
+                {tSearch("tripLengthNote", { min: MINIMUM_BILLABLE_RENTAL_DAYS, max: TRIP_MAX_SPAN_DAYS })}
               </p>
               {errors.pickupDate ? (
                 <p className={fieldErrorClass}>{errors.pickupDate.message}</p>

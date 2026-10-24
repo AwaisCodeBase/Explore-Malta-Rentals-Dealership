@@ -179,6 +179,35 @@ function runCalendarRentalDaysAssertions(): void {
     throw new Error("return before pickup datetime must be rejected");
   }
 
+  const zeroDuration = calculateRentalDuration("2026-07-24", "10:00", "2026-07-24", "10:00");
+  if (zeroDuration !== null) {
+    throw new Error("zero-duration rental must be rejected");
+  }
+
+  const sameDayEarlierReturn = calculateRentalDuration(
+    "2026-07-24",
+    "10:00",
+    "2026-07-24",
+    "09:00",
+  );
+  if (sameDayEarlierReturn !== null) {
+    throw new Error("same-day return before pickup must be rejected");
+  }
+
+  const twoHourRental = calculateRentalDuration("2026-07-24", "12:00", "2026-07-24", "14:00");
+  if (!twoHourRental || twoHourRental.billableDays !== 1 || twoHourRental.actualDurationHours !== 2) {
+    throw new Error(
+      `2-hour rental should bill 1 day with 2 actual hours, got ${JSON.stringify(twoHourRental)}`,
+    );
+  }
+
+  const twentyThreeHours = calculateRentalDuration("2026-07-20", "10:00", "2026-07-21", "09:00");
+  if (!twentyThreeHours || twentyThreeHours.billableDays !== 2) {
+    throw new Error(
+      `23-hour overnight rental must keep inclusive calendar billing (2 days), got ${twentyThreeHours?.billableDays ?? "null"}`,
+    );
+  }
+
   console.log("Calendar rental days assertions passed");
 }
 
@@ -463,6 +492,128 @@ const bookingBody: BookingPayload = {
     termsAcceptedAt: new Date().toISOString(),
   },
 };
+
+function runShortRentalAssertions(): void {
+  const eightHour = calculateBookingPrice({
+    ...basePricingInput,
+    rental: {
+      ...basePricingInput.rental,
+      pickupDate: "2026-05-10",
+      returnDate: "2026-05-10",
+      pickupTime: "09:00",
+      returnTime: "17:00",
+    },
+    vehiclePricing: {
+      ...basePricingInput.vehiclePricing,
+      baseDailyRate: 40,
+    },
+  });
+  if (!eightHour) {
+    throw new Error("8-hour rental pricing returned null");
+  }
+  assertApprox("8-hour billable days", eightHour.rentalDays, 1);
+  assertApprox("8-hour rental cost is one full day", eightHour.rentalCost, 40);
+  assertApprox("8-hour actual duration", eightHour.actualDurationHours, 8);
+  if (eightHour.tierKey !== "TIER_1" || eightHour.durationDiscountPercent !== 0) {
+    throw new Error("sub-24-hour rental must use the 1-day tier, not a longer discount");
+  }
+
+  const priced23 = calculateBookingPrice({
+    ...basePricingInput,
+    rental: {
+      ...basePricingInput.rental,
+      pickupDate: "2026-05-11",
+      returnDate: "2026-05-12",
+      pickupTime: "10:00",
+      returnTime: "09:00",
+    },
+    vehiclePricing: {
+      ...basePricingInput.vehiclePricing,
+      baseDailyRate: 40,
+    },
+  });
+  if (!priced23 || priced23.rentalDays !== 2 || priced23.rentalCost !== 80) {
+    throw new Error(
+      `23-hour cross-midnight rental must bill 2 calendar days, got days=${priced23?.rentalDays} cost=${priced23?.rentalCost}`,
+    );
+  }
+
+  expectSchemaSuccess("same-day 8-hour rental", {
+    ...bookingBody,
+    rental: {
+      ...bookingBody.rental,
+      pickupDate: "2026-05-10",
+      returnDate: "2026-05-10",
+      pickupTime: "09:00",
+      returnTime: "17:00",
+    },
+  });
+
+  expectSchemaSuccess("23-hour rental", {
+    ...bookingBody,
+    rental: {
+      ...bookingBody.rental,
+      pickupDate: "2026-05-11",
+      returnDate: "2026-05-12",
+      pickupTime: "10:00",
+      returnTime: "09:00",
+    },
+  });
+
+  expectSchemaFailure(
+    "zero duration",
+    {
+      ...bookingBody,
+      rental: {
+        ...bookingBody.rental,
+        pickupDate: "2026-05-10",
+        returnDate: "2026-05-10",
+        pickupTime: "10:00",
+        returnTime: "10:00",
+      },
+    },
+    (path) => path === "rental.returnTime",
+  );
+
+  expectSchemaFailure(
+    "negative duration",
+    {
+      ...bookingBody,
+      rental: {
+        ...bookingBody.rental,
+        pickupDate: "2026-05-10",
+        returnDate: "2026-05-10",
+        pickupTime: "10:00",
+        returnTime: "09:00",
+      },
+    },
+    (path) => path === "rental.returnTime",
+  );
+
+  const normalized = normalizeBookingPayload(
+    bookingSubmissionSchema.parse({
+      ...bookingBody,
+      rental: {
+        ...bookingBody.rental,
+        pickupDate: "2026-05-10",
+        returnDate: "2026-05-10",
+        pickupTime: "09:00",
+        returnTime: "17:00",
+      },
+    }),
+  );
+  if (normalized.billableDays !== 1) {
+    throw new Error(`normalized short rental must store 1 billable day, got ${normalized.billableDays}`);
+  }
+  if (normalized.actualDurationHours !== 8) {
+    throw new Error(`normalized short rental must keep actual hours, got ${normalized.actualDurationHours}`);
+  }
+  if (normalized.returnDateTime.getTime() - normalized.pickupDateTime.getTime() !== 8 * 60 * 60 * 1000) {
+    throw new Error("short rental must keep the actual pickup/return interval");
+  }
+
+  console.log("Short rental assertions passed");
+}
 
 function runNegativeValidationTests(): void {
   expectSchemaFailure(
@@ -783,6 +934,7 @@ async function main(): Promise<void> {
   runStorageBoxAssertions();
   runHotelDiscountAssertions();
   runInsurancePlanAssertions();
+  runShortRentalAssertions();
   runNegativeValidationTests();
   runSundayDeliveryRestrictionTests();
   console.log("All checks OK.");

@@ -407,10 +407,10 @@ function BookingSidebar({
             </p>
           ) : null}
         </div>
-        <span className="type-spec shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-emerald-800">
-          Free cancellation
-        </span>
       </div>
+      <p className="mt-3 text-xs leading-relaxed text-[var(--text-secondary)]">
+        Cancellations more than 48 hours before the scheduled rental start receive a 50% refund of the booking amount. Within 48 hours, the booking is non-refundable.
+      </p>
 
       <hr className="rule-fade my-5" />
 
@@ -959,7 +959,9 @@ export function VehicleDetailsShell({
             ) : (
               <p className="text-sm font-semibold text-[var(--text-secondary)]">Price on request</p>
             )}
-            <p className="mt-1.5 text-xs text-[var(--text-muted)]">Free cancellation</p>
+            <p className="mt-1.5 text-xs leading-snug text-[var(--text-muted)]">
+              50% refund more than 48h before start. Within 48h, non-refundable.
+            </p>
           </div>
           <Link
             href={(() => {

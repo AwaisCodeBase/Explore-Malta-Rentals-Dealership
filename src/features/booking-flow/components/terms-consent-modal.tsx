@@ -134,8 +134,9 @@ const TERMS_SUMMARY_SECTIONS = [
   {
     heading: "Cancellation Policy",
     points: [
-      "Free cancellation applies up to 48 hours before rental start.",
-      "Cancellations inside 48 hours are non-refundable.",
+      "The 48-hour period is measured from the scheduled rental start time.",
+      "Cancellations more than 48 hours before that start time are eligible for a 50% refund of the booking amount. Explore Malta Rentals retains the remaining 50%.",
+      "Cancellations within 48 hours of that start time are non-refundable. Explore Malta Rentals retains the full booking amount.",
     ],
   },
   {

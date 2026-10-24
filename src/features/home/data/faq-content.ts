@@ -15,7 +15,7 @@ export const faqItems = [
     id: "cancel",
     question: "What is your cancellation policy?",
     answer:
-      "Policies can vary by season and vehicle. Contact us with your booking details and we will explain the options. We aim to be fair and clear so you can plan your Malta trip with confidence.",
+      "Cancellations made more than 48 hours before the scheduled rental start time are eligible for a 50% refund of the booking amount. Explore Malta Rentals retains the remaining 50%. Cancellations made within 48 hours of the scheduled rental start time are non-refundable, and the full booking amount is retained.",
   },
   {
     id: "invoice",

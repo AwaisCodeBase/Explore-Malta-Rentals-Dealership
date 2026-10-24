@@ -5,6 +5,12 @@ import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/record
 import { deleteOccupancyForBooking } from "@/lib/vehicle-unit-occupancy";
 import { prisma } from "@/lib/prisma";
 
+class CompleteStateError extends Error {
+  constructor(readonly reason: "invalid_status" | "missing_vehicle_unit") {
+    super(reason);
+  }
+}
+
 export type CompleteBookingResult =
   | { ok: true; booking: AdminBookingDetail }
   | {
@@ -38,37 +44,58 @@ export async function completeBooking(
     return { ok: false, reason: "missing_vehicle_unit" };
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: "COMPLETED",
-        securityDepositStatus: input.depositOutcome,
-        depositRefundAmount:
-          input.depositOutcome === "REFUNDED" ? (input.depositRefundAmount ?? null) : null,
-        depositDeductionAmount:
-          input.depositOutcome === "DEDUCTED" ? (input.depositDeductionAmount ?? null) : null,
-        depositDeductionReason:
-          input.depositOutcome === "DEDUCTED" ? input.depositDeductionReason?.trim() || null : null,
-        completionNotes: input.completionNotes?.trim() || null,
-      },
-    });
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id" FROM "Booking" WHERE "id" = ${bookingId} FOR UPDATE
+      `;
+      const current = await tx.booking.findUnique({
+        where: { id: bookingId },
+        select: { status: true, vehicleUnitId: true },
+      });
+      if (!current || current.status !== "RETURNED") {
+        throw new CompleteStateError("invalid_status");
+      }
+      if (!current.vehicleUnitId) {
+        throw new CompleteStateError("missing_vehicle_unit");
+      }
 
-    await tx.vehicleUnit.update({
-      where: { id: existing.vehicleUnitId! },
-      data: { status: input.unitStatusAfterCompletion },
-    });
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: "COMPLETED",
+          securityDepositStatus: input.depositOutcome,
+          depositRefundAmount:
+            input.depositOutcome === "REFUNDED" ? (input.depositRefundAmount ?? null) : null,
+          depositDeductionAmount:
+            input.depositOutcome === "DEDUCTED" ? (input.depositDeductionAmount ?? null) : null,
+          depositDeductionReason:
+            input.depositOutcome === "DEDUCTED" ? input.depositDeductionReason?.trim() || null : null,
+          completionNotes: input.completionNotes?.trim() || null,
+        },
+      });
 
-    await deleteOccupancyForBooking(tx, bookingId);
+      await tx.vehicleUnit.update({
+        where: { id: current.vehicleUnitId },
+        data: { status: input.unitStatusAfterCompletion },
+      });
 
-    await recordBookingStatusChange(tx, {
-      bookingId,
-      oldStatus: existing.status,
-      newStatus: "COMPLETED",
-      adminUserId,
-      note: input.note,
+      await deleteOccupancyForBooking(tx, bookingId);
+
+      await recordBookingStatusChange(tx, {
+        bookingId,
+        oldStatus: existing.status,
+        newStatus: "COMPLETED",
+        adminUserId,
+        note: input.note,
+      });
     });
-  });
+  } catch (error) {
+    if (error instanceof CompleteStateError) {
+      return { ok: false, reason: error.reason };
+    }
+    throw error;
+  }
 
   const booking = await getAdminBookingById(bookingId);
   if (!booking) {

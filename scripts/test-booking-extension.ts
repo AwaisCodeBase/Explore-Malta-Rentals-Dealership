@@ -308,19 +308,19 @@ async function runDatabaseTests(): Promise<void> {
     }
     const afterReject = await prisma.booking.findUniqueOrThrow({
       where: { id: active.id },
-      include: { extensions: true, unitOccupancy: true },
+      include: { extensions: true, unitOccupancies: true },
     });
     assert.equal(afterReject.returnDateTime.toISOString(), atUtc(15).toISOString());
     assert.equal(afterReject.subtotal.toNumber(), 240);
     assert.equal(afterReject.extensions.length, 0);
-    assert.equal(afterReject.unitOccupancy?.returnAt.toISOString(), atUtc(15).toISOString());
+    assert.equal(afterReject.unitOccupancies[0]?.returnAt.toISOString(), atUtc(15).toISOString());
     logPass("conflicting extension is rejected and leaves the booking unchanged");
 
     const extended = await extendBooking(active.id, atUtc(18), admin.id, afterReject.updatedAt);
     assert.equal(extended.ok, true);
     const saved = await prisma.booking.findUniqueOrThrow({
       where: { id: active.id },
-      include: { extensions: true, unitOccupancy: true },
+      include: { extensions: true, unitOccupancies: true },
     });
     assert.equal(saved.returnDateTime.toISOString(), atUtc(18).toISOString());
     assert.equal(saved.billableDays, 9);
@@ -339,7 +339,7 @@ async function runDatabaseTests(): Promise<void> {
     assert.equal(saved.extensions[0]?.additionalAmount.toNumber(), 105);
     assert.equal(saved.extensions[0]?.appliedDailyRate.toNumber(), 30);
     assert.equal(saved.extensions[0]?.createdByAdminId, admin.id);
-    assert.equal(saved.unitOccupancy?.returnAt.toISOString(), atUtc(18).toISOString());
+    assert.equal(saved.unitOccupancies[0]?.returnAt.toISOString(), atUtc(18).toISOString());
     assert.equal(saved.vehicleUnitId, primaryUnit.id);
     logPass("successful extension updates dates, original-rate totals, occupancy, and audit row");
 

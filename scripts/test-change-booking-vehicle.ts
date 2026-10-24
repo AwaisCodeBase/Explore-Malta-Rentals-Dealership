@@ -417,11 +417,11 @@ async function runDatabaseTests(): Promise<void> {
     if (!unavailable.ok) assert.equal(unavailable.reason, "no_availability");
     const afterUnavailable = await prisma.booking.findUniqueOrThrow({
       where: { id: booking.id },
-      include: { unitOccupancy: true },
+      include: { unitOccupancies: true },
     });
     assert.equal(afterUnavailable.vehicleId, source.id);
     assert.equal(afterUnavailable.vehicleUnitId, sourceUnit.id);
-    assert.equal(afterUnavailable.unitOccupancy?.vehicleUnitId, sourceUnit.id);
+    assert.equal(afterUnavailable.unitOccupancies[0]?.vehicleUnitId, sourceUnit.id);
     assert.equal(blocker.id.length > 0, true);
     logPass("a fully booked model is rejected and the original unit stays reserved");
 
@@ -512,7 +512,7 @@ async function runDatabaseTests(): Promise<void> {
     assert.equal(changed.ok, true);
     const saved = await prisma.booking.findUniqueOrThrow({
       where: { id: booking.id },
-      include: { unitOccupancy: true, statusHistory: true },
+      include: { unitOccupancies: true, statusHistory: true },
     });
     assert.equal(saved.id, booking.id);
     assert.equal(saved.customerFullName, "Change Vehicle Customer");
@@ -529,7 +529,7 @@ async function runDatabaseTests(): Promise<void> {
     assert.equal(saved.baseDailyRateSnapshot?.toNumber(), 30);
     assert.equal(saved.totalDueOnline.toNumber(), 230);
     assert.equal(saved.cdwTotal.toNumber(), 18);
-    assert.equal(saved.unitOccupancy?.vehicleUnitId, freeUnit.id);
+    assert.equal(saved.unitOccupancies[0]?.vehicleUnitId, freeUnit.id);
     assert.equal(saved.status, "CONFIRMED");
     const sourceUnitAfter = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: sourceUnit.id } });
     assert.equal(sourceUnitAfter.status, "AVAILABLE");
@@ -641,14 +641,14 @@ async function runDatabaseTests(): Promise<void> {
     assert.equal(noUnitChange.ok, true);
     const noUnitSaved = await prisma.booking.findUniqueOrThrow({
       where: { id: noUnit.id },
-      include: { unitOccupancy: true },
+      include: { unitOccupancies: true },
     });
     assert.equal(noUnitSaved.status, "PENDING_PAYMENT");
     assert.equal(noUnitSaved.vehicleId, openTarget.id);
     assert.equal(noUnitSaved.vehicleUnitId, null);
     assert.equal(noUnitSaved.vehicleColorSnapshot, "White");
     assert.equal(noUnitSaved.vehicleLicensePlateSnapshot, null);
-    assert.equal(noUnitSaved.unitOccupancy, null);
+    assert.equal(noUnitSaved.unitOccupancies.length, 0);
     const remaining = await findAvailableVehicleUnits({
       vehicleId: openTarget.id,
       requestedStart: atUtc(27),

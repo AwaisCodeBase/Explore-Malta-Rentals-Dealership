@@ -26,7 +26,7 @@ export async function reconcileMismatchedBookingOccupancies(): Promise<Reconcile
       vehicleUnitId: true,
       pickupDateTime: true,
       returnDateTime: true,
-      unitOccupancy: { select: { vehicleUnitId: true } },
+      unitOccupancies: { select: { vehicleUnitId: true } },
     },
     orderBy: { pickupDateTime: "asc" },
   });
@@ -44,10 +44,13 @@ export async function reconcileMismatchedBookingOccupancies(): Promise<Reconcile
       continue;
     }
 
-    const occupancyUnitId = booking.unitOccupancy?.vehicleUnitId ?? null;
-    if (occupancyUnitId === assignedUnitId) {
+    const hasCurrentLock = booking.unitOccupancies.some((row) => row.vehicleUnitId === assignedUnitId);
+    if (hasCurrentLock) {
       continue;
     }
+
+    const occupancyUnitId =
+      booking.unitOccupancies.find((row) => row.vehicleUnitId !== assignedUnitId)?.vehicleUnitId ?? null;
 
     try {
       await prisma.$transaction(async (tx) => {

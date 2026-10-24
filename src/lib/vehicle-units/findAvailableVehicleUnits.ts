@@ -243,6 +243,8 @@ export type BatchFindAvailableVehicleUnitsInput = {
   requestedEnd: Date;
   excludeHoldReference?: string;
   excludeSessionKey?: string;
+  /** Ignore this booking's own occupancy so a replacement search does not conflict with itself. */
+  excludeBookingId?: string;
 };
 
 /**
@@ -306,9 +308,11 @@ export async function batchFindAvailableVehicleUnits(
         input.requestedEnd,
         input.excludeHoldReference,
         input.excludeSessionKey,
+        input.excludeBookingId,
       ),
       db.booking.findMany({
         where: {
+          ...(input.excludeBookingId ? { id: { not: input.excludeBookingId } } : {}),
           status: { in: [...BLOCKING_BOOKING_STATUSES] },
           vehicleUnitId: { in: unitIds },
           ...overlapWhere,
@@ -328,6 +332,7 @@ export async function batchFindAvailableVehicleUnits(
       }),
       db.booking.findMany({
         where: {
+          ...(input.excludeBookingId ? { id: { not: input.excludeBookingId } } : {}),
           status: { in: [...BLOCKING_BOOKING_STATUSES] },
           vehicleId: { in: vehicleIds },
           vehicleUnitId: null,

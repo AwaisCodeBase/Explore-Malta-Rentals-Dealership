@@ -284,6 +284,7 @@ export async function extendBooking(
 
       const updatedOccupancy = await extendBookingOccupancyReturnAt(tx, {
         bookingId: booking.id,
+        vehicleUnitId: booking.vehicleUnitId!,
         returnAt: proposedReturn,
       });
       if (updatedOccupancy === 0) {

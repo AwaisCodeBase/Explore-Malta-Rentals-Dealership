@@ -61,6 +61,19 @@ export type AdminBookingStatusHistoryItem = {
   createdAt: string;
 };
 
+export type AdminBookingVehicleAssignmentItem = {
+  id: string;
+  vehicleName: string;
+  licensePlate: string | null;
+  color: string | null;
+  vehicleType: string | null;
+  startedAt: string;
+  endedAt: string | null;
+  endDisposition: VehicleUnitStatus | null;
+  reason: string | null;
+  note: string | null;
+};
+
 export type AdminBookingExtensionItem = {
   id: string;
   previousReturnDateTime: string;
@@ -183,6 +196,7 @@ export type AdminBookingDetail = {
 
   statusHistory: AdminBookingStatusHistoryItem[];
   extensions: AdminBookingExtensionItem[];
+  vehicleAssignments: AdminBookingVehicleAssignmentItem[];
 };
 
 export type AdminBookingVehicleOption = {

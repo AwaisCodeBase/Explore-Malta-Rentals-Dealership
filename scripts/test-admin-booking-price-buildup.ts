@@ -101,6 +101,7 @@ function baseBooking(overrides: Partial<AdminBookingDetail> = {}): AdminBookingD
     completionNotes: null,
     statusHistory: [],
     extensions: [],
+    vehicleAssignments: [],
     ...overrides,
   };
 }

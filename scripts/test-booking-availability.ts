@@ -1239,7 +1239,7 @@ async function runRestoreCancelledBookingTests(): Promise<void> {
       admin.id,
     );
     assert.equal(cancelled.ok, true);
-    const occupancyAfterCancel = await prisma.vehicleUnitOccupancy.findUnique({
+    const occupancyAfterCancel = await prisma.vehicleUnitOccupancy.findFirst({
       where: { bookingId },
     });
     assert.equal(occupancyAfterCancel, null);
@@ -1254,7 +1254,7 @@ async function runRestoreCancelledBookingTests(): Promise<void> {
       assert.equal(restored.booking.status, "CONFIRMED");
     }
 
-    const occupancyAfterRestore = await prisma.vehicleUnitOccupancy.findUnique({
+    const occupancyAfterRestore = await prisma.vehicleUnitOccupancy.findFirst({
       where: { bookingId },
     });
     assert.ok(occupancyAfterRestore);
@@ -1357,7 +1357,7 @@ async function runHandoverUnitChangeTests(): Promise<void> {
     assert.equal(booking.vehicleUnitId, unitB);
     assert.equal(booking.status, "VEHICLE_HANDED_OVER");
 
-    const occupancy = await prisma.vehicleUnitOccupancy.findUnique({
+    const occupancy = await prisma.vehicleUnitOccupancy.findFirst({
       where: { bookingId },
       select: { vehicleUnitId: true },
     });

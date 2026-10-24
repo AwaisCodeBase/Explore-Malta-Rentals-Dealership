@@ -120,6 +120,21 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
           },
         },
       },
+      vehicleAssignments: {
+        orderBy: { startedAt: "asc" },
+        select: {
+          id: true,
+          vehicleNameSnapshot: true,
+          licensePlateSnapshot: true,
+          colorSnapshot: true,
+          vehicleTypeSnapshot: true,
+          startedAt: true,
+          endedAt: true,
+          endDisposition: true,
+          reason: true,
+          note: true,
+        },
+      },
       extensions: {
         orderBy: { createdAt: "desc" },
         select: {
@@ -247,6 +262,18 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
       note: entry.note,
       changedByAdminName: entry.changedBy?.name ?? null,
       createdAt: entry.createdAt.toISOString(),
+    })),
+    vehicleAssignments: booking.vehicleAssignments.map((entry) => ({
+      id: entry.id,
+      vehicleName: entry.vehicleNameSnapshot,
+      licensePlate: entry.licensePlateSnapshot,
+      color: entry.colorSnapshot,
+      vehicleType: entry.vehicleTypeSnapshot,
+      startedAt: entry.startedAt.toISOString(),
+      endedAt: entry.endedAt?.toISOString() ?? null,
+      endDisposition: entry.endDisposition,
+      reason: entry.reason,
+      note: entry.note,
     })),
     extensions: booking.extensions.map((entry) => ({
       id: entry.id,

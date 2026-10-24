@@ -107,18 +107,44 @@ export async function convertHoldOccupancyToBooking(
   return Number(updated) > 0;
 }
 
-/** Move an existing booking lock's end later. The generated period column updates with the row. */
+/**
+ * Move the assigned unit's lock later.
+ * Closed intervals on a unit this booking already replaced are left unchanged.
+ * The generated period column updates with the row.
+ */
 export async function extendBookingOccupancyReturnAt(
   db: OccupancyDb,
-  input: { bookingId: string; returnAt: Date },
+  input: { bookingId: string; vehicleUnitId: string; returnAt: Date },
 ): Promise<number> {
   const updated = await db.$executeRaw`
     UPDATE "VehicleUnitOccupancy"
     SET "returnAt" = ${input.returnAt}
     WHERE "bookingId" = ${input.bookingId}
+      AND "vehicleUnitId" = ${input.vehicleUnitId}
   `;
 
   return Number(updated);
+}
+
+/** End one occupancy interval. No-ops when the new end is not after its start. */
+export async function closeBookingUnitOccupancy(
+  db: OccupancyDb,
+  input: { occupancyId: string; returnAt: Date },
+): Promise<number> {
+  const updated = await db.$executeRaw`
+    UPDATE "VehicleUnitOccupancy"
+    SET "returnAt" = ${input.returnAt}
+    WHERE "id" = ${input.occupancyId}
+      AND "pickupAt" < ${input.returnAt}
+  `;
+
+  return Number(updated);
+}
+
+export async function deleteOccupancyById(db: OccupancyDb, occupancyId: string): Promise<void> {
+  await db.$executeRaw`
+    DELETE FROM "VehicleUnitOccupancy" WHERE "id" = ${occupancyId}
+  `;
 }
 
 export async function deleteOccupancyForBooking(db: OccupancyDb, bookingId: string): Promise<void> {

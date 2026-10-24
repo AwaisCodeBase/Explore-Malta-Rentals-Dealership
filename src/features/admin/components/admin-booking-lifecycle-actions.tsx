@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowRight, Bike, CalendarPlus, CheckCircle2, KeyRound, Loader2, RotateCcw, Undo2, XCircle } from "lucide-react";
+import { ArrowRight, ArrowRightLeft, Bike, CalendarPlus, CheckCircle2, KeyRound, Loader2, RotateCcw, Undo2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { AdminBookingChangeVehicleDialog } from "@/features/admin/components/admin-booking-change-vehicle-dialog";
+import { AdminBookingReplaceVehicleDialog } from "@/features/admin/components/admin-booking-replace-vehicle-dialog";
 import { AdminBookingExtendDialog } from "@/features/admin/components/admin-booking-extend-dialog";
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import type { AdminVehicleUnitDto } from "@/lib/admin/vehicle-units/types";
@@ -16,7 +17,7 @@ type AdminBookingLifecycleActionsProps = Readonly<{
   vehicleUnits: AdminVehicleUnitDto[];
 }>;
 
-type ActiveDialog = "handOver" | "markReturned" | "complete" | "cancel" | "restore" | "extend" | "changeVehicle" | null;
+type ActiveDialog = "handOver" | "markReturned" | "complete" | "cancel" | "restore" | "extend" | "changeVehicle" | "replaceVehicle" | null;
 
 function previousStatusBeforeCancel(booking: AdminBookingDetail): "CONFIRMED" | "PENDING_PAYMENT" {
   const cancelled = booking.statusHistory.find(
@@ -433,6 +434,7 @@ export function AdminBookingLifecycleActions({
   }
 
   const showChangeVehicle = booking.status === "CONFIRMED" || booking.status === "PENDING_PAYMENT";
+  const showReplaceVehicle = booking.status === "VEHICLE_HANDED_OVER" && Boolean(booking.vehicleUnitId);
   const showHandOver =
     booking.status === "CONFIRMED" &&
     (Number(booking.totalDueOnline) <= 0 || booking.paymentStatus === "PAID");
@@ -447,6 +449,7 @@ export function AdminBookingLifecycleActions({
 
   if (
     !showChangeVehicle &&
+    !showReplaceVehicle &&
     !showHandOver &&
     !showExtend &&
     !showCancel &&
@@ -507,6 +510,20 @@ export function AdminBookingLifecycleActions({
               }}
             />
           ) : null}
+          {showReplaceVehicle ? (
+            <LifecycleActionCard
+              title={t("actions.replaceVehicle")}
+              summary={t("guidelines.actions.replaceVehicle.summary")}
+              effects={t("guidelines.actions.replaceVehicle.effects")}
+              effectsLabel={t("guidelines.effectsLabel")}
+              icon={ArrowRightLeft}
+              variant="orange"
+              onAction={() => {
+                setError(null);
+                setActiveDialog("replaceVehicle");
+              }}
+            />
+          ) : null}
           {showMarkReturned ? (
             <LifecycleActionCard
               title={t("actions.markReturned")}
@@ -561,6 +578,18 @@ export function AdminBookingLifecycleActions({
           onClose={closeLifecycleDialog}
           onConfirm={(input) => {
             void submitAction("change-vehicle", input);
+          }}
+        />
+      ) : null}
+
+      {activeDialog === "replaceVehicle" ? (
+        <AdminBookingReplaceVehicleDialog
+          booking={booking}
+          isSubmitting={isSubmitting}
+          error={error}
+          onClose={closeLifecycleDialog}
+          onConfirm={(input) => {
+            void submitAction("replace-vehicle", input);
           }}
         />
       ) : null}

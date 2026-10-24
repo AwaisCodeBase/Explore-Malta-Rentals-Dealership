@@ -1665,6 +1665,8 @@
           "willPresentIdAtPickup": "Will present ID at pickup",
           "notes": "Special notes / requests",
           "vehicleName": "Vehicle",
+          "vehicleHistory": "Vehicle history",
+          "vehicleHistoryCurrent": "Current",
           "licensePlate": "License plate",
           "vehicleColor": "Vehicle color",
           "vehicleType": "Vehicle type",
@@ -1853,6 +1855,10 @@
             "changeVehicle": {
               "summary": "Change the booked bike model before the customer takes the vehicle.",
               "effects": "Keeps this booking, the customer, and the dates. The replacement model must be free for the whole rental. A reserved unit is released and a unit of the new model is reserved. The agreed price stays unless you apply the new model's rate. Card payments are not charged or refunded."
+            },
+            "replaceVehicle": {
+              "summary": "Replace the physical bike the customer is already using.",
+              "effects": "Keeps this booking, the dates, and the agreed price. The previous bike stays in the vehicle history and leaves Out with customer. The replacement is handed over for the rest of the rental. Card payments are not charged or refunded."
             }
           },
           "effectsLabel": "Result"
@@ -1864,7 +1870,8 @@
           "cancel": "Cancel booking",
           "restore": "Restore booking",
           "extend": "Extend booking",
-          "changeVehicle": "Change vehicle"
+          "changeVehicle": "Change vehicle",
+          "replaceVehicle": "Replace vehicle"
         },
         "extend": {
           "title": "Extend booking",
@@ -1943,6 +1950,40 @@
           "preview": "Checking availability and price…",
           "emptySelection": "Choose a replacement model to see the price and unit.",
           "confirm": "Confirm vehicle change"
+        },
+        "replaceVehicle": {
+          "title": "Replace vehicle",
+          "description": "Replace the bike already with the customer for booking {reference}. This stays the same booking.",
+          "currentTitle": "Current active vehicle",
+          "replacementTitle": "Replacement vehicle",
+          "remainingTitle": "Remaining rental",
+          "handlingTitle": "Old vehicle handling",
+          "confirmTitle": "Confirm replacement",
+          "loading": "Checking which bikes are free for the rest of this rental…",
+          "noUnits": "No replacement vehicles are available for the remaining rental period.",
+          "selectUnit": "Select a replacement bike",
+          "plate": "Plate",
+          "color": "Color",
+          "type": "Type",
+          "status": "Status",
+          "effective": "Replacement effective",
+          "effectiveHint": "Recorded as the server time when you confirm. The replacement only needs to be free from then until the scheduled return.",
+          "return": "Scheduled return",
+          "previousStatus": "Old vehicle status after replacement",
+          "reason": "Reason",
+          "note": "Note",
+          "notePlaceholder": "What happened to the bike being returned?",
+          "priceUnchanged": "Booking price remains unchanged.",
+          "priceAmount": "Agreed booking charges stay {amount}. A different model rate is not applied.",
+          "back": "Back",
+          "review": "Review replacement",
+          "confirm": "Confirm replacement",
+          "reasons": {
+            "mechanical_issue": "Mechanical issue",
+            "damage": "Damage/problem",
+            "customer_requested": "Customer-requested replacement",
+            "other": "Other"
+          }
         },
         "handOver": {
           "title": "Hand over vehicle",

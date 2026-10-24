@@ -18,6 +18,7 @@
     "test:booking-availability": "tsx scripts/test-booking-availability.ts",
     "test:booking-extension": "tsx scripts/test-booking-extension.ts",
     "test:change-booking-vehicle": "tsx scripts/test-change-booking-vehicle.ts",
+    "test:replace-booking-vehicle": "tsx scripts/test-replace-booking-vehicle.ts",
     "test:vehicle-unit-colors": "tsx scripts/test-vehicle-unit-color-availability.ts",
     "cleanup:expired-holds": "tsx scripts/cleanup-expired-holds.ts",
     "cleanup:audit-test-data": "tsx scripts/cleanup-audit-test-data.ts",

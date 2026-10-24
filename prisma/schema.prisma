@@ -35,6 +35,7 @@ model Vehicle {
   images              VehicleImage[]
   pricingRules        VehiclePricingRule[]
   units               VehicleUnit[]
+  vehicleAssignments  BookingVehicleAssignment[]
 
   @@index([isActive, displayOrder])
   @@index([vehicleType, isActive])
@@ -53,8 +54,9 @@ model VehicleUnit {
   updatedAt        DateTime               @updatedAt
   bookings         Booking[]
   reservationHolds ReservationHold[]
-  vehicle          Vehicle                @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicle          Vehicle                     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   occupancies      VehicleUnitOccupancy[]
+  assignments      BookingVehicleAssignment[]
 
   @@index([vehicleId, isActive, status])
   @@index([vehicleId, createdAt])
@@ -134,9 +136,10 @@ model AdminUser {
   isActive      Boolean                @default(true)
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
-  sessions      AdminSession[]
-  statusChanges BookingStatusHistory[]
-  bookingExtensions BookingExtension[]
+  sessions            AdminSession[]
+  statusChanges       BookingStatusHistory[]
+  bookingExtensions   BookingExtension[]
+  vehicleReplacements BookingVehicleAssignment[]
 
   @@index([role, isActive])
 }
@@ -333,7 +336,8 @@ model Booking {
   reservationHolds                           ReservationHold[]
   extensions                                 BookingExtension[]
   StripePayment                              StripePayment?
-  unitOccupancy                              VehicleUnitOccupancy?
+  unitOccupancies                            VehicleUnitOccupancy[]
+  vehicleAssignments                         BookingVehicleAssignment[]
 
   @@index([status, createdAt])
   @@index([paymentStatus])
@@ -467,13 +471,15 @@ model ContactInquiry {
 }
 
 /// Database-enforced non-overlapping occupancy per physical unit (half-open [pickupAt, returnAt)).
+/// One booking may own several rows after a mid-rental replacement: the closed interval on the
+/// previous unit, and the remaining interval on the unit now with the customer.
 /// The generated `period` column and EXCLUDE constraint are defined in SQL migration.
 model VehicleUnitOccupancy {
   id                String                    @id @default(cuid())
   vehicleUnitId     String
   pickupAt          DateTime                  @db.Timestamptz(3)
   returnAt          DateTime                  @db.Timestamptz(3)
-  bookingId         String?                   @unique
+  bookingId         String?
   reservationHoldId String?                   @unique
   createdAt         DateTime                  @default(now())
   period            Unsupported("tstzrange")? @default(dbgenerated("tstzrange(\"pickupAt\", \"returnAt\", '[)'::text)"))
@@ -482,7 +488,37 @@ model VehicleUnitOccupancy {
   vehicleUnit       VehicleUnit               @relation(fields: [vehicleUnitId], references: [id], onDelete: Cascade)
 
   @@index([vehicleUnitId])
+  @@index([bookingId])
   @@index([pickupAt, returnAt])
+}
+
+/// Physical vehicles actually handed to the customer on one booking.
+/// These rows stay after occupancy locks are released on completion or cancellation.
+model BookingVehicleAssignment {
+  id                   String             @id @default(cuid())
+  bookingId            String
+  vehicleId            String?
+  vehicleUnitId        String
+  vehicleNameSnapshot  String
+  licensePlateSnapshot String?
+  colorSnapshot        String?
+  vehicleTypeSnapshot  VehicleType?
+  startedAt            DateTime
+  endedAt              DateTime?
+  endDisposition       VehicleUnitStatus?
+  reason               String?
+  note                 String?
+  createdByAdminId     String?
+  createdAt            DateTime           @default(now())
+  booking              Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  vehicle              Vehicle?           @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  vehicleUnit          VehicleUnit        @relation(fields: [vehicleUnitId], references: [id], onDelete: Restrict)
+  createdBy            AdminUser?         @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId, startedAt])
+  @@index([vehicleUnitId])
+  @@index([vehicleId])
+  @@index([createdByAdminId])
 }
 
 model BookingDocument {

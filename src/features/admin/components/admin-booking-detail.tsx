@@ -270,6 +270,36 @@ export async function AdminBookingDetailView({ locale, booking }: AdminBookingDe
               value={booking.actualDurationHours.toFixed(2)}
             />
           </dl>
+          {booking.vehicleAssignments.length > 0 ? (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {t("details.fields.vehicleHistory")}
+              </h4>
+              <ol className="mt-3 space-y-3">
+                {booking.vehicleAssignments.map((assignment) => (
+                  <li key={assignment.id} className="text-sm text-slate-800">
+                    <p className="font-semibold text-slate-950">
+                      {assignment.vehicleName}
+                      {assignment.licensePlate ? ` · ${assignment.licensePlate}` : ""}
+                      {assignment.color ? ` · ${assignment.color}` : ""}
+                    </p>
+                    <p className="text-slate-600">
+                      {formatMaltaDateTime(assignment.startedAt)}
+                      {" → "}
+                      {assignment.endedAt
+                        ? formatMaltaDateTime(assignment.endedAt)
+                        : t("details.fields.vehicleHistoryCurrent")}
+                    </p>
+                    {assignment.endDisposition ? (
+                      <p className="text-slate-500">
+                        {t(`lifecycle.unitStatus.${assignment.endDisposition}` as "lifecycle.unitStatus.AVAILABLE")}
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
         </DetailSection>
       </div>
 

@@ -4,6 +4,12 @@ import type { MarkVehicleReturnedInput } from "@/lib/admin/bookings/lifecycle/bo
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
 import { prisma } from "@/lib/prisma";
 
+class ReturnStateError extends Error {
+  constructor(readonly reason: "invalid_status" | "missing_vehicle_unit") {
+    super(reason);
+  }
+}
+
 export type MarkVehicleReturnedResult =
   | { ok: true; booking: AdminBookingDetail }
   | {
@@ -37,29 +43,50 @@ export async function markVehicleReturned(
     return { ok: false, reason: "missing_vehicle_unit" };
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: "RETURNED",
-        returnRecordedAt: input.returnRecordedAt,
-        returnNotes: input.returnNotes?.trim() || null,
-      },
-    });
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id" FROM "Booking" WHERE "id" = ${bookingId} FOR UPDATE
+      `;
+      const current = await tx.booking.findUnique({
+        where: { id: bookingId },
+        select: { status: true, vehicleUnitId: true },
+      });
+      if (!current || current.status !== "VEHICLE_HANDED_OVER") {
+        throw new ReturnStateError("invalid_status");
+      }
+      if (!current.vehicleUnitId) {
+        throw new ReturnStateError("missing_vehicle_unit");
+      }
 
-    await tx.vehicleUnit.update({
-      where: { id: existing.vehicleUnitId! },
-      data: { status: input.unitStatusAfterReturn },
-    });
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: "RETURNED",
+          returnRecordedAt: input.returnRecordedAt,
+          returnNotes: input.returnNotes?.trim() || null,
+        },
+      });
 
-    await recordBookingStatusChange(tx, {
-      bookingId,
-      oldStatus: existing.status,
-      newStatus: "RETURNED",
-      adminUserId,
-      note: input.note,
+      await tx.vehicleUnit.update({
+        where: { id: current.vehicleUnitId },
+        data: { status: input.unitStatusAfterReturn },
+      });
+
+      await recordBookingStatusChange(tx, {
+        bookingId,
+        oldStatus: existing.status,
+        newStatus: "RETURNED",
+        adminUserId,
+        note: input.note,
+      });
     });
-  });
+  } catch (error) {
+    if (error instanceof ReturnStateError) {
+      return { ok: false, reason: error.reason };
+    }
+    throw error;
+  }
 
   const booking = await getAdminBookingById(bookingId);
   if (!booking) {

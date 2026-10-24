@@ -1,3 +1,4 @@
+import { isBookableHelmetSize, type BookableHelmetSize } from "@/lib/booking/helmet-sizes";
 import type { BookingSubmissionInput, VehicleType as ApiVehicleType } from "@/lib/booking/types";
 import type { BookingFlowState } from "@/features/booking-flow/lib/types";
 import { isApiVehicleType } from "@/features/vehicles/data/vehicles";
@@ -35,12 +36,9 @@ function isHelmetRequiredForApiVehicle(apiVehicle: ApiVehicleType): boolean {
   return apiVehicle === "Scooter" || apiVehicle === "Motorcycle" || apiVehicle === "ATV";
 }
 
-function toHelmetSize(value: string): "S" | "M" | "L" | null {
+function toHelmetSize(value: string): BookableHelmetSize | null {
   const trimmed = value.trim();
-  if (trimmed === "S" || trimmed === "M" || trimmed === "L") {
-    return trimmed;
-  }
-  return null;
+  return isBookableHelmetSize(trimmed) ? trimmed : null;
 }
 
 function mapCdwPlanToApi(

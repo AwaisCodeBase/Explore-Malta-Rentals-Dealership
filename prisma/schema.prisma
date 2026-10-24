@@ -734,10 +734,12 @@ enum CdwOption {
   REDUCE_800_ATV
 }
 
+/// S is retained for historical bookings. New bookings select M, L, or XL only.
 enum HelmetSize {
   S
   M
   L
+  XL
 }
 
 enum ConfirmationEmailStatus {

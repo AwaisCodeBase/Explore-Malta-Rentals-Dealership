@@ -7,6 +7,15 @@ import type { z } from "zod";
 
 import { bookingSubmissionSchema } from "../src/lib/booking/bookingSubmissionSchema";
 import {
+  BOOKABLE_HELMET_SIZES,
+  isBookableHelmetSize,
+  isStoredHelmetSize,
+  STORED_HELMET_SIZES,
+} from "../src/lib/booking/helmet-sizes";
+import { buildAdminBookingNotificationEmail } from "../src/lib/email/buildAdminBookingNotificationEmail";
+import { buildBookingConfirmationEmail } from "../src/lib/email/buildBookingConfirmationEmail";
+import type { Booking } from "../src/generated/prisma/client";
+import {
   isPickupDeliveryAllowedForDate,
   isSundayDateOnly,
 } from "../src/lib/booking/delivery-availability";
@@ -661,6 +670,109 @@ function runNegativeValidationTests(): void {
     },
     (p) => p === "addons.helmetSize1" || p === "addons.helmetSize2",
   );
+
+  expectSchemaSuccess("XL helmet size", {
+    ...bookingBody,
+    addons: {
+      ...bookingBody.addons,
+      helmetSize1: "XL",
+      helmetSize2: "L",
+    },
+  });
+
+  expectSchemaFailure(
+    "legacy Small helmet size on a new booking",
+    {
+      ...bookingBody,
+      addons: {
+        ...bookingBody.addons,
+        helmetSize1: "S",
+        helmetSize2: "M",
+      },
+    } as unknown as BookingPayload,
+    (p) => p === "addons.helmetSize1",
+  );
+
+  expectSchemaFailure(
+    "unsupported helmet size",
+    {
+      ...bookingBody,
+      addons: {
+        ...bookingBody.addons,
+        helmetSize1: "XXL",
+        helmetSize2: "M",
+      },
+    } as unknown as BookingPayload,
+    (p) => p === "addons.helmetSize1",
+  );
+}
+
+function helmetEmailFixture(
+  helmetSize1: "S" | "XL",
+  helmetSize2: "S" | "XL",
+): Booking {
+  return {
+    bookingReference: "EMR-HELMET",
+    customerFullName: "Test Rider",
+    customerEmail: "rider@example.com",
+    customerPhone: "+35600000000",
+    vehicleType: "Scooter",
+    vehicleNameSnapshot: null,
+    vehicleLicensePlateSnapshot: null,
+    pickupDateTime: new Date("2026-05-10T10:00:00Z"),
+    returnDateTime: new Date("2026-05-11T10:00:00Z"),
+    billableDays: 1,
+    actualDurationHours: 24,
+    pickupOption: "OFFICE",
+    pickupAddress: null,
+    dropoffOption: "OFFICE",
+    dropoffAddress: null,
+    cdwOption: "NO_CDW",
+    additionalDriverEnabled: false,
+    storageBoxSelected: false,
+    helmetSize1,
+    helmetSize2,
+    subtotal: 40,
+    totalDueOnline: 0,
+    depositAmount: 0,
+    depositMethod: "IN_PERSON",
+    totalDueLater: 40,
+    termsAccepted: true,
+  } as unknown as Booking;
+}
+
+function runHelmetSizeAssertions(): void {
+  if (BOOKABLE_HELMET_SIZES.join(",") !== "M,L,XL") {
+    throw new Error(`bookable helmet sizes changed unexpectedly: ${BOOKABLE_HELMET_SIZES.join(",")}`);
+  }
+  if (STORED_HELMET_SIZES.join(",") !== "S,M,L,XL") {
+    throw new Error(`stored helmet sizes changed unexpectedly: ${STORED_HELMET_SIZES.join(",")}`);
+  }
+  if (isBookableHelmetSize("S") || !isStoredHelmetSize("S") || !isBookableHelmetSize("XL")) {
+    throw new Error("helmet size helpers do not distinguish legacy Small from bookable XL");
+  }
+
+  const xlBooking = helmetEmailFixture("XL", "XL");
+  const customerXl = buildBookingConfirmationEmail(xlBooking);
+  if (!customerXl.text.includes("size XL") || !customerXl.html.includes("size XL")) {
+    throw new Error("customer confirmation did not render XL");
+  }
+  const adminXl = buildAdminBookingNotificationEmail(xlBooking);
+  if (!adminXl.text.includes("XL, XL") || !adminXl.html.includes("XL, XL")) {
+    throw new Error("admin notification did not render XL");
+  }
+
+  const smallBooking = helmetEmailFixture("S", "S");
+  const customerSmall = buildBookingConfirmationEmail(smallBooking);
+  if (!customerSmall.text.includes("size S") || !customerSmall.html.includes("size S")) {
+    throw new Error("customer confirmation did not render historical Small");
+  }
+  const adminSmall = buildAdminBookingNotificationEmail(smallBooking);
+  if (!adminSmall.text.includes("S, S") || !adminSmall.html.includes("S, S")) {
+    throw new Error("admin notification did not render historical Small");
+  }
+
+  console.log("Helmet size assertions passed");
 }
 
 function runStorageBoxAssertions(): void {
@@ -936,6 +1048,7 @@ async function main(): Promise<void> {
   runInsurancePlanAssertions();
   runShortRentalAssertions();
   runNegativeValidationTests();
+  runHelmetSizeAssertions();
   runSundayDeliveryRestrictionTests();
   console.log("All checks OK.");
 }

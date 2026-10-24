@@ -1,5 +1,6 @@
 import "dotenv/config";
 
+import type { BookableHelmetSize } from "../src/lib/booking/helmet-sizes";
 import { prisma } from "../src/lib/prisma";
 
 const BASE_URL = (process.env.HOLD_TEST_BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
@@ -46,8 +47,8 @@ async function getJson(path: string): Promise<{ status: number; body: JsonObject
 
 function bookingFieldsForVehicleType(vehicleType: string): {
   licenseCategory: "AM" | "A1" | "A2" | "A" | "B";
-  helmetSize1: "S" | "M" | "L" | null;
-  helmetSize2: "S" | "M" | "L" | null;
+  helmetSize1: BookableHelmetSize | null;
+  helmetSize2: BookableHelmetSize | null;
 } {
   if (vehicleType === "Scooter") {
     return { licenseCategory: "B", helmetSize1: "M", helmetSize2: "L" };

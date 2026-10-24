@@ -5,6 +5,7 @@ import { vehicleTypeNeedsHelmetFlow } from "@/features/booking-flow/lib/helmet-r
 import { isLicenseAllowedForVehicle } from "@/features/booking-flow/lib/license-categories";
 import type { BookingFlowState } from "@/features/booking-flow/lib/types";
 import { isPickupDeliveryAllowedForDate } from "@/lib/booking/delivery-availability";
+import { isBookableHelmetSize } from "@/lib/booking/helmet-sizes";
 import {
   calculateRentalDuration,
   MAX_BILLABLE_RENTAL_DAYS,
@@ -198,7 +199,12 @@ export function createBookingFlowSchema(m: BookingValidationMessages): z.ZodType
     }
 
     const requiresHelmet = vehicleTypeNeedsHelmetFlow(state.rental.vehicleType);
-    if (requiresHelmet && (!hasText(state.addons.helmetSize1) || !hasText(state.addons.helmetSize2))) {
+    const helmetSize1 = state.addons.helmetSize1.trim();
+    const helmetSize2 = state.addons.helmetSize2.trim();
+    if (
+      requiresHelmet &&
+      (!isBookableHelmetSize(helmetSize1) || !isBookableHelmetSize(helmetSize2))
+    ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         message: m.helmetSizesRequired,

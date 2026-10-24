@@ -13,6 +13,7 @@ import {
 import {
   BOOKABLE_STORED_CDW_OPTIONS,
 } from "@/lib/pricing/insurance-plans";
+import { BOOKABLE_HELMET_SIZES } from "@/lib/booking/helmet-sizes";
 import { isLicenseAllowedForEngine } from "@/lib/vehicles/engine-cc";
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -29,7 +30,8 @@ export const CDW_OPTIONS = [
   "FULL_COVERAGE_50CC_125CC",
   "REDUCE_800_ATV",
 ] as const;
-export const HELMET_SIZES = ["S", "M", "L"] as const;
+/** Sizes accepted on new booking submissions. Historical Small (`S`) is stored but not bookable. */
+export const HELMET_SIZES = BOOKABLE_HELMET_SIZES;
 export const DEPOSIT_METHODS = ["ONLINE", "IN_PERSON"] as const;
 export const PAYMENT_MODES = ["STRIPE", "ALREADY_PAID"] as const;
 

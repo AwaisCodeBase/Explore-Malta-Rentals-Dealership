@@ -1770,7 +1770,11 @@
           "onlinePaymentUnavailableNote": "Online payment is not active for this booking — booking charges and security deposit are due at pickup.",
           "depositTitle": "Deposit & payment",
           "depositDueOnlineNote": "Deposit is included in the total due online.",
-          "depositDueLaterNote": "Deposit is payable at pickup and shown in total due later."
+          "depositDueLaterNote": "Deposit is payable at pickup and shown in total due later.",
+          "extensionAmountDue": "Additional amount due from extensions",
+          "extensionAmountDueNote": "This extra rental charge is recorded on the booking. It is not collected automatically from the original online payment or the security deposit.",
+          "extensionsTitle": "Booking extensions",
+          "extensionLine": "{from} → {to} · {days, plural, one {# extra day} other {# extra days}}"
         }
       },
       "lifecycle": {
@@ -1841,6 +1845,10 @@
             "restore": {
               "summary": "Undo a cancellation and put the reservation back on the calendar.",
               "effects": "Restores the previous booking status and reserves the original vehicle unit for the original dates. Payment status is left unchanged."
+            },
+            "extend": {
+              "summary": "Keep the same vehicle for a later return time.",
+              "effects": "Moves the return time later when that unit is free. Extra days use this booking's original daily rate. Delivery, storage, and the deposit are unchanged."
             }
           },
           "effectsLabel": "Result"
@@ -1850,7 +1858,49 @@
           "markReturned": "Mark vehicle returned",
           "complete": "Complete booking",
           "cancel": "Cancel booking",
-          "restore": "Restore booking"
+          "restore": "Restore booking",
+          "extend": "Extend booking"
+        },
+        "extend": {
+          "title": "Extend booking",
+          "description": "Extend booking {reference} with the same vehicle unit and the original daily rate.",
+          "currentTitle": "Current booking",
+          "vehicle": "Vehicle",
+          "unit": "Assigned unit",
+          "pickup": "Pickup",
+          "return": "Current return",
+          "billableDays": "Billable days",
+          "dailyRate": "Original daily rate",
+          "newReturn": "New return date / time",
+          "returnTime": "Return time",
+          "maltaTime": "Times use Malta time. A later return cannot pass another booking on this unit, or the 28-day maximum.",
+          "loadingAvailability": "Checking this unit's availability…",
+          "unavailableDay": "Unavailable",
+          "availableDay": "Available",
+          "selectedDay": "Selected",
+          "thisBooking": "This booking",
+          "otherBooking": "Other booking",
+          "maxRentalDay": "Past 28-day maximum",
+          "maxRentalLimit": "Cannot extend past {date} — this booking already has {used} of {max} billable days.",
+          "blockedByBooking": "Cannot extend past {date} — another booking on this unit starts then.",
+          "otherBookingsTitle": "Other bookings on this unit",
+          "otherBookingsEmpty": "No other bookings for this unit in this period.",
+          "pickDay": "Choose an available day on the calendar. The price is calculated from this booking's original rate.",
+          "dayUnavailable": "That return is not available for this unit at the selected time.",
+          "preview": "Calculating extension…",
+          "previewTitle": "Extension preview",
+          "proposedReturn": "Proposed return",
+          "additionalDays": "Additional billable days",
+          "additionalRental": "Additional rental",
+          "additionalHotel": "Hotel discount on extra rental",
+          "additionalCdw": "Additional CDW",
+          "additionalDriver": "Additional driver",
+          "additionalAmount": "Additional amount due",
+          "updatedSubtotal": "Updated booking charges",
+          "updatedSubtotalSum": "{current} + {additional} = {total}",
+          "unchangedCharges": "Delivery and storage box charges stay as they are.",
+          "available": "The assigned unit is free for this extension.",
+          "confirm": "Confirm extension"
         },
         "handOver": {
           "title": "Hand over vehicle",

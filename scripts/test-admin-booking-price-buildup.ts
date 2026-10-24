@@ -100,6 +100,7 @@ function baseBooking(overrides: Partial<AdminBookingDetail> = {}): AdminBookingD
     depositDeductionReason: null,
     completionNotes: null,
     statusHistory: [],
+    extensions: [],
     ...overrides,
   };
 }

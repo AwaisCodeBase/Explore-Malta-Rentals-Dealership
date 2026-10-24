@@ -61,6 +61,21 @@ export type AdminBookingStatusHistoryItem = {
   createdAt: string;
 };
 
+export type AdminBookingExtensionItem = {
+  id: string;
+  previousReturnDateTime: string;
+  newReturnDateTime: string;
+  additionalBillableDays: number;
+  appliedDailyRate: number;
+  additionalRentalAmount: number;
+  additionalHotelDiscountAmount: number;
+  additionalCdwAmount: number;
+  additionalDriverAmount: number;
+  additionalAmount: number;
+  createdAt: string;
+  createdByAdminName: string | null;
+};
+
 export type AdminBookingDetail = {
   id: string;
   bookingReference: string;
@@ -167,6 +182,7 @@ export type AdminBookingDetail = {
   completionNotes: string | null;
 
   statusHistory: AdminBookingStatusHistoryItem[];
+  extensions: AdminBookingExtensionItem[];
 };
 
 export type AdminBookingVehicleOption = {

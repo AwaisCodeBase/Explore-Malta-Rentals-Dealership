@@ -67,6 +67,7 @@ export type AdminBookingPriceBuildup = {
     depositDueAtPickup: boolean;
   };
   paymentSummary: BookingPaymentSummary;
+  extensionAmountDue: number;
 };
 
 /** Display-only breakdown from stored booking snapshots. Does not recalculate pricing rules. */
@@ -155,5 +156,8 @@ export function buildAdminBookingPriceBuildup(booking: AdminBookingDetail): Admi
       totalDueOnline: booking.totalDueOnline,
       totalDueLater: booking.totalDueLater,
     }),
+    extensionAmountDue: roundMoney(
+      booking.extensions.reduce((total, extension) => total + extension.additionalAmount, 0),
+    ),
   };
 }

@@ -107,6 +107,20 @@ export async function convertHoldOccupancyToBooking(
   return Number(updated) > 0;
 }
 
+/** Move an existing booking lock's end later. The generated period column updates with the row. */
+export async function extendBookingOccupancyReturnAt(
+  db: OccupancyDb,
+  input: { bookingId: string; returnAt: Date },
+): Promise<number> {
+  const updated = await db.$executeRaw`
+    UPDATE "VehicleUnitOccupancy"
+    SET "returnAt" = ${input.returnAt}
+    WHERE "bookingId" = ${input.bookingId}
+  `;
+
+  return Number(updated);
+}
+
 export async function deleteOccupancyForBooking(db: OccupancyDb, bookingId: string): Promise<void> {
   await db.$executeRaw`
     DELETE FROM "VehicleUnitOccupancy" WHERE "bookingId" = ${bookingId}

@@ -120,6 +120,25 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
           },
         },
       },
+      extensions: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          previousReturnDateTime: true,
+          newReturnDateTime: true,
+          additionalBillableDays: true,
+          appliedDailyRate: true,
+          additionalRentalAmount: true,
+          additionalHotelDiscountAmount: true,
+          additionalCdwAmount: true,
+          additionalDriverAmount: true,
+          additionalAmount: true,
+          createdAt: true,
+          createdBy: {
+            select: { name: true },
+          },
+        },
+      },
     },
   });
 
@@ -228,6 +247,20 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
       note: entry.note,
       changedByAdminName: entry.changedBy?.name ?? null,
       createdAt: entry.createdAt.toISOString(),
+    })),
+    extensions: booking.extensions.map((entry) => ({
+      id: entry.id,
+      previousReturnDateTime: entry.previousReturnDateTime.toISOString(),
+      newReturnDateTime: entry.newReturnDateTime.toISOString(),
+      additionalBillableDays: entry.additionalBillableDays,
+      appliedDailyRate: entry.appliedDailyRate.toNumber(),
+      additionalRentalAmount: entry.additionalRentalAmount.toNumber(),
+      additionalHotelDiscountAmount: entry.additionalHotelDiscountAmount.toNumber(),
+      additionalCdwAmount: entry.additionalCdwAmount.toNumber(),
+      additionalDriverAmount: entry.additionalDriverAmount.toNumber(),
+      additionalAmount: entry.additionalAmount.toNumber(),
+      createdAt: entry.createdAt.toISOString(),
+      createdByAdminName: entry.createdBy?.name ?? null,
     })),
   };
 }

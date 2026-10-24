@@ -136,6 +136,7 @@ model AdminUser {
   updatedAt     DateTime               @updatedAt
   sessions      AdminSession[]
   statusChanges BookingStatusHistory[]
+  bookingExtensions BookingExtension[]
 
   @@index([role, isActive])
 }
@@ -330,6 +331,7 @@ model Booking {
   statusHistory                              BookingStatusHistory[]
   emailLogs                                  EmailLog[]
   reservationHolds                           ReservationHold[]
+  extensions                                 BookingExtension[]
   StripePayment                              StripePayment?
   unitOccupancy                              VehicleUnitOccupancy?
 
@@ -344,6 +346,28 @@ model Booking {
   @@index([vehicleId])
   @@index([vehicleUnitId])
   @@index([termsVersionId])
+}
+
+/// Incremental return-date extension. Amounts are the extra charge at the original booking rate.
+model BookingExtension {
+  id                            String    @id @default(cuid())
+  bookingId                     String
+  previousReturnDateTime        DateTime
+  newReturnDateTime             DateTime
+  additionalBillableDays        Int
+  appliedDailyRate              Decimal   @db.Decimal(10, 2)
+  additionalRentalAmount        Decimal   @db.Decimal(10, 2)
+  additionalHotelDiscountAmount Decimal   @default(0) @db.Decimal(10, 2)
+  additionalCdwAmount           Decimal   @default(0) @db.Decimal(10, 2)
+  additionalDriverAmount        Decimal   @default(0) @db.Decimal(10, 2)
+  additionalAmount              Decimal   @db.Decimal(10, 2)
+  createdByAdminId              String?
+  createdAt                     DateTime  @default(now())
+  booking                       Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  createdBy                     AdminUser? @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId, createdAt])
+  @@index([createdByAdminId])
 }
 
 model BookingStatusHistory {

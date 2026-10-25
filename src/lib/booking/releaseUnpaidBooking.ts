@@ -1,9 +1,15 @@
 import type { BookingStatus, Prisma } from "@/generated/prisma/index";
+import { restoreLoyaltyCreditForUnpaidBooking } from "@/lib/loyalty/loyalty-credit";
 import { deleteOccupancyForBooking } from "@/lib/vehicle-unit-occupancy";
 
 type ReleaseDb = Pick<
   Prisma.TransactionClient,
-  "booking" | "vehicleUnit" | "bookingStatusHistory" | "$executeRaw" | "$executeRawUnsafe"
+  | "booking"
+  | "vehicleUnit"
+  | "bookingStatusHistory"
+  | "customerLoyaltyCredit"
+  | "$executeRaw"
+  | "$executeRawUnsafe"
 >;
 
 export type ReleaseUnpaidBookingResult =
@@ -65,9 +71,13 @@ export async function releaseUnpaidBooking(
     }
 
     const previousStatus = booking.status;
+    const restoredCredit = await restoreLoyaltyCreditForUnpaidBooking(db, booking.id);
     const note =
       options.note?.trim() ||
       "Released unpaid online booking after payment failure or checkout expiry";
+    const noteWithCredit = restoredCredit.restored
+      ? `${note} €5 loyalty credit returned to available because payment was not completed.`
+      : note;
 
     await db.booking.update({
       where: { id: bookingId },
@@ -91,7 +101,7 @@ export async function releaseUnpaidBooking(
         bookingId,
         oldStatus: previousStatus,
         newStatus: "CANCELLED",
-        note: options.actorLabel ? `[${options.actorLabel}] ${note}` : note,
+        note: options.actorLabel ? `[${options.actorLabel}] ${noteWithCredit}` : noteWithCredit,
         changedByAdminId: null,
       },
     });

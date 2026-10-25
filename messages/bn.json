@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "অতিরিক্ত ড্রাইভার:",
       "storageCost": "স্টোরেজ বক্স:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "সাবটোটাল:",
       "pricingPending": "গাড়ি এবং ভাড়ার তারিখ/সময় বৈধ হয়ে গেলে দামের পূর্বরূপ দেখা যাবে।",
       "section3": "ধারা 3 - জমা ও মোট",

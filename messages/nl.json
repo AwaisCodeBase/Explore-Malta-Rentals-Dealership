@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Extra bestuurder:",
       "storageCost": "Opbergdoos:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Subtotaal:",
       "pricingPending": "Een prijsvoorbeeld verschijnt zodra de voertuig- en huurdata/-tijden geldig zijn.",
       "section3": "Sectie 3 - Storting en totalen",

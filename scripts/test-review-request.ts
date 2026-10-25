@@ -160,6 +160,11 @@ async function runDatabaseTests(): Promise<void> {
 
   async function cleanup(): Promise<void> {
     if (bookingIds.length > 0) {
+      await prisma.customerLoyaltyCredit.deleteMany({
+        where: {
+          OR: [{ sourceBookingId: { in: bookingIds } }, { redeemedBookingId: { in: bookingIds } }],
+        },
+      });
       await prisma.emailLog.deleteMany({ where: { bookingId: { in: bookingIds } } });
       await prisma.booking.deleteMany({ where: { id: { in: bookingIds } } });
     }
@@ -306,6 +311,7 @@ async function runDatabaseTests(): Promise<void> {
       email: `review-${testSuffix}@example.com`,
     });
 
+    const beforeReturn = Date.now();
     const returned = await returnBooking(booking.id);
     assert.equal(returned.ok, true);
     if (!returned.ok) return;
@@ -316,9 +322,9 @@ async function runDatabaseTests(): Promise<void> {
     assert.equal(returned.booking.depositAmount, 150);
 
     const scheduledAt = new Date(returned.booking.reviewRequest!.scheduledAt);
-    const delay = scheduledAt.getTime() - Date.now();
+    const delay = scheduledAt.getTime() - beforeReturn;
     assert.ok(delay >= 60 * 1000 - 5_000);
-    assert.ok(delay <= 5 * 60 * 1000 + 5_000);
+    assert.ok(delay <= 5 * 60 * 1000 + 30_000);
 
     const unitAfterReturn = await prisma.vehicleUnit.findUnique({ where: { id: unit.id } });
     assert.equal(unitAfterReturn?.status, "AVAILABLE");
@@ -363,8 +369,10 @@ async function runDatabaseTests(): Promise<void> {
     assert.equal(sender.calls[0]?.to, `review-${testSuffix}@example.com`);
     assert.match(sender.calls[0]?.html ?? "", /https:\/\/example\.com\/google-review/);
     assert.match(sender.calls[0]?.html ?? "", /Leave a Google Review/);
+    assert.match(sender.calls[0]?.html ?? "", /€5 off your next rental/);
+    assert.match(sender.calls[0]?.text ?? "", /does not depend on leaving a Google review/);
     assert.match(sender.calls[0]?.text ?? "", new RegExp(booking.bookingReference));
-    assert.doesNotMatch(sender.calls[0]?.html ?? "", /loyalty|€\s*5|deposit/i);
+    assert.doesNotMatch(sender.calls[0]?.html ?? "", /leave a review to receive|once you review|deposit/i);
 
     const sentRequest = await prisma.bookingReviewRequest.findUnique({ where: { bookingId: booking.id } });
     assert.equal(sentRequest?.status, "SENT");

@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "السائق الإضافي:",
       "storageCost": "صندوق التخزين:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "المجموع الفرعي:",
       "pricingPending": "ستظهر معاينة التسعير بمجرد صلاحية المركبة وتواريخ/أوقات الإيجار.",
       "section3": "القسم 3 - الوديعة والإجماليات",

@@ -27,6 +27,11 @@ import {
   type PricingCdwOption,
 } from "@/lib/pricing/calculate-booking-price";
 import { validateHotelCode, type ValidatedHotelCode } from "@/lib/hotel-codes";
+import {
+  chargesAfterLoyalty,
+  redeemOldestAvailableLoyaltyCredit,
+} from "@/lib/loyalty/loyalty-credit";
+import { roundPricingAmount } from "@/lib/pricing/duration-pricing";
 
 import { validateBookingPayload } from "./validateBookingPayload";
 import { validateStorageBoxSelection } from "./validateStorageBoxSelection";
@@ -712,13 +717,54 @@ async function createBookingWithUniqueReference(
               assignedLicensePlate = assigned.licensePlate;
             }
 
-            const booking = await tx.booking.create({
+            const createdBooking = await tx.booking.create({
               data: {
                 ...bookingCreateData,
                 vehicleUnitId: assignedUnitId,
                 vehicleLicensePlateSnapshot: assignedLicensePlate,
               },
             });
+
+            const redemption = await redeemOldestAvailableLoyaltyCredit(tx, {
+              customerEmail: payload.customer.email,
+              bookingId: createdBooking.id,
+              eligibleChargesEur: pricing.breakdown.subtotal,
+            });
+
+            let booking = createdBooking;
+            if (redemption.applied) {
+              const charges = chargesAfterLoyalty(pricing.breakdown.subtotal, redemption.amountEur);
+              const depositAmount = pricing.breakdown.depositAmount;
+              const isAlreadyPaid = payload.payment.mode === "ALREADY_PAID";
+              const depositOnline = !isAlreadyPaid && payload.deposit.depositMethod === "ONLINE";
+              const totalDueOnline = isAlreadyPaid
+                ? 0
+                : depositOnline
+                  ? roundPricingAmount(charges + depositAmount)
+                  : charges;
+              const totalDueLater = isAlreadyPaid ? 0 : depositOnline ? 0 : depositAmount;
+              const loyaltySettlesOnlinePayment =
+                !isAlreadyPaid && createdBooking.status === "PENDING_PAYMENT" && totalDueOnline <= 0;
+
+              booking = await tx.booking.update({
+                where: { id: createdBooking.id },
+                data: {
+                  loyaltyCreditAmount: redemption.amountEur,
+                  totalDueOnline,
+                  totalDueLater,
+                  ...(isAlreadyPaid
+                    ? { paymentReceivedAmount: roundPricingAmount(charges + depositAmount) }
+                    : {}),
+                  ...(loyaltySettlesOnlinePayment
+                    ? {
+                        status: "CONFIRMED",
+                        paymentStatus: "PAID",
+                        paymentReceivedAmount: 0,
+                      }
+                    : {}),
+                },
+              });
+            }
 
             try {
               if (holdForFinalization) {
@@ -933,8 +979,11 @@ export async function submitBooking(payload: BookingSubmissionInput): Promise<Su
     requireHoldReference,
   );
 
-  const totalDueOnline =
-    validation.data.payment.mode === "ALREADY_PAID" ? 0 : pricing.breakdown.totalDueOnline;
+  const storedTotalDueOnline =
+    typeof booking.totalDueOnline === "number"
+      ? booking.totalDueOnline
+      : booking.totalDueOnline.toNumber();
+  const totalDueOnline = validation.data.payment.mode === "ALREADY_PAID" ? 0 : storedTotalDueOnline;
 
   // Only send confirmation email immediately when no online payment is required.
   // When Stripe payment is involved, the webhook or success-page verifier

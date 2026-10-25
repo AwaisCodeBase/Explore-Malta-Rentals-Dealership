@@ -267,7 +267,7 @@ export async function AdminBookingPriceBuildup({ locale, booking }: AdminBooking
             value={formatEur(buildup.subtotal.storageBoxCost)}
           />
           <BuildupRow
-            emphasis
+            emphasis={buildup.subtotal.loyaltyCreditAmount <= 0}
             label={
               <FormulaLabel
                 label={t("details.fields.bookingChargesTotal")}
@@ -276,6 +276,19 @@ export async function AdminBookingPriceBuildup({ locale, booking }: AdminBooking
             }
             value={formatEur(buildup.subtotal.subtotal)}
           />
+          {buildup.subtotal.loyaltyCreditAmount > 0 ? (
+            <>
+              <BuildupRow
+                label={t("details.priceBuildup.loyaltyCredit")}
+                value={formatSignedEur(buildup.subtotal.loyaltyCreditAmount, true)}
+              />
+              <BuildupRow
+                emphasis
+                label={t("details.priceBuildup.chargesAfterLoyalty")}
+                value={formatEur(buildup.subtotal.chargesAfterLoyalty)}
+              />
+            </>
+          ) : null}
           {buildup.extensionAmountDue > 0 ? (
             <BuildupRow
               emphasis

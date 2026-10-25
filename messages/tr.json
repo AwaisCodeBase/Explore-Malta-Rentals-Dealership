@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Ek Sürücü:",
       "storageCost": "Saklama Kutusu:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Ara toplam:",
       "pricingPending": "Araç ve kiralama tarihleri/saatleri geçerli olduğunda fiyatlandırma önizlemesi görünecektir.",
       "section3": "Bölüm 3 - Mevduat ve Toplamlar",

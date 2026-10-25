@@ -953,6 +953,8 @@
       "cdwCost": "ซีดีดับบลิว:",
       "addDriverCost": "ไดรเวอร์เพิ่มเติม:",
       "storageCost": "กล่องเก็บของ:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "ผลรวมย่อย:",
       "pricingPending": "การแสดงตัวอย่างราคาจะปรากฏขึ้นเมื่อยานพาหนะและวันที่/เวลาเช่าถูกต้อง",
       "section3": "ส่วนที่ 3 - เงินฝากและยอดรวม",

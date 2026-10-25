@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Dodatkowy sterownik:",
       "storageCost": "Pudełko do przechowywania:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Suma częściowa:",
       "pricingPending": "Podgląd cen pojawi się, gdy daty/godziny wynajmu pojazdu i wynajmu staną się ważne.",
       "section3": "Sekcja 3 – Depozyt i sumy",

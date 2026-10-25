@@ -327,6 +327,9 @@ model Booking {
   depositDeductionReason                     String?
   completionNotes                            String?
   idempotencyKey                             String?                 @unique
+  /// €5 loyalty discount applied to this booking's charges. Null when none was redeemed.
+  /// The security deposit is not included in this amount.
+  loyaltyCreditAmount                        Decimal?                @db.Decimal(10, 2)
   hotelCode                                  HotelCode?              @relation(fields: [hotelCodeId], references: [id])
   hotelPartner                               HotelPartner?           @relation(fields: [hotelPartnerId], references: [id])
   acceptedTermsVersion                       TermsVersion?           @relation(fields: [termsVersionId], references: [id])
@@ -336,6 +339,8 @@ model Booking {
   statusHistory                              BookingStatusHistory[]
   emailLogs                                  EmailLog[]
   reviewRequest                              BookingReviewRequest?
+  loyaltyCreditIssued                        CustomerLoyaltyCredit?  @relation("LoyaltyCreditSource")
+  loyaltyCreditRedeemed                      CustomerLoyaltyCredit?  @relation("LoyaltyCreditRedemption")
   reservationHolds                           ReservationHold[]
   extensions                                 BookingExtension[]
   StripePayment                              StripePayment?
@@ -412,6 +417,27 @@ model EmailLog {
   @@index([recipientEmail, createdAt])
   @@index([status, createdAt])
   @@index([initiatedByAdminId])
+}
+
+/// One €5 next-rental credit earned by a returned booking.
+/// Identity is the normalized customer email. There is no customer account.
+/// A source booking issues at most one credit. A credit is redeemed by at most one booking.
+model CustomerLoyaltyCredit {
+  id                      String              @id @default(cuid())
+  sourceBookingId         String              @unique
+  customerEmailNormalized String
+  amount                  Decimal             @db.Decimal(10, 2)
+  currency                String              @default("EUR")
+  status                  LoyaltyCreditStatus @default(AVAILABLE)
+  issuedAt                DateTime            @default(now())
+  redeemedAt              DateTime?
+  redeemedBookingId       String?             @unique
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  sourceBooking           Booking             @relation("LoyaltyCreditSource", fields: [sourceBookingId], references: [id], onDelete: Cascade)
+  redeemedBooking         Booking?            @relation("LoyaltyCreditRedemption", fields: [redeemedBookingId], references: [id], onDelete: Restrict)
+
+  @@index([customerEmailNormalized, status, issuedAt])
 }
 
 /// One automatic post-return review request per booking.
@@ -658,6 +684,11 @@ enum BookingStatus {
   RETURNED
   COMPLETED
   CANCELLED
+}
+
+enum LoyaltyCreditStatus {
+  AVAILABLE
+  REDEEMED
 }
 
 enum PaymentStatus {

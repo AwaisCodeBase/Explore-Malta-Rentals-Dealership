@@ -161,6 +161,14 @@ async function cleanup(): Promise<void> {
     WHERE "bookingId" IN (SELECT "id" FROM "Booking" WHERE "customerEmail" = ${TEST_EMAIL})
        OR "reservationHoldId" IN (SELECT "id" FROM "ReservationHold" WHERE "customerEmail" = ${TEST_EMAIL})
   `;
+  await prisma.customerLoyaltyCredit.deleteMany({
+    where: {
+      OR: [
+        { sourceBooking: { customerEmail: TEST_EMAIL } },
+        { redeemedBooking: { customerEmail: TEST_EMAIL } },
+      ],
+    },
+  });
   await prisma.booking.deleteMany({ where: { customerEmail: TEST_EMAIL } });
   await prisma.reservationHold.deleteMany({ where: { customerEmail: TEST_EMAIL } });
   await prisma.vehicleUnit.deleteMany({

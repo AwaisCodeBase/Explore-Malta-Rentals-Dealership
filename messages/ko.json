@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "추가 드라이버:",
       "storageCost": "보관함:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "소계:",
       "pricingPending": "차량 및 렌트 날짜/시간이 유효하면 가격 미리보기가 나타납니다.",
       "section3": "섹션 3 - 예금 및 총액",

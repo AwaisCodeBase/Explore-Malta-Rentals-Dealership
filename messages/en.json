@@ -971,6 +971,8 @@
       "durationDiscount": "Duration discount: {percent}% → {rate}/day",
       "rentalCost": "Rental Cost:",
       "hotelDiscount": "Hotel discount ({percent}% via {hotel}): -{amount}",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "deliveryLine": "Delivery / Drop-off: {total} (pickup {pickup} + drop-off {dropoff}{discount})",
       "bundleDiscount": " - {amount} bundle discount",
       "cdwCost": "Insurance:",
@@ -1671,6 +1673,19 @@
             "SKIPPED": "Skipped"
           }
         },
+        "loyaltyCredit": {
+          "title": "Loyalty credit",
+          "issued": "Credit issued",
+          "status": "Status",
+          "issuedAt": "Issued",
+          "redeemedBooking": "Redeemed on",
+          "appliedFrom": "Applied from booking",
+          "independentOfReview": "This €5 credit is for completing the rental. It does not depend on a Google review.",
+          "statuses": {
+            "AVAILABLE": "Available",
+            "REDEEMED": "Redeemed"
+          }
+        },
         "fields": {
           "reference": "Booking reference",
           "status": "Booking status",
@@ -1790,6 +1805,8 @@
           "plusCdwTotal": "+ CDW total",
           "plusAdditionalDriver": "+ Additional driver",
           "plusStorageBox": "+ Storage box",
+          "loyaltyCredit": "Loyalty credit",
+          "chargesAfterLoyalty": "Booking charges after loyalty credit",
           "paymentSummaryTitle": "Payment summary",
           "notApplicable": "Not applicable",
           "securityDepositHelperText": "Security deposit is separate from booking charges and may be refundable according to rental policy.",

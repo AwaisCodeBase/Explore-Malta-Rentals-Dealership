@@ -175,6 +175,9 @@ export type AdminBookingDetail = {
   depositMethod: DepositMethod;
   totalDueOnline: number;
   totalDueLater: number;
+  loyaltyCreditAmount: number | null;
+  issuedLoyaltyCredit: AdminLoyaltyCredit | null;
+  redeemedLoyaltyCredit: AdminRedeemedLoyaltyCredit | null;
 
   termsAccepted: boolean;
   termsAcceptedAt: string | null;
@@ -200,6 +203,20 @@ export type AdminBookingDetail = {
   statusHistory: AdminBookingStatusHistoryItem[];
   extensions: AdminBookingExtensionItem[];
   vehicleAssignments: AdminBookingVehicleAssignmentItem[];
+};
+
+export type AdminLoyaltyCredit = {
+  amount: number;
+  status: "AVAILABLE" | "REDEEMED";
+  issuedAt: string;
+  redeemedAt: string | null;
+  redeemedBookingId: string | null;
+  redeemedBookingReference: string | null;
+};
+
+export type AdminRedeemedLoyaltyCredit = {
+  amount: number;
+  sourceBookingReference: string | null;
 };
 
 export type AdminBookingReviewRequest = {

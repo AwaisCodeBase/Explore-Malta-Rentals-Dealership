@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "अतिरिक्त ड्राइवर:",
       "storageCost": "स्टोरेज बॉक्स:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "उप-योग:",
       "pricingPending": "वाहन और किराया तारीखें/समय वैध होने के बाद मूल्य निर्धारण पूर्वावलोकन दिखाई देगा।",
       "section3": "अनुभाग 3 - जमा और कुल",

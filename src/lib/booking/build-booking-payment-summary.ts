@@ -6,6 +6,8 @@ export type BookingPaymentSummaryInput = {
   depositMethod: BookingPaymentSummaryDepositMethod;
   totalDueOnline: number;
   totalDueLater: number;
+  /** Booking-charge discount. Never applied to the security deposit. */
+  loyaltyCreditAmount?: number;
 };
 
 export type BookingPaymentSummary = {
@@ -31,7 +33,8 @@ function normalizeDepositMethod(method: BookingPaymentSummaryDepositMethod): "ON
 export function buildBookingPaymentSummary(
   input: BookingPaymentSummaryInput,
 ): BookingPaymentSummary {
-  const bookingChargesTotal = input.subtotal;
+  const loyaltyCreditAmount = roundMoney(Math.max(0, input.loyaltyCreditAmount ?? 0));
+  const bookingChargesTotal = roundMoney(Math.max(0, input.subtotal - loyaltyCreditAmount));
   const securityDeposit = input.depositAmount;
   const totalCustomerLiability = roundMoney(bookingChargesTotal + securityDeposit);
   const depositMethod = normalizeDepositMethod(input.depositMethod);

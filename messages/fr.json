@@ -953,6 +953,8 @@
       "cdwCost": "CDW :",
       "addDriverCost": "Conducteur supplémentaire :",
       "storageCost": "Coffre de rangement :",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Sous-total :",
       "pricingPending": "L'aperçu de tarification apparaîtra une fois le véhicule et les dates/heures de location valides.",
       "section3": "Section 3 - Caution & Totaux",

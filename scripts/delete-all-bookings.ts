@@ -20,6 +20,7 @@ async function main() {
   }
 
   const deleted = await prisma.$transaction(async (tx) => {
+    await tx.customerLoyaltyCredit.deleteMany();
     const emailLogs = await tx.emailLog.deleteMany({
       where: { bookingId: { not: null } },
     });

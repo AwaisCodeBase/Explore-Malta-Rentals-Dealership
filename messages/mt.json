@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Sewwieq Addizzjonali:",
       "storageCost": "Kaxxa ta' Ħażna:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Subtotali:",
       "pricingPending": "Previżjoni tal-prezzar tidher ladarba l-vettura u d-dati/ħinijiet tal-kiri jkunu validi.",
       "section3": "Sezzjoni 3 - Depożitu u Totali",

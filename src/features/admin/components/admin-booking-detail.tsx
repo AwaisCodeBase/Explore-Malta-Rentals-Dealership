@@ -77,6 +77,56 @@ function reviewStatusClass(status: string): string {
   return "bg-amber-50 text-amber-800";
 }
 
+async function LoyaltyCreditSection({
+  locale,
+  booking,
+}: Readonly<{
+  locale: string;
+  booking: AdminBookingDetail;
+}>) {
+  const t = await getTranslations({ locale, namespace: "Admin.bookings" });
+  const issued = booking.issuedLoyaltyCredit;
+  const redeemed = booking.redeemedLoyaltyCredit;
+
+  return (
+    <DetailSection title={t("details.loyaltyCredit.title")}>
+      <dl>
+        {issued ? (
+          <>
+            <DetailRow label={t("details.loyaltyCredit.issued")} value={formatEur(issued.amount)} />
+            <DetailRow
+              label={t("details.loyaltyCredit.status")}
+              value={t(
+                `details.loyaltyCredit.statuses.${issued.status}` as "details.loyaltyCredit.statuses.AVAILABLE",
+              )}
+            />
+            <DetailRow label={t("details.loyaltyCredit.issuedAt")} value={formatMaltaDateTime(issued.issuedAt)} />
+            <DetailRow
+              label={t("details.loyaltyCredit.redeemedBooking")}
+              value={
+                issued.redeemedBookingId && issued.redeemedBookingReference ? (
+                  <a className="font-semibold text-teal-800 underline" href={`/${locale}/admin/bookings/${issued.redeemedBookingId}`}>
+                    {issued.redeemedBookingReference}
+                  </a>
+                ) : (
+                  "—"
+                )
+              }
+            />
+          </>
+        ) : null}
+        {redeemed ? (
+          <DetailRow
+            label={t("details.loyaltyCredit.appliedFrom")}
+            value={redeemed.sourceBookingReference ?? "—"}
+          />
+        ) : null}
+      </dl>
+      <p className="mt-3 text-sm text-slate-600">{t("details.loyaltyCredit.independentOfReview")}</p>
+    </DetailSection>
+  );
+}
+
 async function ReviewRequestSection({
   locale,
   booking,
@@ -283,6 +333,10 @@ export async function AdminBookingDetailView({ locale, booking }: AdminBookingDe
 
       {booking.reviewRequest || booking.status === "RETURNED" || booking.status === "COMPLETED" ? (
         <ReviewRequestSection locale={locale} booking={booking} />
+      ) : null}
+
+      {booking.issuedLoyaltyCredit || booking.redeemedLoyaltyCredit ? (
+        <LoyaltyCreditSection locale={locale} booking={booking} />
       ) : null}
 
       <div className="grid gap-5 lg:grid-cols-2">

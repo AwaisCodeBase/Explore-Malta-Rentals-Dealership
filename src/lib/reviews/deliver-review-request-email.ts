@@ -1,6 +1,8 @@
 import { buildPostRentalReviewEmail } from "@/lib/email/buildPostRentalReviewEmail";
 import { sendEmail } from "@/lib/email/emailClient";
 import type { SendEmailResult } from "@/lib/email/types";
+import { buildLoyaltyCreditEmailSection } from "@/lib/loyalty/loyalty-credit";
+import { prisma } from "@/lib/prisma";
 import { resolveGoogleReviewUrl } from "@/lib/reviews/google-review-url";
 import { reviewRequestErrorMessage, writeReviewEmailLogNow } from "@/lib/reviews/review-email-log";
 
@@ -55,11 +57,18 @@ export async function deliverReviewRequestEmail(
 
   let content: { subject: string; html: string; text: string };
   try {
+    const loyaltyCredit = await prisma.customerLoyaltyCredit.findUnique({
+      where: { sourceBookingId: booking.id },
+      select: { id: true },
+    });
+    const loyaltySection = loyaltyCredit ? buildLoyaltyCreditEmailSection() : null;
     content = buildPostRentalReviewEmail({
       customerFullName: booking.customerFullName,
       bookingReference: booking.bookingReference,
       vehicleName: booking.vehicleName ?? "",
       reviewUrl: reviewUrl.url,
+      additionalHtml: loyaltySection?.html,
+      additionalText: loyaltySection?.text,
     });
   } catch (error) {
     const message = reviewRequestErrorMessage(error);

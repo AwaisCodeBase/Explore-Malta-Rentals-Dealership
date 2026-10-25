@@ -953,6 +953,8 @@
       "cdwCost": "CDW：",
       "addDriverCost": "追加ドライバー：",
       "storageCost": "収納ボックス：",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "小計：",
       "pricingPending": "車両とレンタル日時が有効になると料金プレビューが表示されます。",
       "section3": "セクション3 - デポジットと合計",

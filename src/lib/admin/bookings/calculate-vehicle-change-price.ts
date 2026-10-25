@@ -18,6 +18,8 @@ export type VehicleChangePriceInput = {
   hotelDiscountPercentSnapshot: number | null;
   hotelDiscountAmountSnapshot: number | null;
   replacementBaseDailyRate: number;
+  /** €5 loyalty discount already stored on the booking. Deposit is not part of this amount. */
+  loyaltyCreditAmount?: number;
 };
 
 export type VehicleChangePricing = {
@@ -53,11 +55,17 @@ function moneyEquals(left: number, right: number): boolean {
   return Math.abs(left - right) < 0.001;
 }
 
+function chargesAfterStoredLoyalty(subtotal: number, loyaltyCreditAmount: number | undefined): number {
+  const loyalty = roundPricingAmount(Math.max(0, loyaltyCreditAmount ?? 0));
+  return roundPricingAmount(Math.max(0, subtotal - loyalty));
+}
+
 function duesMatchStoredSubtotal(input: VehicleChangePriceInput): boolean {
+  const charges = chargesAfterStoredLoyalty(input.currentSubtotal, input.loyaltyCreditAmount);
   const expectedOnline =
     input.depositMethod === "ONLINE"
-      ? roundPricingAmount(input.currentSubtotal + input.depositAmount)
-      : input.currentSubtotal;
+      ? roundPricingAmount(charges + input.depositAmount)
+      : charges;
   const expectedLater = input.depositMethod === "IN_PERSON" ? input.depositAmount : 0;
   return (
     moneyEquals(input.currentTotalDueOnline, expectedOnline) &&
@@ -117,10 +125,11 @@ export function calculateVehicleChangePrice(input: VehicleChangePriceInput): Veh
   const finalRentalCost = keepExisting ? input.currentRentalCost : calculated.rentalSubtotal;
   const finalSubtotal = keepExisting ? input.currentSubtotal : calculatedSubtotal;
   const duesUpdated = !keepExisting && duesMatchStoredSubtotal(input);
+  const finalCharges = chargesAfterStoredLoyalty(finalSubtotal, input.loyaltyCreditAmount);
   const finalTotalDueOnline = duesUpdated
     ? input.depositMethod === "ONLINE"
-      ? roundPricingAmount(finalSubtotal + input.depositAmount)
-      : finalSubtotal
+      ? roundPricingAmount(finalCharges + input.depositAmount)
+      : finalCharges
     : input.currentTotalDueOnline;
   const finalTotalDueLater = duesUpdated
     ? input.depositMethod === "IN_PERSON"

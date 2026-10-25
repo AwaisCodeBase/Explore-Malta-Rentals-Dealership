@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "اضافی ڈرائیور:",
       "storageCost": "ذخیرہ خانہ:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "ذیلی کل:",
       "pricingPending": "گاڑی اور کرایے کی تاریخیں/وقت درست ہونے کے بعد قیمت کا پیش نظارہ ظاہر ہوگا۔",
       "section3": "سیکشن 3 - جمع اور ٹوٹل",

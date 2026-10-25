@@ -2,6 +2,7 @@ import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import { getAdminBookingById } from "@/lib/admin/bookings/getAdminBookingById";
 import type { CancelBookingInput } from "@/lib/admin/bookings/lifecycle/booking-lifecycle-schema";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
+import { restoreLoyaltyCreditForUnpaidBooking } from "@/lib/loyalty/loyalty-credit";
 import { deleteOccupancyForBooking } from "@/lib/vehicle-unit-occupancy";
 import { prisma } from "@/lib/prisma";
 
@@ -32,6 +33,8 @@ export async function cancelBooking(
     return { ok: false, reason: "not_found" };
   }
 
+  // A credit redeemed on a confirmed booking stays redeemed if that booking is later cancelled.
+  // A pending booking never became a completed sale, so cancelling it returns the credit.
   if (existing.status !== "CONFIRMED" && existing.status !== "PENDING_PAYMENT") {
     return { ok: false, reason: "invalid_status" };
   }
@@ -72,6 +75,10 @@ export async function cancelBooking(
     }
 
     await deleteOccupancyForBooking(tx, bookingId);
+
+    if (existing.status === "PENDING_PAYMENT") {
+      await restoreLoyaltyCreditForUnpaidBooking(tx, bookingId);
+    }
 
     await recordBookingStatusChange(tx, {
       bookingId,

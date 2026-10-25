@@ -2,6 +2,7 @@ import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import { getAdminBookingById } from "@/lib/admin/bookings/getAdminBookingById";
 import type { MarkVehicleReturnedInput } from "@/lib/admin/bookings/lifecycle/booking-lifecycle-schema";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
+import { issueLoyaltyCreditForReturnedBooking } from "@/lib/loyalty/loyalty-credit";
 import { prisma } from "@/lib/prisma";
 import { scheduleReviewRequestForReturnedBooking } from "@/lib/reviews/schedule-review-request";
 
@@ -88,11 +89,19 @@ export async function markVehicleReturned(
         note: input.note,
       });
 
-      return scheduleReviewRequestForReturnedBooking(tx, {
+      const scheduledReview = await scheduleReviewRequestForReturnedBooking(tx, {
         id: bookingId,
         bookingReference: current.bookingReference,
         customerEmail: current.customerEmail,
       });
+
+      // Same transition as the review request. Completing the booking later does not issue another credit.
+      await issueLoyaltyCreditForReturnedBooking(tx, {
+        id: bookingId,
+        customerEmail: current.customerEmail,
+      });
+
+      return scheduledReview;
     });
   } catch (error) {
     if (error instanceof ReturnStateError) {

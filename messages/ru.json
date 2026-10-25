@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Дополнительный водитель:",
       "storageCost": "Кофр:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Промежуточный итог:",
       "pricingPending": "Предварительный просмотр цен появится после подтверждения действительности транспортного средства и дат/времени аренды.",
       "section3": "Раздел 3 - Залог и итоги",

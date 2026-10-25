@@ -20,6 +20,7 @@
     "test:change-booking-vehicle": "tsx scripts/test-change-booking-vehicle.ts",
     "test:replace-booking-vehicle": "tsx scripts/test-replace-booking-vehicle.ts",
     "test:review-request": "tsx scripts/test-review-request.ts",
+    "test:loyalty-credit": "tsx scripts/test-loyalty-credit.ts",
     "test:admin-booking-return-date": "tsx scripts/test-admin-booking-return-date.ts",
     "test:vehicle-unit-colors": "tsx scripts/test-vehicle-unit-color-availability.ts",
     "cleanup:expired-holds": "tsx scripts/cleanup-expired-holds.ts",

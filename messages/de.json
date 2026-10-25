@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Zweiter Fahrer:",
       "storageCost": "Staufach:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Zwischensumme:",
       "pricingPending": "Preisansicht erscheint, sobald Fahrzeug und Daten/Zeiten gültig sind.",
       "section3": "Abschnitt 3 - Kaution & Summen",

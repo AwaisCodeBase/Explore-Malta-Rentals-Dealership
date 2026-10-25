@@ -81,6 +81,7 @@ const changeBookingSelect = {
   totalDueLater: true,
   depositAmount: true,
   depositMethod: true,
+  loyaltyCreditAmount: true,
   hotelDiscountPercentSnapshot: true,
   hotelDiscountAmountSnapshot: true,
   baseDailyRateSnapshot: true,
@@ -315,6 +316,7 @@ async function prepareVehicleChange(
     hotelDiscountPercentSnapshot: money(booking.hotelDiscountPercentSnapshot),
     hotelDiscountAmountSnapshot: money(booking.hotelDiscountAmountSnapshot),
     replacementBaseDailyRate: vehicle.baseDailyRate.toNumber(),
+    loyaltyCreditAmount: booking.loyaltyCreditAmount?.toNumber() ?? 0,
   });
   if (!priced.ok) {
     return failure(priced.reason);

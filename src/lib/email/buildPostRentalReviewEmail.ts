@@ -47,15 +47,15 @@ export function buildPostRentalReviewEmail(input: PostRentalReviewEmailInput): B
     "",
     "Thank you for choosing Explore Malta Rentals. We hope you enjoyed your rental.",
     `Booking ${input.bookingReference} · ${vehicleName}`,
-    "",
-    "We would really appreciate it if you shared your experience with us on Google.",
-    "",
-    `Leave a Google Review: ${input.reviewUrl}`,
   ];
   if (extraText) {
     textSections.push("", extraText);
   }
   textSections.push(
+    "",
+    "We would really appreciate it if you shared your experience with us on Google.",
+    "",
+    `Leave a Google Review: ${input.reviewUrl}`,
     "",
     "If you need anything after your rental, reply to this email and our team will be happy to help.",
   );
@@ -67,6 +67,7 @@ export function buildPostRentalReviewEmail(input: PostRentalReviewEmailInput): B
   <p style="margin:0 0 18px 0;color:#4b5563;line-height:1.6;">
     Booking <strong>${safeReference}</strong> · ${safeVehicle}
   </p>
+  ${extraHtml ? `<div style="margin:0 0 22px 0;padding:14px 16px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;color:#134e4a;line-height:1.6;">${extraHtml}</div>` : ""}
   <p style="margin:0 0 20px 0;color:#374151;line-height:1.6;">
     We would really appreciate it if you shared your experience with us on Google.
   </p>
@@ -76,7 +77,6 @@ export function buildPostRentalReviewEmail(input: PostRentalReviewEmailInput): B
   <p style="margin:0 0 18px 0;font-size:12px;line-height:1.5;color:#6b7280;word-break:break-all;">
     <a href="${safeUrl}" style="color:#0f766e;text-decoration:underline;">${safeUrl}</a>
   </p>
-  ${extraHtml ? `<div style="margin:0 0 18px 0;color:#374151;line-height:1.6;">${extraHtml}</div>` : ""}
   <p style="margin:0;color:#4b5563;line-height:1.6;">
     If you need anything after your rental, reply to this email and our team will be happy to help.
   </p>`;

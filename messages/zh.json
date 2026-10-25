@@ -953,6 +953,8 @@
       "cdwCost": "CDW：",
       "addDriverCost": "附加驾驶员：",
       "storageCost": "储物箱：",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "小计：",
       "pricingPending": "车辆和租赁日期/时间有效后将显示定价预览。",
       "section3": "第 3 部分 - 押金与总计",

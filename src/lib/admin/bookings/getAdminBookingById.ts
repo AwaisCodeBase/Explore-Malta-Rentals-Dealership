@@ -90,6 +90,26 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
       depositMethod: true,
       totalDueOnline: true,
       totalDueLater: true,
+      loyaltyCreditAmount: true,
+      loyaltyCreditIssued: {
+        select: {
+          amount: true,
+          status: true,
+          issuedAt: true,
+          redeemedAt: true,
+          redeemedBooking: {
+            select: { id: true, bookingReference: true },
+          },
+        },
+      },
+      loyaltyCreditRedeemed: {
+        select: {
+          amount: true,
+          sourceBooking: {
+            select: { bookingReference: true },
+          },
+        },
+      },
       termsAccepted: true,
       termsAcceptedAt: true,
       termsVersion: true,
@@ -255,6 +275,23 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
     depositMethod: booking.depositMethod,
     totalDueOnline: booking.totalDueOnline.toNumber(),
     totalDueLater: booking.totalDueLater.toNumber(),
+    loyaltyCreditAmount: decimalToNumber(booking.loyaltyCreditAmount),
+    issuedLoyaltyCredit: booking.loyaltyCreditIssued
+      ? {
+          amount: booking.loyaltyCreditIssued.amount.toNumber(),
+          status: booking.loyaltyCreditIssued.status,
+          issuedAt: booking.loyaltyCreditIssued.issuedAt.toISOString(),
+          redeemedAt: booking.loyaltyCreditIssued.redeemedAt?.toISOString() ?? null,
+          redeemedBookingId: booking.loyaltyCreditIssued.redeemedBooking?.id ?? null,
+          redeemedBookingReference: booking.loyaltyCreditIssued.redeemedBooking?.bookingReference ?? null,
+        }
+      : null,
+    redeemedLoyaltyCredit: booking.loyaltyCreditRedeemed
+      ? {
+          amount: booking.loyaltyCreditRedeemed.amount.toNumber(),
+          sourceBookingReference: booking.loyaltyCreditRedeemed.sourceBooking.bookingReference,
+        }
+      : null,
     termsAccepted: booking.termsAccepted,
     termsAcceptedAt: booking.termsAcceptedAt?.toISOString() ?? null,
     termsVersion: booking.termsVersion,

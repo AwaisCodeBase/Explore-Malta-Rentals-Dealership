@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Pengemudi Tambahan:",
       "storageCost": "Kotak Penyimpanan:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Jumlah keseluruhan:",
       "pricingPending": "Pratinjau harga akan muncul setelah tanggal/waktu sewa kendaraan dan valid.",
       "section3": "Bagian 3 - Deposit & Total",

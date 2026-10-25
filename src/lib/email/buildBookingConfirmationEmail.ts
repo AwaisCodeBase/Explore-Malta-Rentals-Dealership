@@ -21,6 +21,12 @@ function formatOptional(value: string | null | undefined): string {
   return value.trim();
 }
 
+function moneyOrZero(value: { toString(): string } | number | null | undefined): number {
+  if (value == null) return 0;
+  const amount = typeof value === "number" ? value : Number(value.toString());
+  return Number.isFinite(amount) ? amount : 0;
+}
+
 function formatMoneyEur(value: { toString(): string } | number): string {
   const n = typeof value === "number" ? value : Number(value.toString());
   if (Number.isNaN(n)) {
@@ -105,6 +111,9 @@ export function buildBookingConfirmationEmail(booking: Booking): BookingConfirma
   const helmetText = helmetLine(booking);
 
   const subtotal = formatMoneyEur(booking.subtotal);
+  const loyaltyCreditAmount = moneyOrZero(booking.loyaltyCreditAmount);
+  const loyaltyLine =
+    loyaltyCreditAmount > 0 ? `Loyalty credit: -${formatMoneyEur(loyaltyCreditAmount)}` : null;
   const totalOnline = formatMoneyEur(booking.totalDueOnline);
   const deposit = formatMoneyEur(booking.depositAmount);
   const depositMethod = escapeHtml(depositMethodLabel(booking.depositMethod));
@@ -142,6 +151,7 @@ export function buildBookingConfirmationEmail(booking: Booking): BookingConfirma
     "",
     "PAYMENT SUMMARY",
     `Rental subtotal: ${subtotal}`,
+    ...(loyaltyLine ? [loyaltyLine] : []),
     `Amount paid online: ${totalOnline}`,
     `Deposit amount: ${deposit}`,
     `Deposit payment method: ${depositMethodLabel(booking.depositMethod)}`,
@@ -192,6 +202,11 @@ export function buildBookingConfirmationEmail(booking: Booking): BookingConfirma
   <h2 style="margin:4px 0 10px 0;font-size:16px;color:#111827;">Payment summary</h2>
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 18px 0;">
     <tr><td style="padding:7px 0;color:#6b7280;width:42%;">Rental subtotal</td><td style="padding:7px 0;color:#111827;">${escapeHtml(subtotal)}</td></tr>
+    ${
+      loyaltyLine
+        ? `<tr><td style="padding:7px 0;color:#6b7280;">Loyalty credit</td><td style="padding:7px 0;color:#111827;">-${escapeHtml(formatMoneyEur(loyaltyCreditAmount))}</td></tr>`
+        : ""
+    }
     <tr><td style="padding:7px 0;color:#6b7280;">Amount paid online</td><td style="padding:7px 0;color:#111827;">${escapeHtml(totalOnline)}</td></tr>
     <tr><td style="padding:7px 0;color:#6b7280;">Deposit amount</td><td style="padding:7px 0;color:#111827;">${escapeHtml(deposit)}</td></tr>
     <tr><td style="padding:7px 0;color:#6b7280;">Deposit method</td><td style="padding:7px 0;color:#111827;">${depositMethod}</td></tr>

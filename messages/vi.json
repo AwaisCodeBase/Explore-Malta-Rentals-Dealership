@@ -953,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Trình điều khiển bổ sung:",
       "storageCost": "Hộp lưu trữ:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Tổng phụ:",
       "pricingPending": "Bản xem trước giá sẽ xuất hiện sau khi ngày/giờ thuê xe và xe hợp lệ.",
       "section3": "Phần 3 - Tiền gửi & Tổng số",

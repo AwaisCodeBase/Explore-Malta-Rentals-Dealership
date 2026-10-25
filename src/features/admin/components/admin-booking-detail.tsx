@@ -4,6 +4,7 @@ import { ArrowLeft, BadgeCheck, CheckCircle2, KeyRound, RotateCcw, XCircle } fro
 import { getTranslations } from "next-intl/server";
 
 import { AdminBookingPriceBuildup } from "@/features/admin/components/admin-booking-price-buildup";
+import { AdminBookingReviewRequestButton } from "@/features/admin/components/admin-booking-review-request-button";
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import { formatMaltaDate, formatMaltaDateTime } from "@/lib/format-malta-datetime";
 
@@ -67,6 +68,83 @@ function unitStatusBadgeClass(status: string): string {
   if (status === "OUT_WITH_CUSTOMER") return "bg-violet-50 text-violet-700";
   if (status === "MAINTENANCE") return "bg-orange-50 text-orange-700";
   return "bg-slate-100 text-slate-600";
+}
+
+function reviewStatusClass(status: string): string {
+  if (status === "SENT") return "bg-emerald-50 text-emerald-700";
+  if (status === "FAILED") return "bg-rose-50 text-rose-700";
+  if (status === "SKIPPED") return "bg-slate-100 text-slate-600";
+  return "bg-amber-50 text-amber-800";
+}
+
+async function ReviewRequestSection({
+  locale,
+  booking,
+}: Readonly<{
+  locale: string;
+  booking: AdminBookingDetail;
+}>) {
+  const t = await getTranslations({ locale, namespace: "Admin.bookings" });
+  const review = booking.reviewRequest;
+  const canSend = booking.status === "RETURNED" || booking.status === "COMPLETED";
+  const actionLabel = review?.sentAt ? t("details.reviewRequest.resend") : t("details.reviewRequest.send");
+
+  return (
+    <DetailSection title={t("details.reviewRequest.title")}>
+      <dl>
+        <DetailRow
+          label={t("details.reviewRequest.status")}
+          value={
+            review ? (
+              <span className={["inline-flex rounded-full px-2 py-0.5 text-xs font-semibold", reviewStatusClass(review.status)].join(" ")}>
+                {t(`details.reviewRequest.statuses.${review.status}` as "details.reviewRequest.statuses.SENT")}
+              </span>
+            ) : (
+              t("details.reviewRequest.notScheduled")
+            )
+          }
+        />
+        {review && (review.status === "PENDING" || review.status === "PROCESSING") ? (
+          <DetailRow label={t("details.reviewRequest.scheduled")} value={formatMaltaDateTime(review.scheduledAt)} />
+        ) : null}
+        {review?.sentAt ? (
+          <DetailRow label={t("details.reviewRequest.sent")} value={formatMaltaDateTime(review.sentAt)} />
+        ) : null}
+        {review?.lastManualResendAt ? (
+          <DetailRow label={t("details.reviewRequest.lastResent")} value={formatMaltaDateTime(review.lastManualResendAt)} />
+        ) : null}
+        {review?.lastManualResendByName ? (
+          <DetailRow label={t("details.reviewRequest.resentBy")} value={review.lastManualResendByName} />
+        ) : null}
+        {review?.lastError ? (
+          <DetailRow label={t("details.reviewRequest.error")} value={review.lastError} />
+        ) : null}
+      </dl>
+      {review?.status === "PENDING" || review?.status === "PROCESSING" ? (
+        <p className="mt-3 text-sm text-slate-500">{t("details.reviewRequest.scheduledHint")}</p>
+      ) : null}
+      {!review ? <p className="mt-3 text-sm text-slate-500">{t("details.reviewRequest.notScheduledHint")}</p> : null}
+      {review?.status === "SKIPPED" ? (
+        <p className="mt-3 text-sm text-slate-500">
+          {review.skippedReason === "invalid_customer_email"
+            ? t("details.reviewRequest.skippedHint")
+            : t("details.reviewRequest.skippedGeneric")}
+        </p>
+      ) : null}
+      {canSend ? (
+        <div className="mt-4">
+          <AdminBookingReviewRequestButton
+            bookingId={booking.id}
+            disabled={review?.status === "PROCESSING"}
+            label={actionLabel}
+            sendingLabel={t("details.reviewRequest.sending")}
+            successMessage={t("details.reviewRequest.resendSuccess")}
+            fallbackError={t("details.reviewRequest.fallbackError")}
+          />
+        </div>
+      ) : null}
+    </DetailSection>
+  );
 }
 
 function DetailSection({
@@ -202,6 +280,10 @@ export async function AdminBookingDetailView({ locale, booking }: AdminBookingDe
           />
         </dl>
       </DetailSection>
+
+      {booking.reviewRequest || booking.status === "RETURNED" || booking.status === "COMPLETED" ? (
+        <ReviewRequestSection locale={locale} booking={booking} />
+      ) : null}
 
       <div className="grid gap-5 lg:grid-cols-2">
         <DetailSection title={t("details.sections.customer")}>

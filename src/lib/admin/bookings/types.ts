@@ -2,6 +2,7 @@ import type {
   BookingStatus,
   ConfirmationEmailStatus,
   DepositMethod,
+  ReviewRequestStatus,
   PaymentMethod,
   PaymentStatus,
   SecurityDepositStatus,
@@ -182,6 +183,7 @@ export type AdminBookingDetail = {
 
   confirmationEmailStatus: ConfirmationEmailStatus;
   confirmationEmailSentAt: string | null;
+  reviewRequest: AdminBookingReviewRequest | null;
 
   paymentReceivedAmount: number | null;
   paymentMethod: PaymentMethod | null;
@@ -198,6 +200,20 @@ export type AdminBookingDetail = {
   statusHistory: AdminBookingStatusHistoryItem[];
   extensions: AdminBookingExtensionItem[];
   vehicleAssignments: AdminBookingVehicleAssignmentItem[];
+};
+
+export type AdminBookingReviewRequest = {
+  status: ReviewRequestStatus;
+  scheduledAt: string;
+  sentAt: string | null;
+  lastSentAt: string | null;
+  attempts: number;
+  lastError: string | null;
+  skippedReason: string | null;
+  processingStartedAt: string | null;
+  manualResendCount: number;
+  lastManualResendAt: string | null;
+  lastManualResendByName: string | null;
 };
 
 export type AdminBookingVehicleOption = {

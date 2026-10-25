@@ -140,6 +140,8 @@ model AdminUser {
   statusChanges       BookingStatusHistory[]
   bookingExtensions   BookingExtension[]
   vehicleReplacements BookingVehicleAssignment[]
+  initiatedEmails     EmailLog[]
+  manualReviewResends BookingReviewRequest[] @relation("BookingReviewRequestManualResend")
 
   @@index([role, isActive])
 }
@@ -333,6 +335,7 @@ model Booking {
   documents                                  BookingDocument[]
   statusHistory                              BookingStatusHistory[]
   emailLogs                                  EmailLog[]
+  reviewRequest                              BookingReviewRequest?
   reservationHolds                           ReservationHold[]
   extensions                                 BookingExtension[]
   StripePayment                              StripePayment?
@@ -398,14 +401,42 @@ model EmailLog {
   status            ConfirmationEmailStatus
   providerMessageId String?
   errorMessage      String?
-  sentAt            DateTime?
-  failedAt          DateTime?
-  createdAt         DateTime                @default(now())
-  booking           Booking?                @relation(fields: [bookingId], references: [id])
+  sentAt             DateTime?
+  failedAt           DateTime?
+  createdAt          DateTime                @default(now())
+  initiatedByAdminId String?
+  booking            Booking?                @relation(fields: [bookingId], references: [id])
+  initiatedBy        AdminUser?              @relation(fields: [initiatedByAdminId], references: [id], onDelete: SetNull)
 
   @@index([bookingId, createdAt])
   @@index([recipientEmail, createdAt])
   @@index([status, createdAt])
+  @@index([initiatedByAdminId])
+}
+
+/// One automatic post-return review request per booking.
+/// Delivery runs outside the rental-return transaction.
+model BookingReviewRequest {
+  id                        String              @id @default(cuid())
+  bookingId                 String              @unique
+  status                    ReviewRequestStatus
+  scheduledAt               DateTime
+  sentAt                    DateTime?
+  lastSentAt                DateTime?
+  attempts                  Int                 @default(0)
+  lastError                 String?
+  skippedReason             String?
+  processingStartedAt       DateTime?
+  manualResendCount         Int                 @default(0)
+  lastManualResendAt        DateTime?
+  lastManualResendByAdminId String?
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  booking                   Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  lastManualResendBy        AdminUser?          @relation("BookingReviewRequestManualResend", fields: [lastManualResendByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([status, scheduledAt])
+  @@index([lastManualResendByAdminId])
 }
 
 model AvailabilityBlock {
@@ -761,6 +792,15 @@ enum EmailType {
   BOOKING_CONFIRMATION
   BOOKING_UPDATE
   GENERAL_CONTACT_REPLY
+  REVIEW_REQUEST
+}
+
+enum ReviewRequestStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  SKIPPED
 }
 
 enum AvailabilityBlockType {

@@ -1645,6 +1645,32 @@
           "history": "Status history",
           "lifecycle": "Lifecycle operations"
         },
+        "reviewRequest": {
+          "title": "Review request",
+          "status": "Status",
+          "scheduled": "Scheduled",
+          "sent": "Sent",
+          "lastResent": "Last resent",
+          "resentBy": "Resent by",
+          "error": "Last error",
+          "notScheduled": "Not scheduled",
+          "notScheduledHint": "A review request is created when the booking is marked returned.",
+          "scheduledHint": "The thank-you email is sent shortly after the vehicle is marked returned.",
+          "skippedHint": "No valid customer email was available, so the review email was not sent. The return itself was completed.",
+          "skippedGeneric": "The review email was not sent.",
+          "send": "Send review request",
+          "resend": "Resend review request",
+          "sending": "Sending…",
+          "resendSuccess": "Review request email sent.",
+          "fallbackError": "Unable to send the review request. Please try again.",
+          "statuses": {
+            "PENDING": "Scheduled",
+            "PROCESSING": "Sending",
+            "SENT": "Sent",
+            "FAILED": "Failed",
+            "SKIPPED": "Skipped"
+          }
+        },
         "fields": {
           "reference": "Booking reference",
           "status": "Booking status",

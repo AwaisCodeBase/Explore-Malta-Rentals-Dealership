@@ -3,6 +3,7 @@ import { getAdminBookingById } from "@/lib/admin/bookings/getAdminBookingById";
 import type { MarkVehicleReturnedInput } from "@/lib/admin/bookings/lifecycle/booking-lifecycle-schema";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
 import { prisma } from "@/lib/prisma";
+import { scheduleReviewRequestForReturnedBooking } from "@/lib/reviews/schedule-review-request";
 
 class ReturnStateError extends Error {
   constructor(readonly reason: "invalid_status" | "missing_vehicle_unit") {
@@ -43,14 +44,20 @@ export async function markVehicleReturned(
     return { ok: false, reason: "missing_vehicle_unit" };
   }
 
+  let scheduled: Awaited<ReturnType<typeof scheduleReviewRequestForReturnedBooking>> | null = null;
   try {
-    await prisma.$transaction(async (tx) => {
+    scheduled = await prisma.$transaction(async (tx) => {
       await tx.$queryRaw<Array<{ id: string }>>`
         SELECT "id" FROM "Booking" WHERE "id" = ${bookingId} FOR UPDATE
       `;
       const current = await tx.booking.findUnique({
         where: { id: bookingId },
-        select: { status: true, vehicleUnitId: true },
+        select: {
+          status: true,
+          vehicleUnitId: true,
+          customerEmail: true,
+          bookingReference: true,
+        },
       });
       if (!current || current.status !== "VEHICLE_HANDED_OVER") {
         throw new ReturnStateError("invalid_status");
@@ -80,12 +87,26 @@ export async function markVehicleReturned(
         adminUserId,
         note: input.note,
       });
+
+      return scheduleReviewRequestForReturnedBooking(tx, {
+        id: bookingId,
+        bookingReference: current.bookingReference,
+        customerEmail: current.customerEmail,
+      });
     });
   } catch (error) {
     if (error instanceof ReturnStateError) {
       return { ok: false, reason: error.reason };
     }
     throw error;
+  }
+
+  if (scheduled?.created) {
+    console.log("[review-request] scheduled", {
+      bookingId,
+      status: scheduled.status,
+      scheduledAt: scheduled.scheduledAt?.toISOString() ?? null,
+    });
   }
 
   const booking = await getAdminBookingById(bookingId);

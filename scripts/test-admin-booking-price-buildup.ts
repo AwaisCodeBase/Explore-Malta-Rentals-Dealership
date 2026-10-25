@@ -103,6 +103,7 @@ function baseBooking(overrides: Partial<AdminBookingDetail> = {}): AdminBookingD
     extensions: [],
     vehicleAssignments: [],
     ...overrides,
+    reviewRequest: overrides.reviewRequest ?? null,
   };
 }
 

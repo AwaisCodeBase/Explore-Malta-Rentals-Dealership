@@ -40,7 +40,7 @@ export async function sendEmail(payload: EmailPayload): Promise<SendEmailResult>
       return { ok: false, reason: "transport_create_failed" };
     }
     logMockEmail(payload);
-    return { ok: true, deliveryMode: "development_console" };
+    return { ok: true, deliveryMode: "development_console", providerMessageId: null };
   }
 
   try {
@@ -62,7 +62,7 @@ export async function sendEmail(payload: EmailPayload): Promise<SendEmailResult>
     }
 
     console.log("[email] Resend accepted message", { to, id: data?.id ?? null });
-    return { ok: true, deliveryMode: "resend" };
+    return { ok: true, deliveryMode: "resend", providerMessageId: data?.id ?? null };
   } catch (error) {
     console.error("[email] Resend unexpected error", error);
     return { ok: false, reason: "send_failed", cause: error };

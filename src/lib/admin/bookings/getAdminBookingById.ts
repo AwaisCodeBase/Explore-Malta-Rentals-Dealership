@@ -154,6 +154,23 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
           },
         },
       },
+      reviewRequest: {
+        select: {
+          status: true,
+          scheduledAt: true,
+          sentAt: true,
+          lastSentAt: true,
+          attempts: true,
+          lastError: true,
+          skippedReason: true,
+          processingStartedAt: true,
+          manualResendCount: true,
+          lastManualResendAt: true,
+          lastManualResendBy: {
+            select: { name: true },
+          },
+        },
+      },
     },
   });
 
@@ -244,6 +261,21 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
     consentSource: booking.consentSource,
     confirmationEmailStatus: booking.confirmationEmailStatus,
     confirmationEmailSentAt: booking.confirmationEmailSentAt?.toISOString() ?? null,
+    reviewRequest: booking.reviewRequest
+      ? {
+          status: booking.reviewRequest.status,
+          scheduledAt: booking.reviewRequest.scheduledAt.toISOString(),
+          sentAt: booking.reviewRequest.sentAt?.toISOString() ?? null,
+          lastSentAt: booking.reviewRequest.lastSentAt?.toISOString() ?? null,
+          attempts: booking.reviewRequest.attempts,
+          lastError: booking.reviewRequest.lastError,
+          skippedReason: booking.reviewRequest.skippedReason,
+          processingStartedAt: booking.reviewRequest.processingStartedAt?.toISOString() ?? null,
+          manualResendCount: booking.reviewRequest.manualResendCount,
+          lastManualResendAt: booking.reviewRequest.lastManualResendAt?.toISOString() ?? null,
+          lastManualResendByName: booking.reviewRequest.lastManualResendBy?.name ?? null,
+        }
+      : null,
     paymentReceivedAmount: decimalToNumber(booking.paymentReceivedAmount),
     paymentMethod: booking.paymentMethod,
     securityDepositCollectedAmount: decimalToNumber(booking.securityDepositCollectedAmount),

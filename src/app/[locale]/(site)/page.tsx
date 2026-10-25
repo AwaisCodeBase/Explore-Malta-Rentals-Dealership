@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Suspense } from "react";
-import { SectionSkeleton } from "@/components/section-skeleton";
-import { VideoHero } from "@/features/home/components/video-hero";
+import { PremiumLandingHero } from "@/features/home/components/premium-landing-hero";
+import { HeroBookingSection } from "@/features/home/components/hero-booking-section";
 import { BikeCategoriesSection } from "@/features/home/components/bike-categories-section";
+import { HowItWorksSection } from "@/features/home/components/how-it-works-section";
 import { HighlightedServicesSection } from "@/features/home/components/highlighted-services-section";
 import { QuickBookingCtaSection } from "@/features/home/components/quick-booking-cta-section";
-import { ContactSection } from "@/features/home/components/contact-section";
+import { LandingContactSection } from "@/features/home/components/landing-contact-section";
 import { FaqSection } from "@/features/home/components/faq-section";
+import { HomePageWithPreloader } from "@/features/home/components/home-page-with-preloader";
+import { HomePreloaderLayout } from "@/features/home/components/home-preloader-layout";
 
 type HomePageProps = Readonly<{
   params: Promise<{ locale: string }>;
@@ -30,17 +32,19 @@ export default async function Home({ params }: HomePageProps) {
   setRequestLocale(locale);
 
   return (
-    <main className="flex flex-1 flex-col">
-      <VideoHero />
-      <Suspense fallback={<SectionSkeleton />}>
-        <BikeCategoriesSection />
-        <HighlightedServicesSection />
-      </Suspense>
-      <Suspense fallback={<SectionSkeleton />}>
-        <FaqSection />
-        <QuickBookingCtaSection />
-        <ContactSection />
-      </Suspense>
-    </main>
+    <HomePreloaderLayout>
+      <HomePageWithPreloader>
+        <main className="flex flex-1 flex-col">
+          <PremiumLandingHero />
+          <HeroBookingSection />
+          <BikeCategoriesSection />
+          <HowItWorksSection />
+          <HighlightedServicesSection />
+          <FaqSection />
+          <QuickBookingCtaSection />
+          <LandingContactSection />
+        </main>
+      </HomePageWithPreloader>
+    </HomePreloaderLayout>
   );
 }

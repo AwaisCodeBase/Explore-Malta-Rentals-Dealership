@@ -2,7 +2,15 @@ import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import { getAdminBookingById } from "@/lib/admin/bookings/getAdminBookingById";
 import type { MarkVehicleReturnedInput } from "@/lib/admin/bookings/lifecycle/booking-lifecycle-schema";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
+import { issueLoyaltyCreditForReturnedBooking } from "@/lib/loyalty/loyalty-credit";
 import { prisma } from "@/lib/prisma";
+import { scheduleReviewRequestForReturnedBooking } from "@/lib/reviews/schedule-review-request";
+
+class ReturnStateError extends Error {
+  constructor(readonly reason: "invalid_status" | "missing_vehicle_unit") {
+    super(reason);
+  }
+}
 
 export type MarkVehicleReturnedResult =
   | { ok: true; booking: AdminBookingDetail }
@@ -37,29 +45,78 @@ export async function markVehicleReturned(
     return { ok: false, reason: "missing_vehicle_unit" };
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: "RETURNED",
-        returnRecordedAt: input.returnRecordedAt,
-        returnNotes: input.returnNotes?.trim() || null,
-      },
-    });
+  let scheduled: Awaited<ReturnType<typeof scheduleReviewRequestForReturnedBooking>> | null = null;
+  try {
+    scheduled = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id" FROM "Booking" WHERE "id" = ${bookingId} FOR UPDATE
+      `;
+      const current = await tx.booking.findUnique({
+        where: { id: bookingId },
+        select: {
+          status: true,
+          vehicleUnitId: true,
+          customerEmail: true,
+          bookingReference: true,
+        },
+      });
+      if (!current || current.status !== "VEHICLE_HANDED_OVER") {
+        throw new ReturnStateError("invalid_status");
+      }
+      if (!current.vehicleUnitId) {
+        throw new ReturnStateError("missing_vehicle_unit");
+      }
 
-    await tx.vehicleUnit.update({
-      where: { id: existing.vehicleUnitId! },
-      data: { status: input.unitStatusAfterReturn },
-    });
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: "RETURNED",
+          returnRecordedAt: input.returnRecordedAt,
+          returnNotes: input.returnNotes?.trim() || null,
+        },
+      });
 
-    await recordBookingStatusChange(tx, {
+      await tx.vehicleUnit.update({
+        where: { id: current.vehicleUnitId },
+        data: { status: input.unitStatusAfterReturn },
+      });
+
+      await recordBookingStatusChange(tx, {
+        bookingId,
+        oldStatus: existing.status,
+        newStatus: "RETURNED",
+        adminUserId,
+        note: input.note,
+      });
+
+      const scheduledReview = await scheduleReviewRequestForReturnedBooking(tx, {
+        id: bookingId,
+        bookingReference: current.bookingReference,
+        customerEmail: current.customerEmail,
+      });
+
+      // Same transition as the review request. Completing the booking later does not issue another credit.
+      await issueLoyaltyCreditForReturnedBooking(tx, {
+        id: bookingId,
+        customerEmail: current.customerEmail,
+      });
+
+      return scheduledReview;
+    });
+  } catch (error) {
+    if (error instanceof ReturnStateError) {
+      return { ok: false, reason: error.reason };
+    }
+    throw error;
+  }
+
+  if (scheduled?.created) {
+    console.log("[review-request] scheduled", {
       bookingId,
-      oldStatus: existing.status,
-      newStatus: "RETURNED",
-      adminUserId,
-      note: input.note,
+      status: scheduled.status,
+      scheduledAt: scheduled.scheduledAt?.toISOString() ?? null,
     });
-  });
+  }
 
   const booking = await getAdminBookingById(bookingId);
   if (!booking) {

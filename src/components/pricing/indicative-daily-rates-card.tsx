@@ -13,6 +13,11 @@ export type IndicativeDailyRatesCardProps = Readonly<{
   className?: string;
 }>;
 
+/**
+ * Duration-discount glance card.
+ * Visual chrome follows the landing-page-renewal redesign; tier data comes from
+ * `PRICING_TIERS` (main) so discounts stay in sync with booking pricing.
+ */
 export function IndicativeDailyRatesCard({
   className,
 }: IndicativeDailyRatesCardProps) {
@@ -20,41 +25,45 @@ export function IndicativeDailyRatesCard({
   return (
     <div
       className={joinClasses(
-        "w-full overflow-hidden rounded-[var(--r-panel)] bg-[var(--surface-card)]",
-        "shadow-[inset_0_0_0_1px_var(--line-subtle),var(--elev-3)]",
+        "w-full overflow-hidden rounded-xl border border-slate-200/90 bg-[var(--surface-card)] shadow-sm ring-1 ring-slate-950/[0.04]",
         className,
       )}
     >
-      <div className="flex flex-col gap-3 border-b border-[var(--line-subtle)] bg-[var(--surface-soft)] px-6 py-5 sm:flex-row sm:items-end sm:justify-between sm:gap-6 sm:px-7">
-        <div className="min-w-0">
-          <h3 className="flex items-center gap-2 text-xs font-semibold tracking-[0.02em] text-ink-500">
+      <div className="flex flex-col gap-1 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-[#f0f7fc] px-6 py-4 sm:flex-row sm:items-end sm:justify-between sm:px-7">
+        <div>
+          <h3 className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
             <span
               aria-hidden
-              className="inline-flex size-6 items-center justify-center rounded-md bg-[var(--surface-card)] text-orange-600 shadow-[inset_0_0_0_1px_var(--line-subtle)]"
+              className="inline-flex size-6 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--orange-500)_14%,white)] text-[var(--orange-600)] ring-1 ring-[color-mix(in_srgb,var(--orange-500)_22%,transparent)]"
             >
               <Euro className="size-3.5 shrink-0" />
             </span>
             {t("cardTitle")}
           </h3>
-          <p className="mt-2.5 text-[1.0625rem] font-semibold tracking-[-0.02em] text-ink-900">
+          <p className="mt-0.5 text-base font-semibold tracking-tight text-slate-800">
             {t("cardSubtitle")}
           </p>
         </div>
-        <p className="text-xs leading-[1.5] text-ink-500 sm:text-right">
-          {t("beforeExtras")}
-        </p>
+        <p className="text-xs text-slate-500 sm:text-right">{t("beforeExtras")}</p>
       </div>
 
-      <dl className="grid gap-px bg-[var(--line-subtle)] sm:grid-cols-2">
+      <dl className="grid gap-px bg-slate-200/80 sm:grid-cols-2">
         {PRICING_TIERS.map((tier) => (
           <div
             key={tier.key}
-            className="flex items-baseline justify-between gap-4 bg-[var(--surface-card)] px-6 py-4 transition-colors duration-[var(--dur-fast)] hover:bg-[var(--surface-soft)] sm:px-7"
+            className="flex items-baseline justify-between gap-4 bg-[var(--surface-card)] px-6 py-3.5 sm:px-7 sm:py-4"
           >
-            <dt className="text-sm font-medium text-ink-700">
+            <dt className="text-sm font-medium text-slate-800">
               {formatDurationRuleLabel(tier.minDays, tier.maxDays)}
             </dt>
-            <dd className="shrink-0 text-right text-sm font-bold tabular-nums text-ink-900">
+            <dd
+              className={joinClasses(
+                "shrink-0 text-right text-sm font-semibold tabular-nums",
+                tier.discountPercent <= 0
+                  ? "text-slate-500"
+                  : "text-[var(--orange-600)]",
+              )}
+            >
               {tier.discountPercent <= 0
                 ? t("noDiscount")
                 : t("percentOff", { percent: tier.discountPercent })}
@@ -63,7 +72,7 @@ export function IndicativeDailyRatesCard({
         ))}
       </dl>
 
-      <p className="border-t border-[var(--line-subtle)] bg-[var(--surface-soft)] px-6 py-4 text-xs leading-[1.7] text-ink-500 sm:px-7">
+      <p className="border-t border-slate-100 bg-slate-50/50 px-6 py-3.5 text-xs leading-relaxed text-slate-500 sm:px-7">
         {t("footnote")}
       </p>
     </div>

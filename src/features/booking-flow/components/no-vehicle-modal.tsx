@@ -51,62 +51,61 @@ export function NoVehicleModal({ show, onDismiss }: NoVehicleModalProps) {
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-all duration-[var(--dur-base)] ease-[var(--ease-standard)] sm:p-6 ${
-        visible ? "bg-[var(--ink-950)]/55 backdrop-blur-md" : "bg-transparent backdrop-blur-none"
+      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-all duration-300 sm:p-6 ${
+        visible ? "bg-slate-900/60 backdrop-blur-sm" : "bg-slate-900/0 backdrop-blur-none"
       }`}
       aria-modal="true"
       role="dialog"
       aria-labelledby="no-vehicle-modal-title"
     >
       <div
-        className={`relative w-full max-w-md overflow-hidden rounded-[var(--r-panel)] bg-[var(--surface-card)] shadow-[var(--elev-5)] ring-1 ring-[var(--line)] transition-all duration-[var(--dur-slow)] ease-[var(--ease-out-expo)] ${
-          visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.97] opacity-0"
+        className={`relative w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/60 transition-all duration-300 ${
+          visible ? "translate-y-0 opacity-100 scale-100" : "translate-y-4 opacity-0 scale-95"
         }`}
       >
-        {/* Decorative gradient header band */}
-        <div className="h-1.5 w-full bg-[linear-gradient(90deg,var(--orange-400),var(--orange-300),var(--orange-500))]" />
-
         {/* Close button */}
         <button
           type="button"
           onClick={onDismiss}
           aria-label={tFlow("noVehicleDismiss")}
-          className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full text-[var(--text-faint)] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
         >
           <X className="h-4 w-4" />
         </button>
 
-        <div className="px-7 pt-7 pb-7 text-center sm:px-8 sm:pb-8">
+        <div className="px-8 pb-8 pt-6 text-center">
           {/* Icon */}
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[var(--r-card)] bg-orange-50 ring-1 ring-orange-200/70">
-            <Bike className="h-8 w-8 text-orange-600" strokeWidth={1.75} />
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--brand-orange)]/15 to-amber-100">
+            <Bike className="h-8 w-8 text-[var(--brand-orange-strong)]" strokeWidth={1.75} />
           </div>
 
-          <h2 id="no-vehicle-modal-title" className="type-h3 text-[var(--text-primary)]">
+          <h2
+            id="no-vehicle-modal-title"
+            className="text-xl font-bold tracking-[-0.03em] text-slate-900"
+          >
             {t("noneSelectedTitle")}
           </h2>
 
-          <p className="mx-auto mt-2.5 max-w-sm text-sm leading-relaxed text-[var(--text-secondary)]">
-            {t("noneSelectedBodyLong")}
-          </p>
+          <p className="mt-2 text-sm leading-relaxed text-slate-500">{t("noneSelectedBodyLong")}</p>
 
           {/* CTA */}
-          <Link
-            href="/vehicles"
-            className="mt-6 inline-flex w-full min-h-12 items-center justify-center gap-2 rounded-[var(--r-field)] bg-orange-400 px-6 text-sm font-semibold text-white shadow-[var(--elev-orange)] transition duration-[var(--dur-base)] ease-[var(--ease-out-expo)] hover:-translate-y-0.5 hover:bg-orange-500 hover:shadow-[var(--elev-orange-lift)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
-          >
-            <Bike className="h-4 w-4" />
-            {t("browseFleet")}
-          </Link>
+          <div className="mt-6 flex flex-row items-center justify-center gap-3">
+            <Link
+              href="/vehicles"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand-orange)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--brand-orange-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2"
+            >
+              <Bike className="h-4 w-4" />
+              {t("browseFleet")}
+            </Link>
 
-          {/* Dismiss link */}
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="mt-2.5 w-full rounded-[var(--r-field)] px-6 py-2.5 text-sm font-medium text-[var(--text-muted)] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          >
-            {tFlow("noVehicleChooseLater")}
-          </button>
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="rounded-xl px-4 py-2.5 text-sm text-slate-500 transition-colors hover:text-slate-700"
+            >
+              {tFlow("noVehicleChooseLater")}
+            </button>
+          </div>
         </div>
       </div>
     </div>

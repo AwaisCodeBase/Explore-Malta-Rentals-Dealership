@@ -79,6 +79,7 @@
     "heroDescription": "Motosiklet, ATV ve bisiklet kiralama. Rehberli turlar."
   },
   "Home": {
+    "heroWatchVideo": "Videoyu izle",
     "heroBookRide": "Yolculuk Rezervasyonunuzu Yapın",
     "heroViewFleet": "Filoyu Görüntüle",
     "heroTrust1": "Rehberli turlar mevcut",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "Otele teslim / iade",
         "description": "Geçerli olduğu durumlarda, uygun bir şekilde bırakma ve toplama konusunda yardımcı olabiliriz."
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "Günlük geziler için harika",
         "bullet2": "Dengeli konfor + kontrol",
         "subtitle": "Motosiklet"
-      }
+      },
+      "includesLabel": "Dahil:"
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "Güven pilotu",
     "testimonialsExcellent": "Harika",
     "testimonialsMarqueeAria": "Müşteri referansları, kaydırma",
-    "ratingStarsAria": "{rating} 5 üzerinden"
+    "ratingStarsAria": "{rating} 5 üzerinden",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "Bugünün kiralamaları için açık",
+    "heroScrollCue": "Keşfetmek için kaydırın",
+    "heroMetaCategory": "Premium motosiklet kiralama",
+    "heroMetaRental": "Günlük ve haftalık kiralama",
+    "heroTrustVerified": "Doğrulanmış filo",
+    "heroConsoleTitle": "Uygunluğu kontrol et",
+    "heroConsoleNote": "Gizli ücret yok. Esnek teslim alma seçenekleri.",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "Filo kategorileri",
+    "sectionServicesTitleLine1": "Hizmetler ve",
+    "sectionServicesTitleLine2": "avantajlar",
+    "highlightedServicesHowWeWork": "Nasıl çalıştığımızı görün",
+    "highlightedServicesInfoLabel": "Bilgi"
   },
   "Faq": {
-    "title": "Sıkça Sorulan Sorular (SSS)",
+    "title": "Sıkça Sorulan Sorular",
     "subtitleLead": "Aradığınızı bulamıyor musunuz? Bize ulaşın",
     "subtitleTail": "veya aşağıdaki iletişim bölümünü kullanın.",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "İptal politikanız nedir?",
-        "answer": "Politikalar sezona ve araca göre değişiklik gösterebilir. Rezervasyon ayrıntılarınızla birlikte bizimle iletişime geçin; seçenekleri açıklayalım. Malta seyahatinizi güvenle planlayabilmeniz için adil ve net olmayı hedefliyoruz."
+        "answer": "Planlanan kiralama başlangıç saatinden 48 saatten daha önce yapılan iptallerde rezervasyon tutarının %50'si iade edilir. Kalan %50 Explore Malta Rentals tarafından tutulur. Planlanan başlangıç saatine 48 saat kala yapılan iptaller iade edilmez ve rezervasyon tutarının tamamı tutulur."
       },
       "invoice": {
         "question": "Kask ve güvenlik donanımı dahil mi?",
@@ -236,7 +323,12 @@
     "description": "Arayın, mesaj gönderin veya ziyaret edin; doğru yolculuğu seçmenize yardımcı olmak için buradayız. Cep telefonu numaranız ve harita konumunuz aşağıdadır.",
     "whatsappTitle": "WhatsApp mesajı gönder",
     "whatsappBody": "Doğru yolculuğu seçmenize ve müsaitlik durumu sorularını yanıtlamanıza yardımcı olacağız.",
-    "envWhatsappHint": "WhatsApp düğmesini etkinleştirmek için NEXT_PUBLIC_WHATSAPP_NUMBER'ı ayarlayın."
+    "envWhatsappHint": "WhatsApp düğmesini etkinleştirmek için NEXT_PUBLIC_WHATSAPP_NUMBER'ı ayarlayın.",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "Ev",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "Teslim alma süresi gerekli",
     "returnDateRequired": "İade tarihi gerekli",
     "returnTimeRequired": "İade süresi gerekli",
-    "minRental": "Minimum kiralama 24 saattir",
+    "minRental": "İade saati teslim alma saatinden sonra olmalıdır.",
     "maxRental": "Maksimum kiralama 4 haftadır",
     "pickupAddressDelivery": "Teslimat için teslim alma adresi gereklidir",
     "dropoffAddressRequired": "Teslim adresi gerekli",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "Daha uzun kiralamalar ekstralar öncesi süre indirimlerini açar — arama sırasında rehber olarak kullanın.",
     "ariaFilters": "Araç filtreleri",
-    "ariaRates": "Gösterge niteliğindeki günlük oranlar"
+    "ariaRates": "Gösterge niteliğindeki günlük oranlar",
+    "group50": "50cc scooterlar",
+    "group125": "125cc motosikletler",
+    "groupOther": "Diğer araçlar",
+    "groupCount": "{count, plural, one {# araç} other {# araç}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "Araç arama",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}: %{percent} süre indirimi · Nihai fiyat araca ve ekstralara bağlıdır.",
-    "durationDiscountSummaryMax": "7+ gün kiralayın ve %{percent}'e kadar tasarruf edin · Nihai fiyat araca ve ekstralara bağlıdır."
+    "durationDiscountSummaryMax": "7+ gün kiralayın ve %{percent}'e kadar tasarruf edin · Nihai fiyat araca ve ekstralara bağlıdır.",
+    "moreFilters": "Daha fazla filtre",
+    "fewerFilters": "Daha az filtre"
   },
   "BookingForm": {
     "invalidPickupDate": "Geçersiz teslim alma tarihi",
@@ -811,11 +909,11 @@
       "returnTime": "Dönüş zamanı",
       "sectionDuration": "Bölüm: Kiralama Süresi (Ekran)",
       "autoDuration": "Otomatik hesaplanan süre:",
-      "durationLine": "{days} gün(ler) ({hours}h)",
+      "durationLine": "{hours} saat · {days, plural, one {# gün} other {# gün}} olarak ücretlendirilir",
       "durationInvalid": "Dönüş tarihi/saati teslim alma sonrasında olmalıdır",
       "durationWaiting": "Geçerli tarihler bekleniyor",
       "notesTitle": "Notlar:",
-      "noteMin": "Minimum kiralama süresi 24 saattir.",
+      "noteMin": "İade saati teslim alma saatinden sonra olmalıdır.",
       "noteDayCharge": "24 saatten az olması durumunda tam gün ücreti alınır.",
       "noteMax": "Maksimum kiralama süresi 4 haftadır.",
       "noteRenew": "Yenilenebilir seçeneği mevcuttur."
@@ -837,8 +935,8 @@
       "rentalDates": "Kiralama tarihleri:",
       "to": "ile",
       "billableDuration": "Faturalandırılabilir süre:",
-      "dayCount": "{count} gün",
-      "actualHours": "(gerçek {hours}h)",
+      "dayCount": "{count, plural, one {# gün} other {# gün}} olarak ücretlendirilir",
+      "actualHours": "{hours} saat",
       "pickupMethod": "Alma yöntemi:",
       "pickupAddress": "Teslim alma adresi:",
       "dropoffMethod": "Bırakma yöntemi:",
@@ -855,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Ek Sürücü:",
       "storageCost": "Saklama Kutusu:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Ara toplam:",
       "pricingPending": "Araç ve kiralama tarihleri/saatleri geçerli olduğunda fiyatlandırma önizlemesi görünecektir.",
       "section3": "Bölüm 3 - Mevduat ve Toplamlar",

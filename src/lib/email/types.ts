@@ -22,6 +22,7 @@ export type AdminBookingNotificationEmailContent = {
 export type SendEmailSuccess = {
   ok: true;
   deliveryMode: "resend" | "development_console";
+  providerMessageId?: string | null;
 };
 
 export type SendEmailFailureReason = "transport_create_failed" | "send_failed";

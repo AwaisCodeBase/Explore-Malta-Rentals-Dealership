@@ -1,7 +1,9 @@
 import { combineDateAndTime } from "@/lib/booking/bookingSubmissionSchema";
-import { batchCheckVehicleAvailabilityForList } from "@/lib/availability/batchCheckVehicleAvailabilityForList";
+import { findConflictingBlocks } from "@/lib/availability/findConflictingBlocks";
+import { findConflictingReservationHolds } from "@/lib/availability/findConflictingReservationHolds";
 import type { VehicleAvailabilityResult } from "@/lib/availability/types";
-import { batchGetAvailableColorsForVehicles } from "@/lib/vehicle-units";
+import { availableColorsFromUnitsMap } from "@/lib/vehicle-units/batchGetAvailableColorsForVehicles";
+import { batchFindAvailableVehicleUnits } from "@/lib/vehicle-units/findAvailableVehicleUnits";
 import type { VehicleListItemDto, VehicleRentalWindowStatus } from "@/lib/vehicles/types";
 
 function holdsOnlyConflict(result: VehicleAvailabilityResult): boolean {
@@ -32,6 +34,33 @@ function classifyRentalWindow(
   return "reserved_other";
 }
 
+function buildAvailabilityResult(
+  hasAvailableUnit: boolean,
+  blocks: VehicleAvailabilityResult["conflictingBlocks"],
+  holds: VehicleAvailabilityResult["conflictingReservationHolds"],
+): VehicleAvailabilityResult {
+  const listingWideHolds = holds.filter((hold) => !hold.vehicleUnitId);
+  const hasVehicleWideBlock = blocks.some((block) => block.vehicleId !== null);
+  const isAvailable = hasAvailableUnit && !hasVehicleWideBlock && listingWideHolds.length === 0;
+
+  const isReservedByActiveHold =
+    !isAvailable && hasAvailableUnit && !hasVehicleWideBlock && holds.length > 0;
+
+  return {
+    isAvailable,
+    conflictingBookings: [],
+    conflictingBlocks: blocks,
+    conflictingReservationHolds: holds,
+    reason: isAvailable
+      ? "Available"
+      : isReservedByActiveHold
+        ? "Selected vehicle is temporarily reserved by another customer"
+        : hasAvailableUnit
+          ? "Selected vehicle is not available for the chosen dates"
+          : "No physical units are available for the chosen dates",
+  };
+}
+
 export type EnrichVehicleListRentalWindowInput = {
   pickupDate: string;
   pickupTime: string;
@@ -56,28 +85,49 @@ export async function enrichVehicleListWithRentalWindow(
   }
 
   const viewerSessionKey = input.viewerSessionKey?.trim() || undefined;
+  const active = vehicles.filter((v) => v.isActive);
+  const ids = active.map((v) => v.id);
+  const uniqueTypes = [...new Set(active.map((v) => v.vehicleType))];
 
-  const availabilityById = await batchCheckVehicleAvailabilityForList(
-    vehicles,
-    requestedStart,
-    requestedEnd,
-  );
+  // One batched unit query + conflict queries — colors reuse the same unit map.
+  const [allBlocks, allHolds, availableUnitsByVehicle] = await Promise.all([
+    findConflictingBlocks({
+      requestedStart,
+      requestedEnd,
+      vehicleIds: ids,
+      vehicleTypes: uniqueTypes,
+    }),
+    findConflictingReservationHolds({
+      requestedStart,
+      requestedEnd,
+      vehicleIds: ids,
+    }),
+    batchFindAvailableVehicleUnits({
+      vehicleIds: ids,
+      requestedStart,
+      requestedEnd,
+      excludeSessionKey: viewerSessionKey,
+    }),
+  ]);
 
-  const colorsByVehicleId = await batchGetAvailableColorsForVehicles({
-    vehicleIds: vehicles.map((v) => v.id),
-    requestedStart,
-    requestedEnd,
-    excludeSessionKey: viewerSessionKey,
-  });
+  const colorsByVehicleId = availableColorsFromUnitsMap(ids, availableUnitsByVehicle);
 
   return vehicles.map((vehicle) => {
-    const result = availabilityById.get(vehicle.id) ?? {
-      isAvailable: false,
-      conflictingBookings: [],
-      conflictingBlocks: [],
-      conflictingReservationHolds: [],
-      reason: "Selected vehicle does not exist",
-    };
+    if (!vehicle.isActive) {
+      return {
+        ...vehicle,
+        rentalWindowStatus: "unavailable" as const,
+        availableColors: [],
+      };
+    }
+
+    const availableUnits = availableUnitsByVehicle.get(vehicle.id) ?? [];
+    const holds = allHolds.filter((h) => h.vehicleId === vehicle.id);
+    const blocks = allBlocks.filter(
+      (b) => b.vehicleId === vehicle.id || b.vehicleType === vehicle.vehicleType,
+    );
+    const result = buildAvailabilityResult(availableUnits.length > 0, blocks, holds);
+
     return {
       ...vehicle,
       rentalWindowStatus: classifyRentalWindow(result, viewerSessionKey),

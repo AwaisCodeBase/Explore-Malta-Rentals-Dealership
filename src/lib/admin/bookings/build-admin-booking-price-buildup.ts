@@ -57,6 +57,8 @@ export type AdminBookingPriceBuildup = {
     additionalDriverTotal: number;
     storageBoxCost: number;
     subtotal: number;
+    loyaltyCreditAmount: number;
+    chargesAfterLoyalty: number;
   };
   deposit: {
     amount: number;
@@ -67,6 +69,7 @@ export type AdminBookingPriceBuildup = {
     depositDueAtPickup: boolean;
   };
   paymentSummary: BookingPaymentSummary;
+  extensionAmountDue: number;
 };
 
 /** Display-only breakdown from stored booking snapshots. Does not recalculate pricing rules. */
@@ -81,6 +84,8 @@ export function buildAdminBookingPriceBuildup(booking: AdminBookingDetail): Admi
       ? roundMoney(originalRentalBeforeDiscount - booking.rentalCost)
       : null;
 
+  const loyaltyCreditAmount = roundMoney(Math.max(0, booking.loyaltyCreditAmount ?? 0));
+  const chargesAfterLoyalty = roundMoney(Math.max(0, booking.subtotal - loyaltyCreditAmount));
   const hasHotelCode = Boolean(booking.hotelCode?.trim());
   const rentalAfterHotelDiscount =
     booking.subtotalAfterHotelDiscountSnapshot ?? booking.rentalCost;
@@ -139,6 +144,8 @@ export function buildAdminBookingPriceBuildup(booking: AdminBookingDetail): Admi
       additionalDriverTotal: booking.additionalDriverTotal,
       storageBoxCost: booking.storageBoxSelected ? booking.storageBoxCost : 0,
       subtotal: booking.subtotal,
+      loyaltyCreditAmount,
+      chargesAfterLoyalty,
     },
     deposit: {
       amount: booking.depositAmount,
@@ -154,6 +161,10 @@ export function buildAdminBookingPriceBuildup(booking: AdminBookingDetail): Admi
       depositMethod: booking.depositMethod,
       totalDueOnline: booking.totalDueOnline,
       totalDueLater: booking.totalDueLater,
+      loyaltyCreditAmount,
     }),
+    extensionAmountDue: roundMoney(
+      booking.extensions.reduce((total, extension) => total + extension.additionalAmount, 0),
+    ),
   };
 }

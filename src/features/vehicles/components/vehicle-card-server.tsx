@@ -19,30 +19,31 @@ type VehicleCardServerProps = Readonly<{
 
 /* Keep these class strings in sync with the client `VehicleCard` — both render the same card. */
 const photoPlateClass =
-  "relative aspect-[4/3] overflow-hidden bg-[linear-gradient(155deg,var(--ink-50)_0%,var(--surface-sunken)_58%,var(--ink-100)_100%)]";
+  "relative aspect-[4/3] overflow-hidden bg-white";
 
 const floatingChipClass =
-  "type-spec absolute left-3 top-3 inline-flex items-center rounded-full border border-white/60 bg-white/85 px-2.5 py-1.5 text-[var(--ink-800)] shadow-sm backdrop-blur-md";
+  "type-spec absolute left-2.5 top-2.5 inline-flex items-center rounded-md border border-white/60 bg-white/85 px-2 py-1 text-[var(--ink-800)] shadow-sm backdrop-blur-md sm:left-3 sm:top-3 sm:rounded-full sm:px-2.5 sm:py-1.5";
 
 const statusChipClass =
-  "type-spec absolute right-3 top-3 inline-flex items-center rounded-full px-2.5 py-1.5 shadow-sm";
+  "type-spec absolute right-2.5 top-2.5 inline-flex items-center rounded-md px-2 py-1 shadow-sm sm:right-3 sm:top-3 sm:rounded-full sm:px-2.5 sm:py-1.5";
 
 const specRibbonClass =
-  "mt-4 grid grid-cols-2 divide-x divide-[var(--line-subtle)] border-y border-[var(--line-subtle)]";
+  "mt-2.5 grid grid-cols-2 divide-x divide-[var(--line-subtle)] border-y border-[var(--line-subtle)] sm:mt-4";
 
-const specCellClass = "type-spec flex items-center py-2.5 text-[var(--text-muted)]";
+const specCellClass =
+  "type-spec flex items-center py-1.5 text-[var(--text-muted)] sm:py-2.5";
 
 const ghostActionClass =
-  "inline-flex min-h-10 flex-1 items-center justify-center rounded-[var(--r-field)] border border-[var(--line)] bg-[var(--surface-card)] px-3 text-[0.8125rem] font-semibold text-[var(--ink-800)] transition-[background-color,border-color,color,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink-950)] active:scale-[0.985]";
+  "inline-flex min-h-9 flex-1 items-center justify-center rounded-md border border-[var(--line)] bg-[var(--surface-card)] px-2.5 text-[0.8125rem] font-semibold text-[var(--ink-800)] transition-[background-color,border-color,color,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink-950)] active:scale-[0.985] sm:min-h-10 sm:rounded-[var(--r-field)] sm:px-3";
 
 const primaryActionClass =
-  "inline-flex min-h-10 w-full items-center justify-center rounded-[var(--r-field)] bg-[var(--orange-400)] px-3 text-[0.8125rem] font-semibold text-[var(--ink-950)] shadow-[var(--elev-orange)] transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:bg-[var(--orange-500)] hover:shadow-[var(--elev-orange-lift)] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none";
+  "inline-flex min-h-9 w-full items-center justify-center rounded-md bg-[var(--orange-400)] px-2.5 text-[0.8125rem] font-semibold text-[var(--ink-950)] shadow-[var(--elev-orange)] transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:bg-[var(--orange-500)] hover:shadow-[var(--elev-orange-lift)] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none sm:min-h-10 sm:rounded-[var(--r-field)] sm:px-3";
 
 const primaryActionBusyClass =
-  "inline-flex min-h-10 w-full cursor-not-allowed items-center justify-center rounded-[var(--r-field)] bg-[var(--orange-300)] px-3 text-[0.8125rem] font-semibold text-[var(--ink-950)] opacity-90 transition-colors duration-[var(--dur-fast)]";
+  "inline-flex min-h-9 w-full cursor-not-allowed items-center justify-center rounded-md bg-[var(--orange-300)] px-2.5 text-[0.8125rem] font-semibold text-[var(--ink-950)] opacity-90 transition-colors duration-[var(--dur-fast)] sm:min-h-10 sm:rounded-[var(--r-field)] sm:px-3";
 
 const disabledActionClass =
-  "inline-flex min-h-10 flex-1 cursor-not-allowed items-center justify-center rounded-[var(--r-field)] border border-[var(--line-subtle)] bg-[var(--surface-sunken)] px-3 text-[0.8125rem] font-semibold text-[var(--text-faint)]";
+  "inline-flex min-h-9 flex-1 cursor-not-allowed items-center justify-center rounded-md border border-[var(--line-subtle)] bg-[var(--surface-sunken)] px-2.5 text-[0.8125rem] font-semibold text-[var(--text-faint)] sm:min-h-10 sm:rounded-[var(--r-field)] sm:px-3";
 
 export async function VehicleCardServer({
   vehicle,
@@ -69,8 +70,8 @@ export async function VehicleCardServer({
             src={mainImage}
             alt={vehicle.name}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-            className="object-cover transition-transform duration-[var(--dur-slower)] ease-[var(--ease-out-expo)] will-change-transform motion-safe:group-hover:scale-[1.06]"
+            sizes="(max-width: 640px) 85vw, (max-width: 1280px) 50vw, 33vw"
+            className="object-contain object-center p-2 transition-transform duration-[var(--dur-slower)] ease-[var(--ease-out-expo)] will-change-transform motion-safe:group-hover:scale-[1.03] sm:p-3"
             priority={priorityImage}
             loading={priorityImage ? undefined : "lazy"}
           />
@@ -79,10 +80,6 @@ export async function VehicleCardServer({
             {t("imageSoon")}
           </div>
         )}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-[linear-gradient(to_top,rgb(10_20_32/0.28),transparent)]"
-        />
         <span className={floatingChipClass}>
           {formatVehicleTypeLabel(vehicle.apiVehicleType)}
         </span>
@@ -107,29 +104,29 @@ export async function VehicleCardServer({
         ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col p-3.5 sm:p-5">
         <div>
-          <h3 className="text-[1.0625rem] font-semibold leading-snug tracking-[-0.025em] text-[var(--ink-950)]">
+          <h3 className="text-[0.95rem] font-semibold leading-snug tracking-[-0.025em] text-[var(--ink-950)] sm:text-[1.0625rem]">
             {vehicle.name}
           </h3>
-          <p className="mt-1.5 line-clamp-2 text-[0.8125rem] leading-relaxed text-[var(--text-secondary)]">
+          <p className="mt-1 line-clamp-2 text-[0.75rem] leading-snug text-[var(--text-secondary)] sm:mt-1.5 sm:text-[0.8125rem] sm:leading-relaxed">
             {vehicle.shortDescription ?? vehicle.tagline}
           </p>
           {brandModel ? (
-            <p className="mt-2 text-xs font-medium text-[var(--text-faint)]">{brandModel}</p>
+            <p className="mt-1 text-xs font-medium text-[var(--text-faint)] sm:mt-2">{brandModel}</p>
           ) : null}
           {status === "reserved_you" ? (
-            <p className="mt-3 rounded-[var(--r-field)] bg-emerald-50 px-3 py-2 text-xs font-medium leading-relaxed text-emerald-900">
+            <p className="mt-2 rounded-[var(--r-field)] bg-emerald-50 px-2.5 py-1.5 text-xs font-medium leading-relaxed text-emerald-900 sm:mt-3 sm:px-3 sm:py-2">
               {t("holdNotice")}
             </p>
           ) : null}
           {status === "reserved_other" ? (
-            <p className="mt-3 rounded-[var(--r-field)] bg-[var(--orange-50)] px-3 py-2 text-xs font-medium leading-relaxed text-[var(--orange-900)]">
+            <p className="mt-2 rounded-[var(--r-field)] bg-[var(--orange-50)] px-2.5 py-1.5 text-xs font-medium leading-relaxed text-[var(--orange-900)] sm:mt-3 sm:px-3 sm:py-2">
               {t("reservedOtherNotice")}
             </p>
           ) : null}
           {status === "unavailable" ? (
-            <p className="mt-3 rounded-[var(--r-field)] bg-[var(--surface-soft)] px-3 py-2 text-xs font-medium leading-relaxed text-[var(--text-secondary)]">
+            <p className="mt-2 rounded-[var(--r-field)] bg-[var(--surface-soft)] px-2.5 py-1.5 text-xs font-medium leading-relaxed text-[var(--text-secondary)] sm:mt-3 sm:px-3 sm:py-2">
               {t("unavailableWindow")}
             </p>
           ) : null}
@@ -144,11 +141,11 @@ export async function VehicleCardServer({
           </li>
         </ul>
 
-        <div className="mt-auto pt-4">
+        <div className="mt-auto pt-3 sm:pt-4">
           {vehicle.pricePerDay > 0 ? (
             <p
               data-numeric
-              className="text-[1.3125rem] font-bold leading-none tracking-[-0.035em] text-[var(--ink-950)]"
+              className="text-[1.125rem] font-bold leading-none tracking-[-0.035em] text-[var(--ink-950)] sm:text-[1.3125rem]"
             >
               {t("fromPerDay", { price: vehicle.pricePerDay })}
             </p>
@@ -158,7 +155,7 @@ export async function VehicleCardServer({
             </p>
           )}
 
-          <div className="mt-4 flex items-stretch gap-2">
+          <div className="mt-2.5 flex items-stretch gap-2 sm:mt-4">
             <Link
               href={detailsHref ?? `/vehicles/${vehicle.slug}`}
               className={ghostActionClass}

@@ -79,6 +79,7 @@
     "heroDescription": "오토바이, ATV, 자전거 대여. 가이드 투어."
   },
   "Home": {
+    "heroWatchVideo": "비디오 보기",
     "heroBookRide": "차량 예약",
     "heroViewFleet": "함대 보기",
     "heroTrust1": "가이드 투어 가능",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "호텔 배송/반납",
         "description": "해당되는 경우, 편리한 반납 및 수거를 도와드릴 수 있습니다."
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "당일치기 여행에 적합",
         "bullet2": "균형 잡힌 편안함 + 제어력",
         "subtitle": "오토바이"
-      }
+      },
+      "includesLabel": "포함 사항:"
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "신뢰 조종사",
     "testimonialsExcellent": "훌륭한",
     "testimonialsMarqueeAria": "고객 사용후기, 스크롤",
-    "ratingStarsAria": "5점 만점에 {rating}"
+    "ratingStarsAria": "5점 만점에 {rating}",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "오늘 대여 가능",
+    "heroScrollCue": "스크롤하여 둘러보기",
+    "heroMetaCategory": "프리미엄 바이크 대여",
+    "heroMetaRental": "일간 및 주간 대여",
+    "heroTrustVerified": "검증된 차량",
+    "heroConsoleTitle": "예약 가능 여부 확인",
+    "heroConsoleNote": "숨은 비용 없음. 유연한 픽업 옵션.",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "차량 카테고리",
+    "sectionServicesTitleLine1": "서비스 &",
+    "sectionServicesTitleLine2": "혜택",
+    "highlightedServicesHowWeWork": "이용 방법 보기",
+    "highlightedServicesInfoLabel": "정보"
   },
   "Faq": {
-    "title": "자주 묻는 질문(FAQ)",
+    "title": "자주 묻는 질문",
     "subtitleLead": "원하는 것을 찾을 수 없나요? 연락하세요",
     "subtitleTail": "또는 아래 문의 섹션을 이용하세요.",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "취소 정책은 어떻게 되나요?",
-        "answer": "정책은 계절과 차량에 따라 다를 수 있습니다. 예약 세부정보를 알려주시면 옵션에 대해 설명해 드리겠습니다. 우리는 귀하가 자신감을 가지고 몰타 여행을 계획할 수 있도록 공정하고 명확하게 하는 것을 목표로 합니다."
+        "answer": "예정된 대여 시작 시각보다 48시간 이전에 취소하면 예약 금액의 50%가 환불됩니다. 나머지 50%는 Explore Malta Rentals가 보유합니다. 예정된 대여 시작 시각 기준 48시간 이내 취소는 환불되지 않으며, 예약 금액 전액이 보유됩니다."
       },
       "invoice": {
         "question": "헬멧과 안전장비가 포함되어 있나요?",
@@ -236,7 +323,12 @@
     "description": "전화, 메시지, 방문 등 귀하가 올바른 차량 서비스를 선택할 수 있도록 도와드리겠습니다. 귀하의 휴대폰 번호와 지도 위치는 아래와 같습니다.",
     "whatsappTitle": "WhatsApp 메시지 보내기",
     "whatsappBody": "올바른 차량 서비스를 선택하고 이용 가능 여부에 대한 질문에 답할 수 있도록 도와드리겠습니다.",
-    "envWhatsappHint": "WhatsApp 버튼을 활성화하려면 NEXT_PUBLIC_WHATSAPP_NUMBER를 설정하세요."
+    "envWhatsappHint": "WhatsApp 버튼을 활성화하려면 NEXT_PUBLIC_WHATSAPP_NUMBER를 설정하세요.",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "집",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "픽업 시간이 필요합니다",
     "returnDateRequired": "반납 날짜는 필수 항목입니다.",
     "returnTimeRequired": "반납 시간은 필수입니다.",
-    "minRental": "최소 대여 시간은 24시간입니다.",
+    "minRental": "반납 시간은 픽업 시간보다 이후여야 합니다.",
     "maxRental": "최대 대여 기간은 4주입니다.",
     "pickupAddressDelivery": "배송을 위해서는 픽업 주소가 필요합니다",
     "dropoffAddressRequired": "반납 주소가 필요합니다",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "장기 대여 시 추가 옵션 전에 기간 할인이 적용됩니다 — 검색 중 참고용으로 활용하세요.",
     "ariaFilters": "차량 필터",
-    "ariaRates": "일일 요금"
+    "ariaRates": "일일 요금",
+    "group50": "50cc 스쿠터",
+    "group125": "125cc 바이크",
+    "groupOther": "기타 차량",
+    "groupCount": "{count, plural, one {#대} other {#대}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "차량 검색",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}: {percent}% 기간 할인 · 최종 가격은 차량 및 추가 옵션에 따라 다릅니다.",
-    "durationDiscountSummaryMax": "7일 이상 대여 시 최대 {percent}% 절약 · 최종 가격은 차량 및 추가 옵션에 따라 다릅니다."
+    "durationDiscountSummaryMax": "7일 이상 대여 시 최대 {percent}% 절약 · 최종 가격은 차량 및 추가 옵션에 따라 다릅니다.",
+    "moreFilters": "필터 더보기",
+    "fewerFilters": "필터 숨기기"
   },
   "BookingForm": {
     "invalidPickupDate": "잘못된 픽업 날짜",
@@ -811,11 +909,11 @@
       "returnTime": "반환 시간",
       "sectionDuration": "섹션: 대여 기간(표시)",
       "autoDuration": "자동 계산된 기간:",
-      "durationLine": "{days} 일 ({hours}h)",
+      "durationLine": "{hours}시간 · {days, plural, one {#일} other {#일}}로 청구",
       "durationInvalid": "반납 날짜/시간은 픽업 이후여야 합니다.",
       "durationWaiting": "유효한 날짜를 기다리는 중",
       "notesTitle": "참고:",
-      "noteMin": "최소 대여 시간은 24시간입니다.",
+      "noteMin": "반납 시간은 픽업 시간보다 이후여야 합니다.",
       "noteDayCharge": "24시간 미만인 경우 하루 종일 요금이 부과됩니다.",
       "noteMax": "최대 대여 기간은 4주입니다.",
       "noteRenew": "재생 가능 옵션을 사용할 수 있습니다."
@@ -837,8 +935,8 @@
       "rentalDates": "대여 날짜:",
       "to": "에게",
       "billableDuration": "청구 가능 기간:",
-      "dayCount": "{count} 일",
-      "actualHours": "(실제 {hours}h)",
+      "dayCount": "{count, plural, one {#일} other {#일}}로 청구",
+      "actualHours": "{hours}시간",
       "pickupMethod": "픽업 방법:",
       "pickupAddress": "픽업 주소:",
       "dropoffMethod": "반납 방법:",
@@ -855,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "추가 드라이버:",
       "storageCost": "보관함:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "소계:",
       "pricingPending": "차량 및 렌트 날짜/시간이 유효하면 가격 미리보기가 나타납니다.",
       "section3": "섹션 3 - 예금 및 총액",

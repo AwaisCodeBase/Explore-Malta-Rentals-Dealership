@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { m, useReducedMotion } from "motion/react";
 import { Loader2 } from "lucide-react";
@@ -133,8 +134,9 @@ const TERMS_SUMMARY_SECTIONS = [
   {
     heading: "Cancellation Policy",
     points: [
-      "Free cancellation applies up to 48 hours before rental start.",
-      "Cancellations inside 48 hours are non-refundable.",
+      "The 48-hour period is measured from the scheduled rental start time.",
+      "Cancellations more than 48 hours before that start time are eligible for a 50% refund of the booking amount. Explore Malta Rentals retains the remaining 50%.",
+      "Cancellations within 48 hours of that start time are non-refundable. Explore Malta Rentals retains the full booking amount.",
     ],
   },
   {
@@ -172,6 +174,11 @@ export function TermsConsentModal({ isOpen, onCancel, onAgree, isSubmitting = fa
   const tTerms = useTranslations("BookingWizard.terms");
   const reduceMotion = useReducedMotion();
   const [confirmChecked, setConfirmChecked] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -206,11 +213,17 @@ export function TermsConsentModal({ isOpen, onCancel, onAgree, isSubmitting = fa
     };
   }, [isOpen, onCancel]);
 
-  if (!isOpen) {
+  useEffect(() => {
+    if (!isOpen) {
+      setConfirmChecked(false);
+    }
+  }, [isOpen]);
+
+  if (!isOpen || !mounted) {
     return null;
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--ink-950)]/55 p-4 backdrop-blur-md sm:p-6">
       <m.div
         role="dialog"
@@ -307,6 +320,7 @@ export function TermsConsentModal({ isOpen, onCancel, onAgree, isSubmitting = fa
           </div>
         </footer>
       </m.div>
-    </div>
+    </div>,
+    document.body,
   );
 }

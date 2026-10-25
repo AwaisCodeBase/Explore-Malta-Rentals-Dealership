@@ -185,15 +185,21 @@ Recovery remains an **ADMIN-authorized** operator endpoint:
 |------|----------------|------|
 | `GET /api/cron/stripe-webhook-recovery` | `0 3 * * *` (daily) | `Authorization: Bearer ${CRON_SECRET}` |
 | `GET /api/cron/expired-holds-cleanup` | `0 4 * * *` (daily) | same `CRON_SECRET` |
+| `GET`/`POST` `/api/cron/review-requests` | `0 5 * * *` (daily) | `CRON_SECRET` via Bearer and/or `x-cron-secret` (incoming review helper) |
 
 Defined in `vercel.json` (`crons` only). Hobby allows **at most one execution per day** per
 job; Vercel may invoke the job **any time within the scheduled hour** (not an exact
 minute guarantee). Configuring the file does **not** prove the cron is deployed or
 active — verify after a production deploy in the Vercel dashboard (cron history).
 
+**Product trade-off:** review-request processing was originally scheduled every minute on
+`main`. On Vercel Hobby it runs **once daily** (`0 5 * * *`), which may delay post-rental
+review emails until the next daily window. Upgrade the plan or accept delayed delivery.
+
 - Set **`CRON_SECRET`** in the Vercel **Production** environment variables before relying
   on these endpoints (random string, ≥16 characters recommended by Vercel). Missing or
-  invalid Bearer → **401**; the job does not run. Do not use an ADMIN session as a
+  invalid credentials → cron handlers reject the request (recovery/cleanup **401**; review
+  route **401**, or **503** if the secret is unset). Do not use an ADMIN session as a
   machine credential.
 - Cron recovery calls the same `runProductionWebhookRecovery` worker as ADMIN recovery
   (claim fencing, batch/soft budget, no `PROCESSED` / `DEAD_LETTER` replay). Actor:

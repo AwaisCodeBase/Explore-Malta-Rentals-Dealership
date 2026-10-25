@@ -161,6 +161,14 @@ async function cleanup(): Promise<void> {
     WHERE "bookingId" IN (SELECT "id" FROM "Booking" WHERE "customerEmail" = ${TEST_EMAIL})
        OR "reservationHoldId" IN (SELECT "id" FROM "ReservationHold" WHERE "customerEmail" = ${TEST_EMAIL})
   `;
+  await prisma.customerLoyaltyCredit.deleteMany({
+    where: {
+      OR: [
+        { sourceBooking: { customerEmail: TEST_EMAIL } },
+        { redeemedBooking: { customerEmail: TEST_EMAIL } },
+      ],
+    },
+  });
   await prisma.booking.deleteMany({ where: { customerEmail: TEST_EMAIL } });
   await prisma.reservationHold.deleteMany({ where: { customerEmail: TEST_EMAIL } });
   await prisma.vehicleUnit.deleteMany({
@@ -1239,7 +1247,7 @@ async function runRestoreCancelledBookingTests(): Promise<void> {
       admin.id,
     );
     assert.equal(cancelled.ok, true);
-    const occupancyAfterCancel = await prisma.vehicleUnitOccupancy.findUnique({
+    const occupancyAfterCancel = await prisma.vehicleUnitOccupancy.findFirst({
       where: { bookingId },
     });
     assert.equal(occupancyAfterCancel, null);
@@ -1254,7 +1262,7 @@ async function runRestoreCancelledBookingTests(): Promise<void> {
       assert.equal(restored.booking.status, "CONFIRMED");
     }
 
-    const occupancyAfterRestore = await prisma.vehicleUnitOccupancy.findUnique({
+    const occupancyAfterRestore = await prisma.vehicleUnitOccupancy.findFirst({
       where: { bookingId },
     });
     assert.ok(occupancyAfterRestore);
@@ -1357,7 +1365,7 @@ async function runHandoverUnitChangeTests(): Promise<void> {
     assert.equal(booking.vehicleUnitId, unitB);
     assert.equal(booking.status, "VEHICLE_HANDED_OVER");
 
-    const occupancy = await prisma.vehicleUnitOccupancy.findUnique({
+    const occupancy = await prisma.vehicleUnitOccupancy.findFirst({
       where: { bookingId },
       select: { vehicleUnitId: true },
     });

@@ -20,6 +20,7 @@ export type CheckVehicleAvailabilityInput = {
   color?: VehicleColor;
   excludeHoldReference?: string;
   excludeSessionKey?: string;
+  excludeBookingId?: string;
 };
 
 async function resolveVehicleType(
@@ -83,6 +84,7 @@ export async function checkVehicleAvailability(
         color: input.color,
         excludeHoldReference: input.excludeHoldReference,
         excludeSessionKey: input.excludeSessionKey,
+        excludeBookingId: input.excludeBookingId,
       },
       unitDb,
     ),

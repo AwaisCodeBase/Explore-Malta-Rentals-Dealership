@@ -9,6 +9,7 @@ import { InsurancePlanOptions } from "@/features/booking-flow/components/insuran
 import { StepShell } from "@/features/booking-flow/components/step-shell";
 import { useBookingFlow } from "@/features/booking-flow/context/booking-flow-context";
 import { vehicleTypeNeedsHelmetFlow } from "@/features/booking-flow/lib/helmet-rental";
+import { BOOKABLE_HELMET_SIZES, isBookableHelmetSize } from "@/lib/booking/helmet-sizes";
 import { useVehicles } from "@/features/vehicles/lib/use-vehicles";
 import {
   getAllowedLicenseCategories,
@@ -50,13 +51,10 @@ export function AddonsStep() {
   const tCust = useTranslations("BookingWizard.customer");
   const tSteps = useTranslations("BookingSteps.addons");
   const helmetSizeOptions = useMemo(
-    () =>
-      [
-        { value: "", label: t("selectSize") },
-        { value: "S", label: "S" },
-        { value: "M", label: "M" },
-        { value: "L", label: "L" },
-      ] as const,
+    () => [
+      { value: "", label: t("selectSize") },
+      ...BOOKABLE_HELMET_SIZES.map((size) => ({ value: size, label: size })),
+    ],
     [t],
   );
   const licenseCategoryOptions = useMemo(
@@ -112,6 +110,32 @@ export function AddonsStep() {
   const selectedHelmetSize2Option =
     helmetSizeOptions.find((option) => option.value === state.addons.helmetSize2) ??
     helmetSizeOptions[0];
+
+  useEffect(() => {
+    if (!supportsHelmet) {
+      return;
+    }
+
+    const helmetSize1 = isBookableHelmetSize(state.addons.helmetSize1)
+      ? state.addons.helmetSize1
+      : "";
+    const helmetSize2 = isBookableHelmetSize(state.addons.helmetSize2)
+      ? state.addons.helmetSize2
+      : "";
+    if (
+      helmetSize1 === state.addons.helmetSize1 &&
+      helmetSize2 === state.addons.helmetSize2
+    ) {
+      return;
+    }
+
+    updateSection("addons", { helmetSize1, helmetSize2 });
+  }, [
+    state.addons.helmetSize1,
+    state.addons.helmetSize2,
+    supportsHelmet,
+    updateSection,
+  ]);
 
   useEffect(() => {
     if (supportsHelmet) {

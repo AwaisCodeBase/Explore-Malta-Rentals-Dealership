@@ -79,6 +79,7 @@
     "heroDescription": "バイク・ATV・自転車レンタル。ガイド付きツアー。"
   },
   "Home": {
+    "heroWatchVideo": "動画を見る",
     "heroBookRide": "ライドを予約する",
     "heroViewFleet": "フリートを見る",
     "heroTrust1": "ガイド付きツアーあり",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "ホテルデリバリー / 返却",
         "description": "該当する場合、便利な配達と回収のお手伝いができます。"
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "日帰り旅行に最適",
         "bullet2": "バランスの取れた快適さ＋コントロール",
         "subtitle": "オートバイ"
-      }
+      },
+      "includesLabel": "含まれるもの:"
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "Trustpilot",
     "testimonialsExcellent": "優秀",
     "testimonialsMarqueeAria": "お客様の声、スクロール中",
-    "ratingStarsAria": "5点満点中{rating}点"
+    "ratingStarsAria": "5点満点中{rating}点",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "本日のレンタル受付中",
+    "heroScrollCue": "スクロールして探索",
+    "heroMetaCategory": "プレミアムバイクレンタル",
+    "heroMetaRental": "日単位・週単位レンタル",
+    "heroTrustVerified": "認証済み車両",
+    "heroConsoleTitle": "空き状況を確認",
+    "heroConsoleNote": "隠れた料金なし。柔軟な受け取りオプション。",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "車両カテゴリー",
+    "sectionServicesTitleLine1": "サービスと",
+    "sectionServicesTitleLine2": "メリット",
+    "highlightedServicesHowWeWork": "仕組みを見る",
+    "highlightedServicesInfoLabel": "情報"
   },
   "Faq": {
-    "title": "よくあるご質問（FAQ）",
+    "title": "よくあるご質問",
     "subtitleLead": "お探しのものが見つかりませんか？",
     "subtitleTail": " からお問い合わせいただくか、下記の連絡先セクションをご利用ください。",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "キャンセルポリシーはどのようになっていますか？",
-        "answer": "ポリシーはシーズンや車両によって異なる場合があります。予約の詳細をご連絡いただければ、選択肢についてご説明します。Maltaの旅を安心して計画できるよう、公平で明確な対応を心がけています。"
+        "answer": "予定されたレンタル開始時刻の48時間より前のキャンセルでは、予約金額の50%が返金されます。残りの50%はExplore Malta Rentalsが保持します。予定されたレンタル開始時刻の48時間以内のキャンセルは返金不可であり、予約金額の全額が保持されます。"
       },
       "invoice": {
         "question": "ヘルメットと安全装備は含まれていますか？",
@@ -236,7 +323,12 @@
     "description": "電話、メッセージ、またはご来店ください — 適切な乗り物選びのお手伝いをします。携帯電話番号と地図の場所は下記の通りです。",
     "whatsappTitle": "WhatsAppでメッセージを送る",
     "whatsappBody": "最適な乗り物を選び、空き状況に関するご質問にお答えします。",
-    "envWhatsappHint": "WhatsAppボタンを有効にするにはNEXT_PUBLIC_WHATSAPP_NUMBERを設定してください。"
+    "envWhatsappHint": "WhatsAppボタンを有効にするにはNEXT_PUBLIC_WHATSAPP_NUMBERを設定してください。",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "ホーム",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "受け取り時間は必須です",
     "returnDateRequired": "返却日は必須です",
     "returnTimeRequired": "返却時間は必須です",
-    "minRental": "最短レンタルは24時間です",
+    "minRental": "返却時刻は受け取り時刻より後である必要があります。",
     "maxRental": "最長レンタルは4週間です",
     "pickupAddressDelivery": "配達には受け取り住所が必要です",
     "dropoffAddressRequired": "返却住所は必須です",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "長期レンタルほど期間割引が適用されます（オプション前）— 検索中の目安としてご利用ください。",
     "ariaFilters": "車両フィルター",
-    "ariaRates": "参考日額料金"
+    "ariaRates": "参考日額料金",
+    "group50": "50ccスクーター",
+    "group125": "125ccバイク",
+    "groupOther": "その他の車両",
+    "groupCount": "{count, plural, one {#台} other {#台}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "車両検索",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}：{percent}% 期間割引 · 最終価格は車両とオプションにより異なります。",
-    "durationDiscountSummaryMax": "7日以上で最大 {percent}% お得 · 最終価格は車両とオプションにより異なります。"
+    "durationDiscountSummaryMax": "7日以上で最大 {percent}% お得 · 最終価格は車両とオプションにより異なります。",
+    "moreFilters": "その他のフィルター",
+    "fewerFilters": "フィルターを減らす"
   },
   "BookingForm": {
     "invalidPickupDate": "無効な受け取り日",
@@ -811,11 +909,11 @@
       "returnTime": "返却時間",
       "sectionDuration": "セクション：レンタル期間（表示）",
       "autoDuration": "自動計算された期間：",
-      "durationLine": "{days}日（{hours}時間）",
+      "durationLine": "{hours}時間 · {days, plural, one {#日} other {#日間}}として課金",
       "durationInvalid": "返却日時は受け取りの後でなければなりません",
       "durationWaiting": "有効な日程を待っています",
       "notesTitle": "メモ：",
-      "noteMin": "最短レンタルは24時間です。",
+      "noteMin": "返却時刻は受け取り時刻より後である必要があります。",
       "noteDayCharge": "24時間未満の場合、丸1日分が請求されます。",
       "noteMax": "最長レンタルは4週間です。",
       "noteRenew": "更新オプションあり。"
@@ -837,8 +935,8 @@
       "rentalDates": "レンタル日程：",
       "to": "〜",
       "billableDuration": "請求可能期間：",
-      "dayCount": "{count}日間",
-      "actualHours": "（実際{hours}時間）",
+      "dayCount": "{count, plural, one {#日} other {#日間}}として課金",
+      "actualHours": "{hours}時間",
       "pickupMethod": "受け取り方法：",
       "pickupAddress": "受け取り住所：",
       "dropoffMethod": "返却方法：",
@@ -855,6 +953,8 @@
       "cdwCost": "CDW：",
       "addDriverCost": "追加ドライバー：",
       "storageCost": "収納ボックス：",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "小計：",
       "pricingPending": "車両とレンタル日時が有効になると料金プレビューが表示されます。",
       "section3": "セクション3 - デポジットと合計",

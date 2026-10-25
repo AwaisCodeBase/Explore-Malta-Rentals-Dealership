@@ -38,6 +38,7 @@ export function AdminBookingFilters({ locale, vehicles, partners }: AdminBooking
       "year",
       "pickupFrom",
       "pickupTo",
+      "returnDate",
     ] as const) {
       const value = String(formData.get(key) ?? "").trim();
       if (value) params.set(key, value);
@@ -190,6 +191,17 @@ export function AdminBookingFilters({ locale, vehicles, partners }: AdminBooking
           type="date"
           name="pickupTo"
           defaultValue={searchParams.get("pickupTo") ?? ""}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[#3a7ca5]/40 focus:ring-2 focus:ring-[#3a7ca5]/15"
+        />
+      </label>
+      <label>
+        <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+          {t("returnDate")}
+        </span>
+        <input
+          type="date"
+          name="returnDate"
+          defaultValue={searchParams.get("returnDate") ?? ""}
           className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[#3a7ca5]/40 focus:ring-2 focus:ring-[#3a7ca5]/15"
         />
       </label>

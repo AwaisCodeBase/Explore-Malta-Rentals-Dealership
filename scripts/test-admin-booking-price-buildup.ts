@@ -100,7 +100,13 @@ function baseBooking(overrides: Partial<AdminBookingDetail> = {}): AdminBookingD
     depositDeductionReason: null,
     completionNotes: null,
     statusHistory: [],
+    extensions: [],
+    vehicleAssignments: [],
+    loyaltyCreditAmount: null,
+    issuedLoyaltyCredit: null,
+    redeemedLoyaltyCredit: null,
     ...overrides,
+    reviewRequest: overrides.reviewRequest ?? null,
   };
 }
 

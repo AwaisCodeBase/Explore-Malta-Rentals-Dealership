@@ -52,6 +52,7 @@ async function findUnitsBlockedByOccupancy(
   requestedEnd: Date,
   excludeHoldReference?: string,
   excludeSessionKey?: string,
+  excludeBookingId?: string,
 ): Promise<Set<string>> {
   if (unitIds.length === 0) {
     return new Set();
@@ -84,6 +85,9 @@ async function findUnitsBlockedByOccupancy(
 
   for (const row of rows) {
     if (row.bookingId) {
+      if (excludeBookingId && row.bookingId === excludeBookingId) {
+        continue;
+      }
       if (!row.booking || (BLOCKING_BOOKING_STATUSES as readonly string[]).includes(row.booking.status)) {
         blockedUnitIds.add(row.vehicleUnitId);
       }
@@ -150,6 +154,7 @@ export async function findAvailableVehicleUnits(
     excludedHoldOwners.push({ sessionKey: input.excludeSessionKey });
   }
 
+  const excludedBooking = input.excludeBookingId ? { id: { not: input.excludeBookingId } } : {};
   const [occupancyBlockedUnitIds, bookedUnitRows, heldUnitRows, legacyBookingCount, legacyHoldCount] =
     await Promise.all([
       findUnitsBlockedByOccupancy(
@@ -159,9 +164,11 @@ export async function findAvailableVehicleUnits(
         input.requestedEnd,
         input.excludeHoldReference,
         input.excludeSessionKey,
+        input.excludeBookingId,
       ),
       db.booking.findMany({
         where: {
+          ...excludedBooking,
           status: { in: [...BLOCKING_BOOKING_STATUSES] },
           vehicleUnitId: { in: unitIds },
           ...overlapWhere,
@@ -181,6 +188,7 @@ export async function findAvailableVehicleUnits(
       }),
       db.booking.findMany({
         where: {
+          ...excludedBooking,
           status: { in: [...BLOCKING_BOOKING_STATUSES] },
           vehicleId: input.vehicleId,
           vehicleUnitId: null,
@@ -227,4 +235,153 @@ export async function findAvailableVehicleUnits(
   }
 
   return freeUnits.slice(legacySlotsToReserve);
+}
+
+export type BatchFindAvailableVehicleUnitsInput = {
+  vehicleIds: readonly string[];
+  requestedStart: Date;
+  requestedEnd: Date;
+  excludeHoldReference?: string;
+  excludeSessionKey?: string;
+  /** Ignore this booking's own occupancy so a replacement search does not conflict with itself. */
+  excludeBookingId?: string;
+};
+
+/**
+ * Batch version of {@link findAvailableVehicleUnits} for listing enrichment.
+ * Runs cleanup once and loads units + conflicts for all vehicles in a few queries
+ * instead of N×(cleanup + 5 conflict queries).
+ */
+export async function batchFindAvailableVehicleUnits(
+  input: BatchFindAvailableVehicleUnitsInput,
+  db: VehicleUnitDbClient = prisma as unknown as VehicleUnitDbClient,
+): Promise<Map<string, VehicleUnitRecord[]>> {
+  const out = new Map<string, VehicleUnitRecord[]>();
+  const vehicleIds = [...new Set(input.vehicleIds.filter(Boolean))];
+  for (const id of vehicleIds) {
+    out.set(id, []);
+  }
+  if (vehicleIds.length === 0) {
+    return out;
+  }
+
+  await prepareAvailabilityData(db);
+
+  const units = await db.vehicleUnit.findMany({
+    where: { vehicleId: { in: vehicleIds } },
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    select: unitSelect,
+  });
+
+  const assignableByVehicle = new Map<string, VehicleUnitRecord[]>();
+  for (const unit of units) {
+    if (!isAssignableVehicleUnit(unit)) {
+      continue;
+    }
+    const list = assignableByVehicle.get(unit.vehicleId) ?? [];
+    list.push(unit);
+    assignableByVehicle.set(unit.vehicleId, list);
+  }
+
+  const allAssignable = [...assignableByVehicle.values()].flat();
+  if (allAssignable.length === 0) {
+    return out;
+  }
+
+  const unitIds = allAssignable.map((unit) => unit.id);
+  const overlapWhere = buildOverlappingRangeWhere(input.requestedStart, input.requestedEnd);
+
+  const excludedHoldOwners: Prisma.ReservationHoldWhereInput[] = [];
+  if (input.excludeHoldReference) {
+    excludedHoldOwners.push({ holdReference: input.excludeHoldReference });
+  }
+  if (input.excludeSessionKey) {
+    excludedHoldOwners.push({ sessionKey: input.excludeSessionKey });
+  }
+
+  const [occupancyBlockedUnitIds, bookedUnitRows, heldUnitRows, legacyBookings, legacyHolds] =
+    await Promise.all([
+      findUnitsBlockedByOccupancy(
+        db,
+        unitIds,
+        input.requestedStart,
+        input.requestedEnd,
+        input.excludeHoldReference,
+        input.excludeSessionKey,
+        input.excludeBookingId,
+      ),
+      db.booking.findMany({
+        where: {
+          ...(input.excludeBookingId ? { id: { not: input.excludeBookingId } } : {}),
+          status: { in: [...BLOCKING_BOOKING_STATUSES] },
+          vehicleUnitId: { in: unitIds },
+          ...overlapWhere,
+        },
+        select: { vehicleUnitId: true },
+      }),
+      db.reservationHold.findMany({
+        where: {
+          status: "ACTIVE",
+          expiresAt: { gt: new Date() },
+          vehicleUnitId: { in: unitIds },
+          pickupDateTime: { lt: input.requestedEnd },
+          returnDateTime: { gt: input.requestedStart },
+          ...(excludedHoldOwners.length > 0 ? { NOT: { OR: excludedHoldOwners } } : {}),
+        },
+        select: { vehicleUnitId: true },
+      }),
+      db.booking.findMany({
+        where: {
+          ...(input.excludeBookingId ? { id: { not: input.excludeBookingId } } : {}),
+          status: { in: [...BLOCKING_BOOKING_STATUSES] },
+          vehicleId: { in: vehicleIds },
+          vehicleUnitId: null,
+          ...overlapWhere,
+        },
+        select: { vehicleId: true },
+      }),
+      db.reservationHold.findMany({
+        where: {
+          status: "ACTIVE",
+          expiresAt: { gt: new Date() },
+          vehicleId: { in: vehicleIds },
+          vehicleUnitId: null,
+          pickupDateTime: { lt: input.requestedEnd },
+          returnDateTime: { gt: input.requestedStart },
+          ...(excludedHoldOwners.length > 0 ? { NOT: { OR: excludedHoldOwners } } : {}),
+        },
+        select: { vehicleId: true },
+      }),
+    ]);
+
+  const blockedUnitIds = new Set(occupancyBlockedUnitIds);
+  for (const row of bookedUnitRows) {
+    if (row.vehicleUnitId) {
+      blockedUnitIds.add(row.vehicleUnitId);
+    }
+  }
+  for (const row of heldUnitRows) {
+    if (row.vehicleUnitId) {
+      blockedUnitIds.add(row.vehicleUnitId);
+    }
+  }
+
+  const legacySlotsByVehicle = new Map<string, number>();
+  for (const row of legacyBookings) {
+    if (!row.vehicleId) continue;
+    legacySlotsByVehicle.set(row.vehicleId, (legacySlotsByVehicle.get(row.vehicleId) ?? 0) + 1);
+  }
+  for (const row of legacyHolds) {
+    if (!row.vehicleId) continue;
+    legacySlotsByVehicle.set(row.vehicleId, (legacySlotsByVehicle.get(row.vehicleId) ?? 0) + 1);
+  }
+
+  for (const vehicleId of vehicleIds) {
+    const assignable = assignableByVehicle.get(vehicleId) ?? [];
+    const freeUnits = assignable.filter((unit) => !blockedUnitIds.has(unit.id));
+    const legacySlots = legacySlotsByVehicle.get(vehicleId) ?? 0;
+    out.set(vehicleId, legacySlots > 0 ? freeUnits.slice(legacySlots) : freeUnits);
+  }
+
+  return out;
 }

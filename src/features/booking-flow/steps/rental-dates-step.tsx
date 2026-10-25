@@ -1,10 +1,10 @@
 "use client";
 
-import { addDays, differenceInHours, format, parse } from "date-fns";
+import { addDays, format, parse } from "date-fns";
 import { useTranslations } from "next-intl";
 import { StepShell } from "@/features/booking-flow/components/step-shell";
 import { useBookingFlow } from "@/features/booking-flow/context/booking-flow-context";
-import { getBillableRentalDays } from "@/lib/pricing/rental-duration";
+import { calculateRentalDuration } from "@/lib/pricing/rental-duration";
 
 const fieldBase =
   "mt-1.5 min-h-12 w-full rounded-[var(--r-field)] border bg-[var(--surface-card)] px-3.5 py-2.5 text-sm tabular-nums text-[var(--text-primary)] shadow-[var(--elev-1)] outline-none transition duration-[var(--dur-fast)] placeholder:text-[var(--text-faint)] disabled:cursor-not-allowed disabled:bg-[var(--surface-sunken)] disabled:text-[var(--text-faint)] disabled:shadow-none";
@@ -15,6 +15,11 @@ const fieldError =
 
 function fieldClass(invalid: boolean) {
   return `${fieldBase} ${invalid ? fieldError : fieldIdle}`;
+}
+
+function formatActualHours(hours: number): string {
+  const rounded = Math.round(hours * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : String(rounded);
 }
 
 const captionClass = "type-spec block text-[var(--text-muted)]";
@@ -32,23 +37,13 @@ export function RentalDatesStep() {
   const parsedPickupDate = pickupDate ? parse(pickupDate, "yyyy-MM-dd", new Date()) : null;
   const pickupBaseDate =
     parsedPickupDate && !Number.isNaN(parsedPickupDate.getTime()) ? parsedPickupDate : today;
-  const returnMinDate = format(addDays(pickupBaseDate, 1), "yyyy-MM-dd");
+  const returnMinDate = format(pickupBaseDate, "yyyy-MM-dd");
   const returnMaxDate = format(addDays(pickupBaseDate, 27), "yyyy-MM-dd");
-  const pickup = pickupDate && pickupTime
-    ? parse(`${pickupDate} ${pickupTime}`, "yyyy-MM-dd HH:mm", new Date())
-    : null;
-  const dropoff = returnDate && returnTime
-    ? parse(`${returnDate} ${returnTime}`, "yyyy-MM-dd HH:mm", new Date())
-    : null;
-  const rentalHours =
-    pickup && dropoff && !Number.isNaN(pickup.getTime()) && !Number.isNaN(dropoff.getTime())
-      ? Math.max(0, differenceInHours(dropoff, pickup))
-      : 0;
-  const rentalDays =
-    pickupDate && returnDate && pickupTime && returnTime
-      ? getBillableRentalDays(pickupDate, pickupTime, returnDate, returnTime)
-      : 0;
-  const hasDateTimeRange = Boolean(pickup && dropoff);
+  const duration =
+    pickupDate && pickupTime && returnDate && returnTime
+      ? calculateRentalDuration(pickupDate, pickupTime, returnDate, returnTime)
+      : null;
+  const hasDateTimeRange = Boolean(pickupDate && pickupTime && returnDate && returnTime);
 
   return (
     <StepShell title={t("shellTitle")} description={t("shellDescription")}>
@@ -123,8 +118,11 @@ export function RentalDatesStep() {
       <div className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-[var(--r-card)] border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-3.5 text-sm text-[var(--text-secondary)]">
         {t("autoDuration")}{" "}
         <span className="font-semibold tabular-nums text-[var(--text-primary)]">
-          {rentalHours > 0
-            ? t("durationLine", { days: rentalDays, hours: rentalHours })
+          {duration
+            ? t("durationLine", {
+                days: duration.billableDays,
+                hours: formatActualHours(duration.actualDurationHours),
+              })
             : hasDateTimeRange
               ? t("durationInvalid")
               : t("durationWaiting")}

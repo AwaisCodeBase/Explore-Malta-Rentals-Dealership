@@ -2,8 +2,13 @@ import { z } from "zod";
 import { differenceInCalendarDays, isAfter, parse, startOfDay } from "date-fns";
 import { BOOKING_TIME_SLOTS } from "@/features/booking/lib/time-slots";
 
-/** Calendar-day span between pickup and drop-off dates (`differenceInCalendarDays`). */
-export const TRIP_MIN_SPAN_DAYS = 1;
+/**
+ * Calendar-day span between pickup and drop-off dates (`differenceInCalendarDays`).
+ * `0` is a same-day rental. Billing still uses inclusive calendar days, with a one-day minimum.
+ */
+export const TRIP_MIN_SPAN_DAYS = 0;
+/** Overnight range used when a customer has not chosen dates yet. */
+export const DEFAULT_TRIP_SPAN_DAYS = 1;
 export const TRIP_MAX_SPAN_DAYS = 30;
 
 export const BOOKING_SHOP_LABEL = "Pietà — Explore Malta Rentals (shop)" as const;
@@ -32,6 +37,9 @@ export function createBookingFormSchema(m: BookingFormMessages) {
     .object({
       vehicleType: z.string().optional(),
       brand: z.string().optional(),
+      transmission: z.string().optional(),
+      seats: z.string().optional(),
+      color: z.string().optional(),
       alternatePickupRequested: z.boolean(),
       alternatePickupAddress: z.string().optional(),
       differentDropoff: z.boolean(),
@@ -75,7 +83,7 @@ export function createBookingFormSchema(m: BookingFormMessages) {
       if (spanDays < TRIP_MIN_SPAN_DAYS) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: m.tripMinDays,
+          message: m.dropoffAfterPickup,
           path: ["dropoffDate"],
         });
       } else if (spanDays > TRIP_MAX_SPAN_DAYS) {

@@ -7,22 +7,33 @@ import React, {
   useState,
   useSyncExternalStore,
 } from "react";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import { addDays } from "date-fns";
-import { TRIP_MIN_SPAN_DAYS } from "@/features/booking/lib/booking-schema";
+import { DEFAULT_TRIP_SPAN_DAYS } from "@/features/booking/lib/booking-schema";
 import { useSearchParams } from "next/navigation";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { IndicativeDailyRatesCard } from "@/components/pricing/indicative-daily-rates-card";
 import { Container } from "@/components/ui/container";
 import type { BookingOption } from "@/features/home/data/hero-booking-options";
-import { LOGO_PATH } from "@/lib/site-brand-copy";
-import { Reveal } from "@/components/motion/reveal";
-import { Stagger, StaggerItem } from "@/components/motion/stagger";
+import { getFormBackgroundPublicPath } from "@/lib/form-background";
 import { VehicleCard } from "@/features/vehicles/components/vehicle-card";
+import {
+  groupVehiclesByEngineCc,
+  vehicleListingItemClass,
+  vehicleListingTrackClass,
+  type EngineCcGroupId,
+} from "@/features/vehicles/lib/vehicle-listing-layout";
+import { VehicleFilters } from "@/features/vehicles/components/vehicle-filters";
+import { VehicleListingSidebar } from "@/features/vehicles/components/vehicle-listing-sidebar";
 import { filterVehicles } from "@/features/vehicles/lib/filter-vehicles";
 import { useVehicles } from "@/features/vehicles/lib/use-vehicles";
+import {
+  VehiclesSearchNavProvider,
+  consumeScrollToVehicleResults,
+  useVehiclesSearchNav,
+} from "@/features/vehicles/lib/vehicles-search-nav-context";
+import { resolveBrandFilterLabel } from "@/lib/vehicles/brand-utils";
 import type {
   Transmission,
   Vehicle,
@@ -47,70 +58,14 @@ import {
   vehicleFilterTypeToUrlParam,
   type EngineCcFilter,
 } from "@/features/vehicles/lib/booking-search-params";
-import { resolveBrandFilterLabel } from "@/lib/vehicles/brand-utils";
-
-const VehicleFilters = dynamic(
-  () =>
-    import("@/features/vehicles/components/vehicle-filters").then((m) => ({
-      default: m.VehicleFilters,
-    })),
-  {
-    loading: () => (
-      <div className="skeleton h-72 rounded-[var(--r-panel)]" aria-hidden />
-    ),
-  },
-);
-
-const VehicleListingSidebar = dynamic(
-  () =>
-    import("@/features/vehicles/components/vehicle-listing-sidebar").then((m) => ({
-      default: m.VehicleListingSidebar,
-    })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="skeleton h-48 rounded-[var(--r-card)]" aria-hidden />
-    ),
-  },
-);
 
 /** Tailwind `lg` — sidebar rail visible; hero omits seats/color there. */
 const LG_MIN_PX = 1024;
 const DEFAULT_PICKUP_DATE = new Date(2026, 5, 12);
-const DEFAULT_RETURN_DATE = addDays(DEFAULT_PICKUP_DATE, TRIP_MIN_SPAN_DAYS);
+const DEFAULT_RETURN_DATE = addDays(DEFAULT_PICKUP_DATE, DEFAULT_TRIP_SPAN_DAYS);
 /** Listing filters do not collect times; defaults align availability with a sensible day window. */
 const DEFAULT_LISTING_PICKUP_TIME = "09:00";
 const DEFAULT_LISTING_DROPOFF_TIME = "09:00";
-
-/** Shared by the client grid and its loading state so skeletons land exactly where cards will. */
-const vehicleGridClass = "grid items-stretch gap-6 sm:grid-cols-2 xl:grid-cols-3";
-
-/** Skeleton mirrors the real card: photo plate, title, clamped copy, spec ribbon, price, actions. */
-function vehicleCardSkeletons(keyPrefix: string) {
-  return Array.from({ length: 6 }).map((_, index) => (
-    <div
-      key={`${keyPrefix}-${index}`}
-      className="surface-card overflow-hidden"
-      aria-hidden
-    >
-      <div className="skeleton aspect-[4/3] w-full" />
-      <div className="p-5">
-        <div className="skeleton h-4 w-3/5 rounded-full" />
-        <div className="skeleton mt-3 h-3 w-full rounded-full" />
-        <div className="skeleton mt-2 h-3 w-4/5 rounded-full" />
-        <div className="mt-4 grid grid-cols-2 gap-3 border-y border-[var(--line-subtle)] py-3">
-          <div className="skeleton h-2.5 w-4/5 rounded-full" />
-          <div className="skeleton h-2.5 w-4/5 rounded-full" />
-        </div>
-        <div className="skeleton mt-4 h-6 w-2/5 rounded-full" />
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <div className="skeleton h-10 rounded-[var(--r-field)]" />
-          <div className="skeleton h-10 rounded-[var(--r-field)]" />
-        </div>
-      </div>
-    </div>
-  ));
-}
 
 function subscribeMinWidthLg(onChange: () => void) {
   const mq = window.matchMedia(`(min-width: ${LG_MIN_PX}px)`);
@@ -149,7 +104,15 @@ type VehicleListingShellProps = Readonly<{
   children?: React.ReactNode;
 }>;
 
-export function VehicleListingShell({
+export function VehicleListingShell(props: VehicleListingShellProps) {
+  return (
+    <VehiclesSearchNavProvider>
+      <VehicleListingShellInner {...props} />
+    </VehiclesSearchNavProvider>
+  );
+}
+
+function VehicleListingShellInner({
   vehicles,
   brandOptions = [],
   heroIntro,
@@ -157,6 +120,8 @@ export function VehicleListingShell({
   children,
 }: VehicleListingShellProps) {
   const tListing = useTranslations("VehicleListing");
+  const searchNav = useVehiclesSearchNav();
+  const isUrlSearchPending = searchNav?.isSearchPending ?? false;
   const shouldFetchFromApi = !vehicles;
   const router = useRouter();
   const pathname = usePathname();
@@ -195,7 +160,7 @@ export function VehicleListingShell({
     parsePickupDateParam(dropoffDateParam);
   const initialReturn = parsedReturn
     ? clampTripEndDate(initialPickup, parsedReturn)
-    : addDays(initialPickup, TRIP_MIN_SPAN_DAYS);
+    : addDays(initialPickup, DEFAULT_TRIP_SPAN_DAYS);
   const initialLocation: BookingOption | null = locationParam
     ? { value: `url:${locationParam}`, label: locationParam }
     : null;
@@ -274,6 +239,14 @@ export function VehicleListingShell({
     return () => window.clearTimeout(timer);
   }, [tripDatesPrompt]);
 
+  const searchParamsKey = searchParams.toString();
+
+  /** After Search available vehicles, land on the results block instead of the page top. */
+  useEffect(() => {
+    if (isUrlSearchPending) return;
+    consumeScrollToVehicleResults();
+  }, [isUrlSearchPending, searchParamsKey]);
+
   useEffect(() => {
     const onTripDatesRequired = () => setTripDatesPrompt(true);
     window.addEventListener("vehicle-trip-dates-required", onTripDatesRequired);
@@ -281,6 +254,12 @@ export function VehicleListingShell({
       window.removeEventListener("vehicle-trip-dates-required", onTripDatesRequired);
     };
   }, []);
+
+  useEffect(() => {
+    const b = resolveBrandFilterLabel(parseBrandSearchParam(brandParam), brandOptions);
+    setSelectedBrand(b);
+    setAppliedBrand(b);
+  }, [brandParam, brandOptions]);
 
   const replaceQuery = useCallback(
     (mutate: (params: URLSearchParams) => void) => {
@@ -297,12 +276,6 @@ export function VehicleListingShell({
     setSelectedType(t);
     setAppliedType(t);
   }, [typeParam]);
-
-  useEffect(() => {
-    const b = resolveBrandFilterLabel(parseBrandSearchParam(brandParam), brandOptions);
-    setSelectedBrand(b);
-    setAppliedBrand(b);
-  }, [brandParam, brandOptions]);
 
   useEffect(() => {
     const tr = parseTransmissionSearchParam(transmissionParam);
@@ -344,7 +317,7 @@ export function VehicleListingShell({
     if (pu) {
       setPickupDate(pu);
       setReturnDate(
-        ret ? clampTripEndDate(pu, ret) : addDays(pu, TRIP_MIN_SPAN_DAYS),
+        ret ? clampTripEndDate(pu, ret) : addDays(pu, DEFAULT_TRIP_SPAN_DAYS),
       );
     }
   }, [
@@ -406,7 +379,14 @@ export function VehicleListingShell({
         p.set("seats", seatsFilterToUrlParam(s));
       });
     },
-    [replaceQuery, selectedBrand, selectedColor, selectedSeats, selectedTransmission, selectedType],
+    [
+      replaceQuery,
+      selectedBrand,
+      selectedColor,
+      selectedSeats,
+      selectedTransmission,
+      selectedType,
+    ],
   );
 
   const handleSearchResults = useCallback(() => {
@@ -552,10 +532,11 @@ export function VehicleListingShell({
     return `?${p.toString()}`;
   })();
 
-  const showListingSidebar = pathname === "/vehicles";
+  /** Vehicles listing uses the hero search card for filters (no left rail). */
+  const showListingSidebar = false;
   const isLg = useIsLgViewport();
-  const hideSeatsInHero = showListingSidebar && isLg;
-  const showListingExtrasInHero = showListingSidebar && !isLg;
+  const hideSeatsInHero = false;
+  const showListingExtrasInHero = pathname === "/vehicles";
 
   const filters = searchPanel ? null : (
     <VehicleFilters
@@ -607,78 +588,124 @@ export function VehicleListingShell({
     />
   ) : null;
 
+  const showResultsLoading =
+    isRefreshing ||
+    isUrlSearchPending ||
+    (shouldFetchFromApi && isVehiclesLoading);
+
   const showServerGrid =
     !useClientResults &&
-    !isRefreshing &&
-    !(shouldFetchFromApi && isVehiclesLoading) &&
+    !showResultsLoading &&
     children != null;
 
-  const clientVehicleGrid = (
-    <Stagger className={vehicleGridClass} step={0.06}>
-      {filteredVehicles.map((vehicle) => (
-        <StaggerItem key={vehicle.slug} className="h-full" y={18}>
-          <VehicleCard
-            vehicle={vehicle}
-            bookingHref={bookingHref}
-            detailsHref={`/vehicles/${vehicle.slug}${detailsDateQuery}`}
-            tripDatesCommitted={tripDatesCommitted}
-            onTripDatesRequired={() => setTripDatesPrompt(true)}
-            pickupDate={vehiclesFetchRentalWindow?.pickupDate ?? null}
-            returnDate={vehiclesFetchRentalWindow?.returnDate ?? null}
-            pickupTime={vehiclesFetchRentalWindow?.pickupTime ?? null}
-            returnTime={vehiclesFetchRentalWindow?.returnTime ?? null}
-          />
-        </StaggerItem>
+  const engineCcGroups = useMemo(
+    () => groupVehiclesByEngineCc(filteredVehicles),
+    [filteredVehicles],
+  );
+
+  const groupTitleKey = (id: EngineCcGroupId) => {
+    if (id === "50") return "group50" as const;
+    if (id === "125") return "group125" as const;
+    return "groupOther" as const;
+  };
+
+  const skeletonRow = (keyPrefix: string) => (
+    <div className={vehicleListingTrackClass}>
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div
+          key={`${keyPrefix}-${index}`}
+          className={`${vehicleListingItemClass} overflow-hidden rounded-xl border border-slate-200 bg-white p-3 sm:rounded-2xl sm:p-4`}
+        >
+          <div className="aspect-[16/10] animate-pulse rounded-lg bg-slate-200/75 sm:aspect-[4/3] sm:rounded-xl" />
+          <div className="mt-3 h-5 w-2/3 animate-pulse rounded bg-slate-200/75 sm:mt-4" />
+          <div className="mt-2 h-4 w-full animate-pulse rounded bg-slate-200/65" />
+          <div className="mt-4 h-9 w-1/2 animate-pulse rounded-md bg-slate-200/75 sm:mt-5 sm:rounded-full" />
+        </div>
       ))}
-    </Stagger>
+    </div>
   );
 
   const results = (
     <div id="vehicle-listing-results" className="space-y-6 scroll-mt-28">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line-subtle)] pb-4">
-        <p
-          className="type-eyebrow text-[0.75rem] text-[var(--ink-700)]"
-          aria-live="polite"
-        >
+      {!showResultsLoading ? (
+        <p className="text-sm text-slate-600">
           {tListing("showing", { count: filteredVehicles.length })}
         </p>
-      </div>
+      ) : null}
 
       {tripDatesPrompt ? (
         <div
           role="status"
-          className="rounded-[var(--r-card)] border border-[var(--orange-200)] bg-[var(--orange-50)] px-4 py-3 text-sm leading-relaxed text-[var(--orange-950)] shadow-sm"
+          className="rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950"
         >
           {tListing("tripDatesHint")}
         </div>
       ) : null}
 
-      {isRefreshing ? (
-        <div className={vehicleGridClass}>{vehicleCardSkeletons("refresh")}</div>
-      ) : shouldFetchFromApi && isVehiclesLoading ? (
-        <div className={vehicleGridClass}>{vehicleCardSkeletons("loading")}</div>
+      {showResultsLoading ? (
+        <div className="flex flex-col gap-8 sm:gap-10" aria-busy="true">
+          {skeletonRow(isUrlSearchPending ? "url-search" : "refresh")}
+        </div>
       ) : shouldFetchFromApi && vehiclesError ? (
-        <div className="rounded-[var(--r-panel)] border border-rose-200 bg-rose-50/80 px-6 py-12 text-center shadow-sm">
-          <h3 className="type-h3 text-rose-950">{tListing("loadErrorTitle")}</h3>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-rose-800">
-            {vehiclesError}
-          </p>
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/70 px-6 py-10 text-center">
+          <h3 className="text-lg font-semibold text-rose-900">{tListing("loadErrorTitle")}</h3>
+          <p className="mt-2 text-sm text-rose-800">{vehiclesError}</p>
         </div>
       ) : filteredVehicles.length > 0 ? (
-        showServerGrid ? children : clientVehicleGrid
+        showServerGrid ? (
+          children
+        ) : (
+          <div className="flex flex-col gap-8 sm:gap-10">
+            {engineCcGroups.map((group) => {
+              const headingId = `vehicle-group-${group.id}`;
+              return (
+                <section
+                  key={group.id}
+                  aria-labelledby={headingId}
+                  className="min-w-0"
+                >
+                  <div className="mb-3 flex items-baseline justify-between gap-3 sm:mb-4">
+                    <h2
+                      id={headingId}
+                      className="text-base font-semibold tracking-[-0.02em] text-[var(--ink-950)] sm:text-lg"
+                    >
+                      {tListing(groupTitleKey(group.id))}
+                    </h2>
+                    <p className="text-xs font-medium tabular-nums text-[var(--text-muted)] sm:text-sm">
+                      {tListing("groupCount", { count: group.vehicles.length })}
+                    </p>
+                  </div>
+                  <div className={vehicleListingTrackClass}>
+                    {group.vehicles.map((vehicle) => (
+                      <div key={vehicle.slug} className={vehicleListingItemClass}>
+                        <VehicleCard
+                          vehicle={vehicle}
+                          bookingHref={bookingHref}
+                          detailsHref={`/vehicles/${vehicle.slug}${detailsDateQuery}`}
+                          tripDatesCommitted={tripDatesCommitted}
+                          onTripDatesRequired={() => setTripDatesPrompt(true)}
+                          pickupDate={vehiclesFetchRentalWindow?.pickupDate ?? null}
+                          returnDate={vehiclesFetchRentalWindow?.returnDate ?? null}
+                          pickupTime={vehiclesFetchRentalWindow?.pickupTime ?? null}
+                          returnTime={vehiclesFetchRentalWindow?.returnTime ?? null}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        )
       ) : vehicleDataset.length === 0 ? (
-        <div className="surface-panel px-6 py-12 text-center">
-          <h3 className="type-h3 text-[var(--ink-950)]">{tListing("emptyTitle")}</h3>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
-            {tListing("emptyBody")}
-          </p>
+        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center">
+          <h3 className="text-lg font-semibold text-slate-900">{tListing("emptyTitle")}</h3>
+          <p className="mt-2 text-sm text-slate-600">{tListing("emptyBody")}</p>
         </div>
       ) : (
-        <div className="surface-panel px-6 py-12 text-center">
-          <h3 className="type-h3 text-[var(--ink-950)]">{tListing("noMatchTitle")}</h3>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">
-            {tListing("noMatchBody")}
-          </p>
+        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center">
+          <h3 className="text-lg font-semibold text-slate-900">{tListing("noMatchTitle")}</h3>
+          <p className="mt-2 text-sm text-slate-600">{tListing("noMatchBody")}</p>
         </div>
       )}
     </div>
@@ -688,48 +715,43 @@ export function VehicleListingShell({
     const heroSection = (
       <section
         aria-labelledby="vehicles-heading"
-        className="relative isolate pb-12 pt-24 sm:pb-14 sm:pt-28"
+        className="relative isolate overflow-hidden pb-8 pt-24 sm:pb-14 sm:pt-32"
       >
-        <Container>
-          <div className="grain relative isolate overflow-hidden rounded-[var(--r-feature)] bg-[var(--surface-inverse)] px-5 py-8 shadow-[inset_0_0_0_1px_var(--line-inverse),var(--elev-5)] sm:px-8 sm:py-10">
-            <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
-              <div className="absolute inset-0 flex items-start justify-center pt-6 sm:pt-8">
-                <Image
-                  src={LOGO_PATH}
-                  alt=""
-                  width={480}
-                  height={96}
-                  className="h-auto w-[min(88%,26rem)] max-w-full object-contain opacity-[0.32]"
-                  style={{ height: "auto" }}
-                  priority={false}
-                />
-              </div>
-              <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_-10%,rgb(58_124_165/0.28),transparent_62%)]" />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(10_20_32/0.62)_0%,rgb(10_20_32/0.30)_52%,rgb(10_20_32/0.66)_100%)]" />
-            </div>
-            <Reveal className="relative z-10" y={16}>
-              <h1 id="vehicles-heading" className="type-h1 text-white">
-                {heroIntro.title}
-              </h1>
-              <p className="mt-4 max-w-3xl text-base leading-relaxed text-white/80 sm:text-lg">
-                {heroIntro.description}
-              </p>
-            </Reveal>
-          </div>
-          {/* Search sits outside the dark panel so its own sticky/overflow behaviour is unaffected. */}
-          <div className="mt-6">{searchPanel ?? filters}</div>
+        <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+          <Image
+            src={getFormBackgroundPublicPath()}
+            alt=""
+            fill
+            priority
+            unoptimized
+            sizes="100vw"
+            className="object-cover object-[22%_center]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/15 to-black/45" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_40%,rgba(0,0,0,0.25),transparent_70%)]" />
+        </div>
+        <Container className="relative z-10">
+          <h1
+            id="vehicles-heading"
+            className="text-3xl font-semibold tracking-[-0.04em] text-white drop-shadow-[0_1px_24px_rgba(15,23,42,0.35)] sm:text-5xl"
+          >
+            {heroIntro.title}
+          </h1>
+          <p className="mt-2.5 max-w-3xl text-sm leading-snug text-white/90 sm:mt-4 sm:text-lg sm:leading-relaxed">
+            {heroIntro.description}
+          </p>
+          <div className="mt-5 sm:mt-8">{searchPanel ?? filters}</div>
         </Container>
       </section>
     );
 
     const resultsBlock = (
-      <Container className="pb-16 pt-8">
+      <Container className="pb-12 pt-5 sm:pb-16 sm:pt-8">
         {results}
-        <hr className="rule-fade mt-12" />
-        <div className="w-full pt-10">
+        <div className="mt-8 w-full border-t border-slate-200/80 pt-8 sm:mt-10 sm:pt-10">
           <section aria-label={tListing("ariaRates")}>
-            <p className="type-lead max-w-2xl">{tListing("ratesBlurb")}</p>
-            <div className="mt-8 w-full">
+            <p className="max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">{tListing("ratesBlurb")}</p>
+            <div className="mt-5 w-full sm:mt-8">
               <IndicativeDailyRatesCard />
             </div>
           </section>
@@ -743,7 +765,7 @@ export function VehicleListingShell({
           <aside
             aria-label={tListing("ariaFilters")}
             className={[
-              "vehicle-filters-rail order-2 hidden w-full shrink-0 flex-col border-t border-[var(--line-subtle)] bg-[var(--surface-card)] transition-[width] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] motion-reduce:transition-none lg:flex lg:order-1 lg:border-t-0 lg:border-r lg:border-[var(--line-subtle)] lg:bg-[linear-gradient(180deg,var(--surface-card)_0%,var(--surface-band)_100%)]",
+              "vehicle-filters-rail order-2 hidden w-full shrink-0 flex-col border-t border-slate-200/80 bg-gradient-to-b from-white to-[#f7fbfe] transition-[width] duration-200 ease-out motion-reduce:transition-none lg:flex lg:order-1 lg:border-t-0 lg:border-r lg:border-slate-200/50 lg:shadow-[inset_-1px_0_0_rgba(15,23,42,0.04)] lg:backdrop-blur-sm",
               filtersCollapsed
                 ? "lg:w-12 lg:max-w-12 lg:min-w-12"
                 : "lg:w-[min(15.5rem,calc(100vw-1rem))] lg:max-w-[15.5rem]",
@@ -783,7 +805,7 @@ export function VehicleListingShell({
           <aside
             aria-label={tListing("ariaFilters")}
             className={[
-              "vehicle-filters-rail order-2 hidden w-full shrink-0 flex-col border-t border-[var(--line-subtle)] bg-[var(--surface-card)] transition-[width] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] motion-reduce:transition-none lg:flex lg:order-1 lg:border-t-0 lg:border-r lg:border-[var(--line-subtle)] lg:bg-[linear-gradient(180deg,var(--surface-card)_0%,var(--surface-band)_100%)]",
+              "vehicle-filters-rail order-2 hidden w-full shrink-0 flex-col border-t border-slate-200/80 bg-gradient-to-b from-white to-[#f7fbfe] transition-[width] duration-200 ease-out motion-reduce:transition-none lg:flex lg:order-1 lg:border-t-0 lg:border-r lg:border-slate-200/50 lg:shadow-[inset_-1px_0_0_rgba(15,23,42,0.04)] lg:backdrop-blur-sm",
               filtersCollapsed
                 ? "lg:w-12 lg:max-w-12 lg:min-w-12"
                 : "lg:w-[min(15.5rem,calc(100vw-1rem))] lg:max-w-[15.5rem]",

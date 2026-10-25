@@ -79,6 +79,7 @@
     "heroDescription": "Verhuur van motorfietsen, ATV's en fietsen. Rondleidingen."
   },
   "Home": {
+    "heroWatchVideo": "Bekijk video",
     "heroBookRide": "Boek uw rit",
     "heroViewFleet": "Bekijk vloot",
     "heroTrust1": "Rondleidingen beschikbaar",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "Hotelbezorging / retour",
         "description": "Waar dit van toepassing is, kunnen we u helpen met het gemakkelijk afleveren en ophalen."
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "Ideaal voor dagtochten",
         "bullet2": "Evenwichtig comfort + controle",
         "subtitle": "Motorfiets"
-      }
+      },
+      "includesLabel": "Inclusief:"
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "Trustpilot",
     "testimonialsExcellent": "Uitstekend",
     "testimonialsMarqueeAria": "Getuigenissen van klanten, scrollen",
-    "ratingStarsAria": "{rating} van de 5"
+    "ratingStarsAria": "{rating} van de 5",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "Open voor verhuur vandaag",
+    "heroScrollCue": "Scroll om te ontdekken",
+    "heroMetaCategory": "Premium bikeverhuur",
+    "heroMetaRental": "Dag- & weekverhuur",
+    "heroTrustVerified": "Geverifieerde vloot",
+    "heroConsoleTitle": "Beschikbaarheid controleren",
+    "heroConsoleNote": "Geen verborgen kosten. Flexibele ophaalopties.",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "Vlootcategorieën",
+    "sectionServicesTitleLine1": "Diensten &",
+    "sectionServicesTitleLine2": "voordelen",
+    "highlightedServicesHowWeWork": "Zo werken wij",
+    "highlightedServicesInfoLabel": "Info"
   },
   "Faq": {
-    "title": "Veelgestelde vragen (FAQ's)",
+    "title": "Veelgestelde vragen",
     "subtitleLead": "Kunt u niet vinden wat u zoekt? Neem contact op",
     "subtitleTail": "of gebruik het onderstaande contactgedeelte.",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "Wat zijn uw annuleringsvoorwaarden?",
-        "answer": "Het beleid kan variëren per seizoen en voertuig. Neem contact met ons op met uw boekingsgegevens, dan leggen wij u de mogelijkheden uit. Wij streven ernaar eerlijk en duidelijk te zijn, zodat u met vertrouwen uw reis naar Malta kunt plannen."
+        "answer": "Annuleringen meer dan 48 uur vóór de geplande starttijd van de huur geven recht op terugbetaling van 50% van het boekingsbedrag. Explore Malta Rentals houdt de overige 50% in. Annuleringen binnen 48 uur vóór die starttijd zijn niet restitueerbaar en het volledige boekingsbedrag wordt ingehouden."
       },
       "invoice": {
         "question": "Zijn helmen en veiligheidsuitrusting inbegrepen?",
@@ -236,7 +323,12 @@
     "description": "Bel, stuur een bericht of bezoek: we zijn er om u te helpen bij het kiezen van de juiste rit. Uw mobiele nummer en kaartlocatie vindt u hieronder.",
     "whatsappTitle": "Stuur een WhatsApp-bericht",
     "whatsappBody": "Wij helpen u bij het kiezen van de juiste rit en beantwoorden vragen over de beschikbaarheid.",
-    "envWhatsappHint": "Stel NEXT_PUBLIC_WHATSAPP_NUMBER in om de WhatsApp-knop in te schakelen."
+    "envWhatsappHint": "Stel NEXT_PUBLIC_WHATSAPP_NUMBER in om de WhatsApp-knop in te schakelen.",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "Thuis",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "Ophaaltijd is vereist",
     "returnDateRequired": "Datum van retour is vereist",
     "returnTimeRequired": "Terugkeertijd is vereist",
-    "minRental": "Minimale huurperiode is 24 uur",
+    "minRental": "De retourtijd moet later zijn dan de ophaaltijd.",
     "maxRental": "Maximale huurperiode is 4 weken",
     "pickupAddressDelivery": "Voor bezorging is een afhaaladres vereist",
     "dropoffAddressRequired": "Afleveradres is vereist",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "Langere huurperiodes ontgrendelen duur-kortingen vóór extras — gebruik ze als leidraad tijdens het zoeken.",
     "ariaFilters": "Voertuigfilters",
-    "ariaRates": "Indicatieve dagtarieven"
+    "ariaRates": "Indicatieve dagtarieven",
+    "group50": "50cc scooters",
+    "group125": "125cc motoren",
+    "groupOther": "Overige voertuigen",
+    "groupCount": "{count, plural, one {# voertuig} other {# voertuigen}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "Voertuig zoeken",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}: {percent} % duur-korting · Eindprijs hangt af van voertuig en extra's.",
-    "durationDiscountSummaryMax": "Huur 7+ dagen en bespaar tot {percent} % · Eindprijs hangt af van voertuig en extra's."
+    "durationDiscountSummaryMax": "Huur 7+ dagen en bespaar tot {percent} % · Eindprijs hangt af van voertuig en extra's.",
+    "moreFilters": "Meer filters",
+    "fewerFilters": "Minder filters"
   },
   "BookingForm": {
     "invalidPickupDate": "Ongeldige ophaaldatum",
@@ -811,11 +909,11 @@
       "returnTime": "Tijd van terugkomst",
       "sectionDuration": "Sectie: Huurduur (weergave)",
       "autoDuration": "Automatisch berekende duur:",
-      "durationLine": "{days} dag(en) ({hours}u)",
+      "durationLine": "{hours} uur · berekend als {days, plural, one {# dag} other {# dagen}}",
       "durationInvalid": "De retourdatum/-tijd moet na het ophalen zijn",
       "durationWaiting": "Wachten op geldige data",
       "notesTitle": "Opmerkingen:",
-      "noteMin": "Minimale huurperiode is 24 uur.",
+      "noteMin": "De retourtijd moet later zijn dan de ophaaltijd.",
       "noteDayCharge": "Bij minder dan 24 uur wordt een volledige dag in rekening gebracht.",
       "noteMax": "Maximale huurperiode is 4 weken.",
       "noteRenew": "Er is een hernieuwbare optie beschikbaar."
@@ -837,8 +935,8 @@
       "rentalDates": "Huurdata:",
       "to": "naar",
       "billableDuration": "Factureerbare duur:",
-      "dayCount": "{count} dag(en)",
-      "actualHours": "(werkelijke {hours}h)",
+      "dayCount": "berekend als {count, plural, one {# dag} other {# dagen}}",
+      "actualHours": "{hours} uur",
       "pickupMethod": "Ophaalmethode:",
       "pickupAddress": "Ophaaladres:",
       "dropoffMethod": "Aflevermethode:",
@@ -855,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Extra bestuurder:",
       "storageCost": "Opbergdoos:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Subtotaal:",
       "pricingPending": "Een prijsvoorbeeld verschijnt zodra de voertuig- en huurdata/-tijden geldig zijn.",
       "section3": "Sectie 3 - Storting en totalen",

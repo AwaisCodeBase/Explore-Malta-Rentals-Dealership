@@ -82,16 +82,18 @@ export const vehicleFilterReactSelectStyles: StylesConfig<
   menu: (base) => ({
     ...base,
     borderRadius: "var(--r-card)",
-    border: "1px solid var(--line)",
-    boxShadow: "var(--elev-4)",
+    border: "1px solid var(--line-subtle)",
+    backgroundColor: "var(--surface-card)",
+    boxShadow: "var(--elev-5)",
     overflow: "hidden",
     zIndex: 9999,
-    marginTop: 8,
+    marginTop: 6,
+    padding: 0,
   }),
   menuList: (base) => ({
     ...base,
-    maxHeight: 280,
-    padding: 6,
+    maxHeight: 260,
+    padding: "6px",
   }),
   noOptionsMessage: (base) => ({
     ...base,
@@ -115,23 +117,29 @@ export const vehicleFilterReactSelectStyles: StylesConfig<
   }),
   option: (base, state) => ({
     ...base,
-    borderRadius: "var(--r-field)",
+    borderRadius: "calc(var(--r-field) - 2px)",
     fontSize: "0.875rem",
-    fontWeight: 600,
+    fontWeight: state.isSelected ? 600 : 500,
+    letterSpacing: "-0.01em",
+    padding: "9px 12px",
+    marginBottom: 2,
     cursor: "pointer",
     transition:
-      "background-color var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard)",
+      "background-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard)",
     backgroundColor: state.isSelected
-      ? "var(--blue-500)"
+      ? "color-mix(in srgb, var(--orange-600) 10%, var(--surface-card))"
       : state.isFocused
-        ? "color-mix(in srgb, var(--blue-500) 10%, white)"
+        ? "var(--surface-soft)"
         : "transparent",
-    color: state.isSelected ? "#ffffff" : "var(--ink-900)",
+    color: "var(--ink-900)",
+    boxShadow: state.isSelected
+      ? "inset 0 0 0 1px color-mix(in srgb, var(--orange-600) 20%, var(--line))"
+      : "none",
     ":active": {
       ...base[":active"],
       backgroundColor: state.isSelected
-        ? "var(--blue-600)"
-        : "color-mix(in srgb, var(--blue-500) 16%, white)",
+        ? "color-mix(in srgb, var(--orange-600) 14%, var(--surface-card))"
+        : "var(--surface-band)",
     },
   }),
   menuPortal: (base) => ({ ...base, zIndex: 9999 }),

@@ -13,22 +13,7 @@ export const heroContent = {
     label: "View Fleet",
   },
   media: {
-    /**
-     * Primary video source.
-     * For best performance, compress this to ~3-5 MB with H.264 before deploy:
-     *   ffmpeg -i Untitled-1.mp4 -c:v libx264 -crf 28 -preset slow \
-     *          -movflags +faststart -an hero-optimized.mp4
-     */
-    videoSrc: "/Untitled-1.mp4",
-    /**
-     * Poster shown before the video loads (and on mobile / reduced-motion /
-     * slow connections, where `HeroVideoBackground` skips the video entirely).
-     *
-     * This is a still frame taken from `videoSrc` itself (t≈5s), so the poster
-     * and the video are the same scene and there is no visual jump when the
-     * video fades in. Re-cut it from the video if the footage ever changes.
-     */
-    posterSrc: "/hero-poster.jpg",
+    backgroundSrc: "/warehouse background.png",
   },
 } as const;
 

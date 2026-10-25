@@ -40,7 +40,7 @@ export async function restoreCancelledBooking(
       vehicleUnitId: true,
       pickupDateTime: true,
       returnDateTime: true,
-      unitOccupancy: { select: { id: true } },
+      unitOccupancies: { select: { id: true } },
       statusHistory: {
         where: { newStatus: "CANCELLED" },
         orderBy: { createdAt: "desc" },
@@ -82,7 +82,7 @@ export async function restoreCancelledBooking(
         data: { status: previousStatus },
       });
 
-      if (!existing.unitOccupancy) {
+      if (existing.unitOccupancies.length === 0) {
         await insertBookingOccupancy(tx, {
           vehicleUnitId: existing.vehicleUnitId!,
           pickupAt: existing.pickupDateTime,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AlreadyPaidProofModal } from "@/features/booking-flow/components/already-paid-proof-modal";
@@ -13,6 +13,7 @@ import {
   getCdwLabel,
 } from "@/lib/pricing/calculate-booking-price";
 import { buildBookingPaymentSummary } from "@/lib/booking/build-booking-payment-summary";
+import { LOYALTY_CREDIT_AMOUNT_EUR } from "@/lib/loyalty/loyalty-credit";
 
 /** Receipt row: label left, value right, hairline separated by the parent `divide-y`. */
 const rowClass = "flex flex-wrap items-baseline justify-between gap-x-6 gap-y-0.5 py-2.5";
@@ -43,6 +44,39 @@ export function BookingSummaryStep() {
   const tCommon = useTranslations("Common");
   const { state, reservationHold, updateSection, bookingSessionId, getFieldError } = useBookingFlow();
   const [proofModalOpen, setProofModalOpen] = useState(false);
+  const [loyaltyOffer, setLoyaltyOffer] = useState<{ email: string; available: boolean } | null>(null);
+
+  useEffect(() => {
+    const email = state.customer.email.trim();
+    if (!email.includes("@")) return;
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void fetch("/api/loyalty-credits/availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          if (!response.ok) return { available: false };
+          return (await response.json()) as { available?: boolean };
+        })
+        .then((offer) => {
+          if (!controller.signal.aborted) {
+            setLoyaltyOffer({ email, available: offer.available === true });
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setLoyaltyOffer({ email, available: false });
+        });
+    }, 300);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [state.customer.email]);
 
   const isAlreadyPaid = state.payment.mode === "already_paid";
   const paymentProofError = getFieldError("payment.proofPath");
@@ -144,30 +178,38 @@ export function BookingSummaryStep() {
     [selectedVehicle, state],
   );
 
+  const loyaltyCreditAvailable =
+    loyaltyOffer?.email === state.customer.email.trim() && loyaltyOffer.available === true;
+  const loyaltyCreditAmount =
+    loyaltyCreditAvailable && pricing && pricing.subtotal >= LOYALTY_CREDIT_AMOUNT_EUR
+      ? LOYALTY_CREDIT_AMOUNT_EUR
+      : 0;
+
   const paymentSummary = useMemo(() => {
     if (!pricing) {
       return null;
     }
 
-    if (isAlreadyPaid) {
-      return {
-        bookingChargesTotal: pricing.subtotal,
-        securityDeposit: pricing.depositAmount,
-        securityDepositDueAtPickup: false,
-        amountPayableOnline: 0,
-        amountDueAtPickupLater: 0,
-        totalCustomerLiability: pricing.subtotal + pricing.depositAmount,
-      };
-    }
-
-    return buildBookingPaymentSummary({
+    const summary = buildBookingPaymentSummary({
       subtotal: pricing.subtotal,
       depositAmount: pricing.depositAmount,
       depositMethod: state.deposit.depositMethod || "in_person",
       totalDueOnline: pricing.totalDueOnline,
       totalDueLater: pricing.totalDueLater,
+      loyaltyCreditAmount,
     });
-  }, [pricing, state.deposit.depositMethod, isAlreadyPaid]);
+
+    if (isAlreadyPaid) {
+      return {
+        ...summary,
+        securityDepositDueAtPickup: false,
+        amountPayableOnline: 0,
+        amountDueAtPickupLater: 0,
+      };
+    }
+
+    return summary;
+  }, [pricing, state.deposit.depositMethod, isAlreadyPaid, loyaltyCreditAmount]);
 
   const cdwLabel =
     state.addons.cdwPlan === null
@@ -224,8 +266,19 @@ export function BookingSummaryStep() {
             <li className={rowClass}>
               <span className={labelClass}>{t("billableDuration")}</span>
               <span className={valueClass}>
-                {pricing ? t("dayCount", { count: pricing.rentalDays }) : "-"}
-                {pricing ? t("actualHours", { hours: pricing.actualDurationHours.toFixed(1) }) : ""}
+                {pricing ? (
+                  <>
+                    {t("actualHours", {
+                      hours: Number.isInteger(pricing.actualDurationHours)
+                        ? String(pricing.actualDurationHours)
+                        : String(pricing.actualDurationHours),
+                    })}
+                    {" · "}
+                    {t("dayCount", { count: pricing.rentalDays })}
+                  </>
+                ) : (
+                  "-"
+                )}
               </span>
             </li>
             <li className={rowClass}>
@@ -312,17 +365,23 @@ export function BookingSummaryStep() {
                   <span className={labelClass}>{t("storageCost")}</span>
                   <span className={valueClass}>{formatEur(pricing.storageBoxCost)}</span>
                 </li>
+                {loyaltyCreditAmount > 0 ? (
+                  <li className={`${rowClass} font-medium tabular-nums text-emerald-700`}>
+                    <span className={labelClass}>{t("loyaltyCredit", { amount: formatEur(loyaltyCreditAmount) })}</span>
+                  </li>
+                ) : null}
               </ul>
               <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t-2 border-[var(--line-strong)] pt-3">
                 <p className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
                   {t("bookingChargesTotal")}
                 </p>
                 <p className="text-lg font-bold tabular-nums tracking-[-0.02em] text-[var(--text-primary)]">
-                  {formatEur(pricing.subtotal)}
+                  {formatEur(paymentSummary?.bookingChargesTotal ?? pricing.subtotal)}
                 </p>
               </div>
               <p className="mt-2 text-xs leading-relaxed text-[var(--text-muted)]">
                 {t("bookingChargesExcludesDepositNote")}
+                {loyaltyCreditAmount > 0 ? ` ${t("loyaltyCreditNote")}` : ""}
               </p>
             </>
           ) : (

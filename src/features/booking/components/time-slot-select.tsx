@@ -22,6 +22,7 @@ type TimeSlotSelectProps = Readonly<{
   "aria-labelledby"?: string;
   /** Defaults to full day; pass booking-only slots (e.g. 09:30–19:00) when needed. */
   slots?: readonly string[];
+  triggerClassName?: string;
 }>;
 
 export const TimeSlotSelect = forwardRef<HTMLButtonElement, TimeSlotSelectProps>(
@@ -33,6 +34,7 @@ export const TimeSlotSelect = forwardRef<HTMLButtonElement, TimeSlotSelectProps>
       onBlur,
       "aria-labelledby": ariaLabelledBy,
       slots = TIME_SLOTS,
+      triggerClassName,
     },
     ref,
   ) {
@@ -49,7 +51,7 @@ export const TimeSlotSelect = forwardRef<HTMLButtonElement, TimeSlotSelectProps>
             id={id}
             aria-labelledby={ariaLabelledBy}
             aria-haspopup="listbox"
-            className={`${triggerShell} justify-between`}
+            className={[triggerShell, "justify-between", triggerClassName].filter(Boolean).join(" ")}
             onBlur={onBlur}
           >
           <Clock className="h-4 w-4 shrink-0 text-[var(--orange-500)]" aria-hidden />

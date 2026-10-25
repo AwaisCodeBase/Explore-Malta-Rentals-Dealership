@@ -79,6 +79,7 @@
     "heroDescription": "Kiri ta' mutur, ATV, u rota. Dwerji gwidati."
   },
   "Home": {
+    "heroWatchVideo": "Ara l-Video",
     "heroBookRide": "Ibbukkja l-Vjaġġ Tiegħek",
     "heroViewFleet": "Ara l-Flotta",
     "heroTrust1": "Dwerji gwidati disponibbli",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "Konsenja / ritorn tal-lukanda",
         "description": "Fejn tapplika, nistgħu ngħinu b'drop-off u ġbir konvenjenti."
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "Ideali għall-jiem ta' vjaġġi",
         "bullet2": "Kumdità bilanċjata + kontroll",
         "subtitle": "Mutur"
-      }
+      },
+      "includesLabel": "Jinkludi:"
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "Trustpilot",
     "testimonialsExcellent": "Eċċellenti",
     "testimonialsMarqueeAria": "Testimonjali tal-klijenti, skrollanti",
-    "ratingStarsAria": "{rating} minn 5"
+    "ratingStarsAria": "{rating} minn 5",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "Miftuħ għall-kiri tal-lum",
+    "heroScrollCue": "Skrollja biex tesplora",
+    "heroMetaCategory": "Kiri ta' roti premium",
+    "heroMetaRental": "Kiri kuljum u kull ġimgħa",
+    "heroTrustVerified": "Flotta verifikata",
+    "heroConsoleTitle": "Iċċekkja d-disponibbiltà",
+    "heroConsoleNote": "L-ebda ħlasijiet moħbija. Għażliet ta' ġbir flessibbli.",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "Kategoriji tal-flotta",
+    "sectionServicesTitleLine1": "Servizzi &",
+    "sectionServicesTitleLine2": "benefiċċji",
+    "highlightedServicesHowWeWork": "Ara kif naħdmu",
+    "highlightedServicesInfoLabel": "Info"
   },
   "Faq": {
-    "title": "Mistoqsijiet Frekwenti (FAQs)",
+    "title": "Mistoqsijiet Frekwenti",
     "subtitleLead": "Ma ssibx dak li qed tfittex? Ikkuntattjana fuq ",
     "subtitleTail": " jew uża s-sezzjoni ta' kuntatt hawn taħt.",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "X'inhi l-politika ta' kanċellazzjoni tagħkom?",
-        "answer": "Il-politiki jistgħu jvarjaw skont is-stagħun u l-vettura. Ikkuntattjana bid-dettalji tal-prenotazzjoni tiegħek u nispjegawlek l-għażliet. Nimmerjaw li nkunu ġusti u ċari biex tkun tista' tippjana l-vjaġġ tiegħek f'Malta b'kunfidenza."
+        "answer": "Kanċellazzjonijiet magħmula aktar minn 48 siegħa qabel il-ħin skedat tal-bidu tal-kiri jintitolaw għal rifużjoni ta' 50% tal-ammont tal-prenotazzjoni. Explore Malta Rentals iżomm il-50% li jibqa'. Kanċellazzjonijiet fi żmien 48 siegħa minn dak il-ħin tal-bidu mhumiex rimborsabbli, u l-ammont sħiħ tal-prenotazzjoni jinżamm."
       },
       "invoice": {
         "question": "Il-helmits u t-tagħmir ta' sigurtà huma inklużi?",
@@ -236,7 +323,12 @@
     "description": "Ċempel, ibgħat messaġġ, jew żurna — aħna hawn biex ngħinuk tagħżel il-vjaġġ it-tajjeb. In-numru tal-mowbajl u l-post fuq il-mappa huma hawn taħt.",
     "whatsappTitle": "Ibgħat messaġġ WhatsApp",
     "whatsappBody": "Ngħinuk tagħżel il-vjaġġ it-tajjeb u nwieġbu mistoqsijiet ta' disponibilità.",
-    "envWhatsappHint": "Issettja NEXT_PUBLIC_WHATSAPP_NUMBER biex tħaddem il-buttuna WhatsApp."
+    "envWhatsappHint": "Issettja NEXT_PUBLIC_WHATSAPP_NUMBER biex tħaddem il-buttuna WhatsApp.",
+    "heroTitle": "Trid rot biex tesplora Malta? Hawn huwa fejn tibda.",
+    "heroDescription": "Explore Malta Rentals huwa għażla eċċellenti għal viżitaturi li jiskopru l-gżira — pariri lokali, pickup malajr f'Pietà, u flotta f'ordni għal kull pjan.",
+    "ctaButton": "Ikkuntattjana",
+    "contactDetailsTitle": "Dettalji ta' kuntatt",
+    "locationImageAlt": "Explore Malta Rentals — post tal-pickup f'Pietà"
   },
   "Footer": {
     "exploreHome": "Id-Dar",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "Il-ħin tal-irkupru huwa meħtieġ",
     "returnDateRequired": "Id-data tar-ritorn hija meħtieġa",
     "returnTimeRequired": "Il-ħin tar-ritorn huwa meħtieġ",
-    "minRental": "Il-kiri minimu huwa 24 siegħa",
+    "minRental": "Il-ħin tar-ritorn irid ikun wara l-ħin tal-ġbir.",
     "maxRental": "Il-kiri massimu huwa 4 ġimgħat",
     "pickupAddressDelivery": "L-indirizz tal-irkupru huwa meħtieġ għall-konsenja",
     "dropoffAddressRequired": "L-indirizz tad-drop-off huwa meħtieġ",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "Kiri itwal jiftħu skonti fuq id-durata qabel l-extra — użahom bħala gwida waqt it-tfittxija.",
     "ariaFilters": "Filtri tal-vetturi",
-    "ariaRates": "Rati ta' kuljum indikattivi"
+    "ariaRates": "Rati ta' kuljum indikattivi",
+    "group50": "Skuters 50cc",
+    "group125": "Muturi 125cc",
+    "groupOther": "Vetturi oħra",
+    "groupCount": "{count, plural, one {# vettura} other {# vetturi}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "Tfittxija tal-vettura",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}: {percent}% skont fuq id-durata · Il-prezz finali jiddependi fuq il-vettura u ż-żidiet.",
-    "durationDiscountSummaryMax": "Ikri 7+ ijiem u iffranka sa {percent}% · Il-prezz finali jiddependi fuq il-vettura u ż-żidiet."
+    "durationDiscountSummaryMax": "Ikri 7+ ijiem u iffranka sa {percent}% · Il-prezz finali jiddependi fuq il-vettura u ż-żidiet.",
+    "moreFilters": "Aktar filtri",
+    "fewerFilters": "Inqas filtri"
   },
   "BookingForm": {
     "invalidPickupDate": "Data tal-irkupru invalida",
@@ -811,11 +909,11 @@
       "returnTime": "Ħin tar-ritorn",
       "sectionDuration": "Sezzjoni: Perjodu tal-Kiri (Wiri)",
       "autoDuration": "Perjodu kkalkolat awtomatikament:",
-      "durationLine": "{days} jum/jiem ({hours}s)",
+      "durationLine": "{hours} siegħat · iċċarġjat bħala {days, plural, one {# jum} other {# ijiem}}",
       "durationInvalid": "Id-data/ħin tar-ritorn għandhom ikunu wara l-irkupru",
       "durationWaiting": "Qed jistenna dati validi",
       "notesTitle": "Noti:",
-      "noteMin": "Il-kiri minimu huwa 24 siegħa.",
+      "noteMin": "Il-ħin tar-ritorn irid ikun wara l-ħin tal-ġbir.",
       "noteDayCharge": "Jekk inqas minn 24 siegħa, jiġi mħallas jum sħiħ.",
       "noteMax": "Il-kiri massimu huwa 4 ġimgħat.",
       "noteRenew": "Għażla ta' tiġdid hija disponibbli."
@@ -837,8 +935,8 @@
       "rentalDates": "Dati tal-kiri:",
       "to": "sa",
       "billableDuration": "Perjodu fatturabbli:",
-      "dayCount": "{count} jum/jiem",
-      "actualHours": " (attwali {hours}s)",
+      "dayCount": "iċċarġjat bħala {count, plural, one {# jum} other {# ijiem}}",
+      "actualHours": "{hours} siegħat",
       "pickupMethod": "Metodu tal-irkupru:",
       "pickupAddress": "Indirizz tal-irkupru:",
       "dropoffMethod": "Metodu tad-drop-off:",
@@ -855,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Sewwieq Addizzjonali:",
       "storageCost": "Kaxxa ta' Ħażna:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Subtotali:",
       "pricingPending": "Previżjoni tal-prezzar tidher ladarba l-vettura u d-dati/ħinijiet tal-kiri jkunu validi.",
       "section3": "Sezzjoni 3 - Depożitu u Totali",

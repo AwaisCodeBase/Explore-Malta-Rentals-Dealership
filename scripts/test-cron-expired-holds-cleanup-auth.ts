@@ -130,10 +130,13 @@ function testRouteWiringAndHobbySchedule() {
   const vercel = JSON.parse(
     fs.readFileSync(path.join(process.cwd(), "vercel.json"), "utf8"),
   ) as { crons: Array<{ path: string; schedule: string }> };
-  assert.equal(vercel.crons.length, 2);
+  assert.equal(vercel.crons.length, 3, "recovery + cleanup + review-requests");
   const cleanup = vercel.crons.find((c) => c.path === "/api/cron/expired-holds-cleanup");
   assert.ok(cleanup);
   assert.equal(cleanup!.schedule, "0 4 * * *", "Hobby: once daily UTC");
+  const review = vercel.crons.find((c) => c.path === "/api/cron/review-requests");
+  assert.ok(review);
+  assert.equal(review!.schedule, "0 5 * * *", "Hobby: daily (not every-minute)");
   for (const c of vercel.crons) {
     // Hobby forbids more-than-daily expressions; these must be pure daily forms.
     assert.match(c.schedule, /^0 \d{1,2} \* \* \*$/);

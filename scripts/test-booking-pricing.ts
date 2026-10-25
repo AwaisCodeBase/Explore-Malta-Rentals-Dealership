@@ -7,6 +7,15 @@ import type { z } from "zod";
 
 import { bookingSubmissionSchema } from "../src/lib/booking/bookingSubmissionSchema";
 import {
+  BOOKABLE_HELMET_SIZES,
+  isBookableHelmetSize,
+  isStoredHelmetSize,
+  STORED_HELMET_SIZES,
+} from "../src/lib/booking/helmet-sizes";
+import { buildAdminBookingNotificationEmail } from "../src/lib/email/buildAdminBookingNotificationEmail";
+import { buildBookingConfirmationEmail } from "../src/lib/email/buildBookingConfirmationEmail";
+import type { Booking } from "../src/generated/prisma/client";
+import {
   isPickupDeliveryAllowedForDate,
   isSundayDateOnly,
 } from "../src/lib/booking/delivery-availability";
@@ -177,6 +186,35 @@ function runCalendarRentalDaysAssertions(): void {
   );
   if (returnBeforePickupTimed !== null) {
     throw new Error("return before pickup datetime must be rejected");
+  }
+
+  const zeroDuration = calculateRentalDuration("2026-07-24", "10:00", "2026-07-24", "10:00");
+  if (zeroDuration !== null) {
+    throw new Error("zero-duration rental must be rejected");
+  }
+
+  const sameDayEarlierReturn = calculateRentalDuration(
+    "2026-07-24",
+    "10:00",
+    "2026-07-24",
+    "09:00",
+  );
+  if (sameDayEarlierReturn !== null) {
+    throw new Error("same-day return before pickup must be rejected");
+  }
+
+  const twoHourRental = calculateRentalDuration("2026-07-24", "12:00", "2026-07-24", "14:00");
+  if (!twoHourRental || twoHourRental.billableDays !== 1 || twoHourRental.actualDurationHours !== 2) {
+    throw new Error(
+      `2-hour rental should bill 1 day with 2 actual hours, got ${JSON.stringify(twoHourRental)}`,
+    );
+  }
+
+  const twentyThreeHours = calculateRentalDuration("2026-07-20", "10:00", "2026-07-21", "09:00");
+  if (!twentyThreeHours || twentyThreeHours.billableDays !== 2) {
+    throw new Error(
+      `23-hour overnight rental must keep inclusive calendar billing (2 days), got ${twentyThreeHours?.billableDays ?? "null"}`,
+    );
   }
 
   console.log("Calendar rental days assertions passed");
@@ -464,6 +502,128 @@ const bookingBody: BookingPayload = {
   },
 };
 
+function runShortRentalAssertions(): void {
+  const eightHour = calculateBookingPrice({
+    ...basePricingInput,
+    rental: {
+      ...basePricingInput.rental,
+      pickupDate: "2026-05-10",
+      returnDate: "2026-05-10",
+      pickupTime: "09:00",
+      returnTime: "17:00",
+    },
+    vehiclePricing: {
+      ...basePricingInput.vehiclePricing,
+      baseDailyRate: 40,
+    },
+  });
+  if (!eightHour) {
+    throw new Error("8-hour rental pricing returned null");
+  }
+  assertApprox("8-hour billable days", eightHour.rentalDays, 1);
+  assertApprox("8-hour rental cost is one full day", eightHour.rentalCost, 40);
+  assertApprox("8-hour actual duration", eightHour.actualDurationHours, 8);
+  if (eightHour.tierKey !== "TIER_1" || eightHour.durationDiscountPercent !== 0) {
+    throw new Error("sub-24-hour rental must use the 1-day tier, not a longer discount");
+  }
+
+  const priced23 = calculateBookingPrice({
+    ...basePricingInput,
+    rental: {
+      ...basePricingInput.rental,
+      pickupDate: "2026-05-11",
+      returnDate: "2026-05-12",
+      pickupTime: "10:00",
+      returnTime: "09:00",
+    },
+    vehiclePricing: {
+      ...basePricingInput.vehiclePricing,
+      baseDailyRate: 40,
+    },
+  });
+  if (!priced23 || priced23.rentalDays !== 2 || priced23.rentalCost !== 80) {
+    throw new Error(
+      `23-hour cross-midnight rental must bill 2 calendar days, got days=${priced23?.rentalDays} cost=${priced23?.rentalCost}`,
+    );
+  }
+
+  expectSchemaSuccess("same-day 8-hour rental", {
+    ...bookingBody,
+    rental: {
+      ...bookingBody.rental,
+      pickupDate: "2026-05-10",
+      returnDate: "2026-05-10",
+      pickupTime: "09:00",
+      returnTime: "17:00",
+    },
+  });
+
+  expectSchemaSuccess("23-hour rental", {
+    ...bookingBody,
+    rental: {
+      ...bookingBody.rental,
+      pickupDate: "2026-05-11",
+      returnDate: "2026-05-12",
+      pickupTime: "10:00",
+      returnTime: "09:00",
+    },
+  });
+
+  expectSchemaFailure(
+    "zero duration",
+    {
+      ...bookingBody,
+      rental: {
+        ...bookingBody.rental,
+        pickupDate: "2026-05-10",
+        returnDate: "2026-05-10",
+        pickupTime: "10:00",
+        returnTime: "10:00",
+      },
+    },
+    (path) => path === "rental.returnTime",
+  );
+
+  expectSchemaFailure(
+    "negative duration",
+    {
+      ...bookingBody,
+      rental: {
+        ...bookingBody.rental,
+        pickupDate: "2026-05-10",
+        returnDate: "2026-05-10",
+        pickupTime: "10:00",
+        returnTime: "09:00",
+      },
+    },
+    (path) => path === "rental.returnTime",
+  );
+
+  const normalized = normalizeBookingPayload(
+    bookingSubmissionSchema.parse({
+      ...bookingBody,
+      rental: {
+        ...bookingBody.rental,
+        pickupDate: "2026-05-10",
+        returnDate: "2026-05-10",
+        pickupTime: "09:00",
+        returnTime: "17:00",
+      },
+    }),
+  );
+  if (normalized.billableDays !== 1) {
+    throw new Error(`normalized short rental must store 1 billable day, got ${normalized.billableDays}`);
+  }
+  if (normalized.actualDurationHours !== 8) {
+    throw new Error(`normalized short rental must keep actual hours, got ${normalized.actualDurationHours}`);
+  }
+  if (normalized.returnDateTime.getTime() - normalized.pickupDateTime.getTime() !== 8 * 60 * 60 * 1000) {
+    throw new Error("short rental must keep the actual pickup/return interval");
+  }
+
+  console.log("Short rental assertions passed");
+}
+
 function runNegativeValidationTests(): void {
   expectSchemaFailure(
     "wrong license (A1 on Scooter)",
@@ -510,6 +670,109 @@ function runNegativeValidationTests(): void {
     },
     (p) => p === "addons.helmetSize1" || p === "addons.helmetSize2",
   );
+
+  expectSchemaSuccess("XL helmet size", {
+    ...bookingBody,
+    addons: {
+      ...bookingBody.addons,
+      helmetSize1: "XL",
+      helmetSize2: "L",
+    },
+  });
+
+  expectSchemaFailure(
+    "legacy Small helmet size on a new booking",
+    {
+      ...bookingBody,
+      addons: {
+        ...bookingBody.addons,
+        helmetSize1: "S",
+        helmetSize2: "M",
+      },
+    } as unknown as BookingPayload,
+    (p) => p === "addons.helmetSize1",
+  );
+
+  expectSchemaFailure(
+    "unsupported helmet size",
+    {
+      ...bookingBody,
+      addons: {
+        ...bookingBody.addons,
+        helmetSize1: "XXL",
+        helmetSize2: "M",
+      },
+    } as unknown as BookingPayload,
+    (p) => p === "addons.helmetSize1",
+  );
+}
+
+function helmetEmailFixture(
+  helmetSize1: "S" | "XL",
+  helmetSize2: "S" | "XL",
+): Booking {
+  return {
+    bookingReference: "EMR-HELMET",
+    customerFullName: "Test Rider",
+    customerEmail: "rider@example.com",
+    customerPhone: "+35600000000",
+    vehicleType: "Scooter",
+    vehicleNameSnapshot: null,
+    vehicleLicensePlateSnapshot: null,
+    pickupDateTime: new Date("2026-05-10T10:00:00Z"),
+    returnDateTime: new Date("2026-05-11T10:00:00Z"),
+    billableDays: 1,
+    actualDurationHours: 24,
+    pickupOption: "OFFICE",
+    pickupAddress: null,
+    dropoffOption: "OFFICE",
+    dropoffAddress: null,
+    cdwOption: "NO_CDW",
+    additionalDriverEnabled: false,
+    storageBoxSelected: false,
+    helmetSize1,
+    helmetSize2,
+    subtotal: 40,
+    totalDueOnline: 0,
+    depositAmount: 0,
+    depositMethod: "IN_PERSON",
+    totalDueLater: 40,
+    termsAccepted: true,
+  } as unknown as Booking;
+}
+
+function runHelmetSizeAssertions(): void {
+  if (BOOKABLE_HELMET_SIZES.join(",") !== "M,L,XL") {
+    throw new Error(`bookable helmet sizes changed unexpectedly: ${BOOKABLE_HELMET_SIZES.join(",")}`);
+  }
+  if (STORED_HELMET_SIZES.join(",") !== "S,M,L,XL") {
+    throw new Error(`stored helmet sizes changed unexpectedly: ${STORED_HELMET_SIZES.join(",")}`);
+  }
+  if (isBookableHelmetSize("S") || !isStoredHelmetSize("S") || !isBookableHelmetSize("XL")) {
+    throw new Error("helmet size helpers do not distinguish legacy Small from bookable XL");
+  }
+
+  const xlBooking = helmetEmailFixture("XL", "XL");
+  const customerXl = buildBookingConfirmationEmail(xlBooking);
+  if (!customerXl.text.includes("size XL") || !customerXl.html.includes("size XL")) {
+    throw new Error("customer confirmation did not render XL");
+  }
+  const adminXl = buildAdminBookingNotificationEmail(xlBooking);
+  if (!adminXl.text.includes("XL, XL") || !adminXl.html.includes("XL, XL")) {
+    throw new Error("admin notification did not render XL");
+  }
+
+  const smallBooking = helmetEmailFixture("S", "S");
+  const customerSmall = buildBookingConfirmationEmail(smallBooking);
+  if (!customerSmall.text.includes("size S") || !customerSmall.html.includes("size S")) {
+    throw new Error("customer confirmation did not render historical Small");
+  }
+  const adminSmall = buildAdminBookingNotificationEmail(smallBooking);
+  if (!adminSmall.text.includes("S, S") || !adminSmall.html.includes("S, S")) {
+    throw new Error("admin notification did not render historical Small");
+  }
+
+  console.log("Helmet size assertions passed");
 }
 
 function runStorageBoxAssertions(): void {
@@ -783,7 +1046,9 @@ async function main(): Promise<void> {
   runStorageBoxAssertions();
   runHotelDiscountAssertions();
   runInsurancePlanAssertions();
+  runShortRentalAssertions();
   runNegativeValidationTests();
+  runHelmetSizeAssertions();
   runSundayDeliveryRestrictionTests();
   console.log("All checks OK.");
 }

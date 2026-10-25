@@ -35,6 +35,7 @@ model Vehicle {
   images              VehicleImage[]
   pricingRules        VehiclePricingRule[]
   units               VehicleUnit[]
+  vehicleAssignments  BookingVehicleAssignment[]
 
   @@index([isActive, displayOrder])
   @@index([vehicleType, isActive])
@@ -53,8 +54,9 @@ model VehicleUnit {
   updatedAt        DateTime               @updatedAt
   bookings         Booking[]
   reservationHolds ReservationHold[]
-  vehicle          Vehicle                @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicle          Vehicle                     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   occupancies      VehicleUnitOccupancy[]
+  assignments      BookingVehicleAssignment[]
 
   @@index([vehicleId, isActive, status])
   @@index([vehicleId, createdAt])
@@ -134,8 +136,12 @@ model AdminUser {
   isActive      Boolean                @default(true)
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
-  sessions      AdminSession[]
-  statusChanges BookingStatusHistory[]
+  sessions            AdminSession[]
+  statusChanges       BookingStatusHistory[]
+  bookingExtensions   BookingExtension[]
+  vehicleReplacements BookingVehicleAssignment[]
+  initiatedEmails     EmailLog[]
+  manualReviewResends BookingReviewRequest[] @relation("BookingReviewRequestManualResend")
 
   @@index([role, isActive])
 }
@@ -321,6 +327,9 @@ model Booking {
   depositDeductionReason                     String?
   completionNotes                            String?
   idempotencyKey                             String?                 @unique
+  /// €5 loyalty discount applied to this booking's charges. Null when none was redeemed.
+  /// The security deposit is not included in this amount.
+  loyaltyCreditAmount                        Decimal?                @db.Decimal(10, 2)
   hotelCode                                  HotelCode?              @relation(fields: [hotelCodeId], references: [id])
   hotelPartner                               HotelPartner?           @relation(fields: [hotelPartnerId], references: [id])
   acceptedTermsVersion                       TermsVersion?           @relation(fields: [termsVersionId], references: [id])
@@ -329,9 +338,14 @@ model Booking {
   documents                                  BookingDocument[]
   statusHistory                              BookingStatusHistory[]
   emailLogs                                  EmailLog[]
+  reviewRequest                              BookingReviewRequest?
+  loyaltyCreditIssued                        CustomerLoyaltyCredit?  @relation("LoyaltyCreditSource")
+  loyaltyCreditRedeemed                      CustomerLoyaltyCredit?  @relation("LoyaltyCreditRedemption")
   reservationHolds                           ReservationHold[]
+  extensions                                 BookingExtension[]
   StripePayment                              StripePayment?
-  unitOccupancy                              VehicleUnitOccupancy?
+  unitOccupancies                            VehicleUnitOccupancy[]
+  vehicleAssignments                         BookingVehicleAssignment[]
 
   @@index([status, createdAt])
   @@index([paymentStatus])
@@ -344,6 +358,28 @@ model Booking {
   @@index([vehicleId])
   @@index([vehicleUnitId])
   @@index([termsVersionId])
+}
+
+/// Incremental return-date extension. Amounts are the extra charge at the original booking rate.
+model BookingExtension {
+  id                            String    @id @default(cuid())
+  bookingId                     String
+  previousReturnDateTime        DateTime
+  newReturnDateTime             DateTime
+  additionalBillableDays        Int
+  appliedDailyRate              Decimal   @db.Decimal(10, 2)
+  additionalRentalAmount        Decimal   @db.Decimal(10, 2)
+  additionalHotelDiscountAmount Decimal   @default(0) @db.Decimal(10, 2)
+  additionalCdwAmount           Decimal   @default(0) @db.Decimal(10, 2)
+  additionalDriverAmount        Decimal   @default(0) @db.Decimal(10, 2)
+  additionalAmount              Decimal   @db.Decimal(10, 2)
+  createdByAdminId              String?
+  createdAt                     DateTime  @default(now())
+  booking                       Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  createdBy                     AdminUser? @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId, createdAt])
+  @@index([createdByAdminId])
 }
 
 model BookingStatusHistory {
@@ -370,14 +406,63 @@ model EmailLog {
   status            ConfirmationEmailStatus
   providerMessageId String?
   errorMessage      String?
-  sentAt            DateTime?
-  failedAt          DateTime?
-  createdAt         DateTime                @default(now())
-  booking           Booking?                @relation(fields: [bookingId], references: [id])
+  sentAt             DateTime?
+  failedAt           DateTime?
+  createdAt          DateTime                @default(now())
+  initiatedByAdminId String?
+  booking            Booking?                @relation(fields: [bookingId], references: [id])
+  initiatedBy        AdminUser?              @relation(fields: [initiatedByAdminId], references: [id], onDelete: SetNull)
 
   @@index([bookingId, createdAt])
   @@index([recipientEmail, createdAt])
   @@index([status, createdAt])
+  @@index([initiatedByAdminId])
+}
+
+/// One €5 next-rental credit earned by a returned booking.
+/// Identity is the normalized customer email. There is no customer account.
+/// A source booking issues at most one credit. A credit is redeemed by at most one booking.
+model CustomerLoyaltyCredit {
+  id                      String              @id @default(cuid())
+  sourceBookingId         String              @unique
+  customerEmailNormalized String
+  amount                  Decimal             @db.Decimal(10, 2)
+  currency                String              @default("EUR")
+  status                  LoyaltyCreditStatus @default(AVAILABLE)
+  issuedAt                DateTime            @default(now())
+  redeemedAt              DateTime?
+  redeemedBookingId       String?             @unique
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  sourceBooking           Booking             @relation("LoyaltyCreditSource", fields: [sourceBookingId], references: [id], onDelete: Cascade)
+  redeemedBooking         Booking?            @relation("LoyaltyCreditRedemption", fields: [redeemedBookingId], references: [id], onDelete: Restrict)
+
+  @@index([customerEmailNormalized, status, issuedAt])
+}
+
+/// One automatic post-return review request per booking.
+/// Delivery runs outside the rental-return transaction.
+model BookingReviewRequest {
+  id                        String              @id @default(cuid())
+  bookingId                 String              @unique
+  status                    ReviewRequestStatus
+  scheduledAt               DateTime
+  sentAt                    DateTime?
+  lastSentAt                DateTime?
+  attempts                  Int                 @default(0)
+  lastError                 String?
+  skippedReason             String?
+  processingStartedAt       DateTime?
+  manualResendCount         Int                 @default(0)
+  lastManualResendAt        DateTime?
+  lastManualResendByAdminId String?
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  booking                   Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  lastManualResendBy        AdminUser?          @relation("BookingReviewRequestManualResend", fields: [lastManualResendByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([status, scheduledAt])
+  @@index([lastManualResendByAdminId])
 }
 
 model AvailabilityBlock {
@@ -443,13 +528,15 @@ model ContactInquiry {
 }
 
 /// Database-enforced non-overlapping occupancy per physical unit (half-open [pickupAt, returnAt)).
+/// One booking may own several rows after a mid-rental replacement: the closed interval on the
+/// previous unit, and the remaining interval on the unit now with the customer.
 /// The generated `period` column and EXCLUDE constraint are defined in SQL migration.
 model VehicleUnitOccupancy {
   id                String                    @id @default(cuid())
   vehicleUnitId     String
   pickupAt          DateTime                  @db.Timestamptz(3)
   returnAt          DateTime                  @db.Timestamptz(3)
-  bookingId         String?                   @unique
+  bookingId         String?
   reservationHoldId String?                   @unique
   createdAt         DateTime                  @default(now())
   period            Unsupported("tstzrange")? @default(dbgenerated("tstzrange(\"pickupAt\", \"returnAt\", '[)'::text)"))
@@ -458,7 +545,37 @@ model VehicleUnitOccupancy {
   vehicleUnit       VehicleUnit               @relation(fields: [vehicleUnitId], references: [id], onDelete: Cascade)
 
   @@index([vehicleUnitId])
+  @@index([bookingId])
   @@index([pickupAt, returnAt])
+}
+
+/// Physical vehicles actually handed to the customer on one booking.
+/// These rows stay after occupancy locks are released on completion or cancellation.
+model BookingVehicleAssignment {
+  id                   String             @id @default(cuid())
+  bookingId            String
+  vehicleId            String?
+  vehicleUnitId        String
+  vehicleNameSnapshot  String
+  licensePlateSnapshot String?
+  colorSnapshot        String?
+  vehicleTypeSnapshot  VehicleType?
+  startedAt            DateTime
+  endedAt              DateTime?
+  endDisposition       VehicleUnitStatus?
+  reason               String?
+  note                 String?
+  createdByAdminId     String?
+  createdAt            DateTime           @default(now())
+  booking              Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  vehicle              Vehicle?           @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  vehicleUnit          VehicleUnit        @relation(fields: [vehicleUnitId], references: [id], onDelete: Restrict)
+  createdBy            AdminUser?         @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId, startedAt])
+  @@index([vehicleUnitId])
+  @@index([vehicleId])
+  @@index([createdByAdminId])
 }
 
 model BookingDocument {
@@ -638,6 +755,11 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum LoyaltyCreditStatus {
+  AVAILABLE
+  REDEEMED
+}
+
 enum PaymentStatus {
   PENDING
   PAID
@@ -762,10 +884,12 @@ enum CdwOption {
   REDUCE_800_ATV
 }
 
+/// S is retained for historical bookings. New bookings select M, L, or XL only.
 enum HelmetSize {
   S
   M
   L
+  XL
 }
 
 enum ConfirmationEmailStatus {
@@ -787,6 +911,15 @@ enum EmailType {
   BOOKING_CONFIRMATION
   BOOKING_UPDATE
   GENERAL_CONTACT_REPLY
+  REVIEW_REQUEST
+}
+
+enum ReviewRequestStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  SKIPPED
 }
 
 enum AvailabilityBlockType {

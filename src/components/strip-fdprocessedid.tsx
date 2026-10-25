@@ -1,39 +1,36 @@
-"use client";
+import Script from "next/script";
 
-import { useEffect } from "react";
+const STRIP_FDPROCESSEDID_SCRIPT = `
+(function () {
+  var name = "fdprocessedid";
+  function strip(el) {
+    if (!(el instanceof Element)) return;
+    if (el.hasAttribute(name)) el.removeAttribute(name);
+    el.querySelectorAll("[" + name + "]").forEach(function (node) {
+      node.removeAttribute(name);
+    });
+  }
+  strip(document.documentElement);
+  new MutationObserver(function (mutations) {
+    for (var i = 0; i < mutations.length; i++) {
+      if (mutations[i].type === "attributes") strip(mutations[i].target);
+    }
+  }).observe(document.documentElement, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: [name],
+  });
+})();
+`;
 
-/** Removes `fdprocessedid` injected by browser extensions (e.g. form fillers) to avoid hydration noise. */
+/**
+ * Strips `fdprocessedid` injected by browser extensions (form fillers, etc.)
+ * before React hydrates, preventing hydration mismatch noise in dev.
+ */
 export function StripFdprocessedId() {
-  useEffect(() => {
-    const attributeName = "fdprocessedid";
-
-    const stripInjectedAttribute = (target: Node) => {
-      if (!(target instanceof Element)) return;
-      if (target.hasAttribute(attributeName)) {
-        target.removeAttribute(attributeName);
-      }
-    };
-
-    document.querySelectorAll(`[${attributeName}]`).forEach((element) => {
-      element.removeAttribute(attributeName);
-    });
-
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.type === "attributes") {
-          stripInjectedAttribute(mutation.target);
-        }
-      }
-    });
-
-    observer.observe(document.documentElement, {
-      subtree: true,
-      attributes: true,
-      attributeFilter: [attributeName],
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  return null;
+  return (
+    <Script id="strip-fdprocessedid" strategy="beforeInteractive">
+      {STRIP_FDPROCESSEDID_SCRIPT}
+    </Script>
+  );
 }

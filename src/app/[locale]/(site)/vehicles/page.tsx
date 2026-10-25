@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/container";
 import { BookingSearchFormSkeleton } from "@/features/booking/components/booking-search-form-skeleton";
 import { VehicleGridServer } from "@/features/vehicles/components/vehicle-grid-server";
 import { VehicleListingShell } from "@/features/vehicles/components/vehicle-listing-shell";
+import type { VehicleColor } from "@/features/vehicles/data/vehicles";
 import { filterVehiclesFromSearchParams } from "@/features/vehicles/lib/filter-vehicles";
 import { getDistinctActiveVehicleBrands } from "@/lib/vehicles/getDistinctActiveVehicleBrands";
 import { getInitialVehiclesForListing } from "@/lib/vehicles/getInitialVehiclesForListing";
@@ -74,6 +75,14 @@ export default async function VehiclesPage({ params, searchParams }: VehiclesPag
     resolvedSearchParams,
   );
 
+  const listingColorOptions = [
+    ...new Set(
+      initialVehicles
+        .map((vehicle) => vehicle.color)
+        .filter((color): color is VehicleColor => color != null),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+
   const bookingHref = rentalWindow
     ? `/booking?${new URLSearchParams({
         date: rentalWindow.pickupDate,
@@ -122,7 +131,11 @@ export default async function VehiclesPage({ params, searchParams }: VehiclesPag
                 <BookingSearchFormSkeleton />
               }
             >
-              <BookingSearchFormFromUrl brandOptions={brandOptions} />
+              <BookingSearchFormFromUrl
+                brandOptions={brandOptions}
+                vehicleListingFilters
+                listingColorOptions={listingColorOptions}
+              />
             </Suspense>
           }
         >

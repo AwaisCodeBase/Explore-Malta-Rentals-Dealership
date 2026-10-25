@@ -15,17 +15,24 @@ export type SyncBookingOccupancyInput = OccupancyPeriodInput & {
   bookingId: string;
 };
 
-/** Aligns the booking calendar lock with the booking's assigned vehicle unit. */
+/**
+ * Aligns the active calendar lock with the assigned unit.
+ * An existing lock on that unit is left in place, including any earlier intervals on other units.
+ * Moving the lock deletes every occupancy for the booking, which is only safe before a replacement history exists.
+ */
 export async function syncBookingOccupancyToAssignedUnit(
   db: SyncBookingOccupancyDb,
   input: SyncBookingOccupancyInput,
 ): Promise<void> {
-  const occupancy = await db.vehicleUnitOccupancy.findUnique({
-    where: { bookingId: input.bookingId },
-    select: { vehicleUnitId: true },
+  const occupancy = await db.vehicleUnitOccupancy.findFirst({
+    where: {
+      bookingId: input.bookingId,
+      vehicleUnitId: input.vehicleUnitId,
+    },
+    select: { id: true },
   });
 
-  if (occupancy?.vehicleUnitId === input.vehicleUnitId) {
+  if (occupancy) {
     return;
   }
 

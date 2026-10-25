@@ -1,10 +1,13 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, KeyRound, Loader2, RotateCcw, Undo2, XCircle } from "lucide-react";
+import { ArrowRight, ArrowRightLeft, Bike, CalendarPlus, CheckCircle2, KeyRound, Loader2, RotateCcw, Undo2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import { AdminBookingChangeVehicleDialog } from "@/features/admin/components/admin-booking-change-vehicle-dialog";
+import { AdminBookingReplaceVehicleDialog } from "@/features/admin/components/admin-booking-replace-vehicle-dialog";
+import { AdminBookingExtendDialog } from "@/features/admin/components/admin-booking-extend-dialog";
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import type { AdminVehicleUnitDto } from "@/lib/admin/vehicle-units/types";
 import { buildBookingCancellationEmailDraft } from "@/lib/email/buildBookingCancellationEmailDraft";
@@ -14,7 +17,7 @@ type AdminBookingLifecycleActionsProps = Readonly<{
   vehicleUnits: AdminVehicleUnitDto[];
 }>;
 
-type ActiveDialog = "handOver" | "markReturned" | "complete" | "cancel" | "restore" | null;
+type ActiveDialog = "handOver" | "markReturned" | "complete" | "cancel" | "restore" | "extend" | "changeVehicle" | "replaceVehicle" | null;
 
 function previousStatusBeforeCancel(booking: AdminBookingDetail): "CONFIRMED" | "PENDING_PAYMENT" {
   const cancelled = booking.statusHistory.find(
@@ -428,16 +431,31 @@ export function AdminBookingLifecycleActions({
     setActiveDialog("restore");
   }
 
+  const showChangeVehicle = booking.status === "CONFIRMED" || booking.status === "PENDING_PAYMENT";
+  const showReplaceVehicle = booking.status === "VEHICLE_HANDED_OVER" && Boolean(booking.vehicleUnitId);
   const showHandOver =
     booking.status === "CONFIRMED" &&
     (Number(booking.totalDueOnline) <= 0 || booking.paymentStatus === "PAID");
+  const showExtend =
+    (booking.status === "CONFIRMED" || booking.status === "VEHICLE_HANDED_OVER") &&
+    Boolean(booking.vehicleUnitId);
   const showCancel = booking.status === "CONFIRMED" || booking.status === "PENDING_PAYMENT";
   const showMarkReturned = booking.status === "VEHICLE_HANDED_OVER";
   const showComplete = booking.status === "RETURNED";
   const showRestore = booking.status === "CANCELLED";
   const readOnlyLifecycle = booking.status === "COMPLETED";
 
-  if (!showHandOver && !showCancel && !showMarkReturned && !showComplete && !showRestore && !readOnlyLifecycle) {
+  if (
+    !showChangeVehicle &&
+    !showReplaceVehicle &&
+    !showHandOver &&
+    !showExtend &&
+    !showCancel &&
+    !showMarkReturned &&
+    !showComplete &&
+    !showRestore &&
+    !readOnlyLifecycle
+  ) {
     return null;
   }
 
@@ -454,6 +472,19 @@ export function AdminBookingLifecycleActions({
           <p className="text-sm font-semibold text-slate-700">
             {t("guidelines.availableActions")}
           </p>
+          {showChangeVehicle ? (
+            <LifecycleActionCard
+              title={t("actions.changeVehicle")}
+              summary={t("guidelines.actions.changeVehicle.summary")}
+              effects={t("guidelines.actions.changeVehicle.effects")}
+              effectsLabel={t("guidelines.effectsLabel")}
+              icon={Bike}
+              onAction={() => {
+                setError(null);
+                setActiveDialog("changeVehicle");
+              }}
+            />
+          ) : null}
           {showHandOver ? (
             <LifecycleActionCard
               title={t("actions.handOver")}
@@ -462,6 +493,33 @@ export function AdminBookingLifecycleActions({
               effectsLabel={t("guidelines.effectsLabel")}
               icon={KeyRound}
               onAction={() => setActiveDialog("handOver")}
+            />
+          ) : null}
+          {showExtend ? (
+            <LifecycleActionCard
+              title={t("actions.extend")}
+              summary={t("guidelines.actions.extend.summary")}
+              effects={t("guidelines.actions.extend.effects")}
+              effectsLabel={t("guidelines.effectsLabel")}
+              icon={CalendarPlus}
+              onAction={() => {
+                setError(null);
+                setActiveDialog("extend");
+              }}
+            />
+          ) : null}
+          {showReplaceVehicle ? (
+            <LifecycleActionCard
+              title={t("actions.replaceVehicle")}
+              summary={t("guidelines.actions.replaceVehicle.summary")}
+              effects={t("guidelines.actions.replaceVehicle.effects")}
+              effectsLabel={t("guidelines.effectsLabel")}
+              icon={ArrowRightLeft}
+              variant="orange"
+              onAction={() => {
+                setError(null);
+                setActiveDialog("replaceVehicle");
+              }}
             />
           ) : null}
           {showMarkReturned ? (
@@ -509,6 +567,42 @@ export function AdminBookingLifecycleActions({
           ) : null}
         </div>
       )}
+
+      {activeDialog === "changeVehicle" ? (
+        <AdminBookingChangeVehicleDialog
+          booking={booking}
+          isSubmitting={isSubmitting}
+          error={error}
+          onClose={closeLifecycleDialog}
+          onConfirm={(input) => {
+            void submitAction("change-vehicle", input);
+          }}
+        />
+      ) : null}
+
+      {activeDialog === "replaceVehicle" ? (
+        <AdminBookingReplaceVehicleDialog
+          booking={booking}
+          isSubmitting={isSubmitting}
+          error={error}
+          onClose={closeLifecycleDialog}
+          onConfirm={(input) => {
+            void submitAction("replace-vehicle", input);
+          }}
+        />
+      ) : null}
+
+      {activeDialog === "extend" ? (
+        <AdminBookingExtendDialog
+          booking={booking}
+          isSubmitting={isSubmitting}
+          error={error}
+          onClose={closeLifecycleDialog}
+          onConfirm={(input) => {
+            void submitAction("extend", input);
+          }}
+        />
+      ) : null}
 
       {activeDialog === "handOver" ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">

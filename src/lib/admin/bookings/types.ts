@@ -2,6 +2,7 @@ import type {
   BookingStatus,
   ConfirmationEmailStatus,
   DepositMethod,
+  ReviewRequestStatus,
   PaymentMethod,
   PaymentStatus,
   SecurityDepositStatus,
@@ -18,6 +19,7 @@ export type AdminBookingListFilters = {
   year?: number;
   pickupFrom?: string;
   pickupTo?: string;
+  returnDate?: string;
   page?: number;
   pageSize?: number;
 };
@@ -59,6 +61,34 @@ export type AdminBookingStatusHistoryItem = {
   note: string | null;
   changedByAdminName: string | null;
   createdAt: string;
+};
+
+export type AdminBookingVehicleAssignmentItem = {
+  id: string;
+  vehicleName: string;
+  licensePlate: string | null;
+  color: string | null;
+  vehicleType: string | null;
+  startedAt: string;
+  endedAt: string | null;
+  endDisposition: VehicleUnitStatus | null;
+  reason: string | null;
+  note: string | null;
+};
+
+export type AdminBookingExtensionItem = {
+  id: string;
+  previousReturnDateTime: string;
+  newReturnDateTime: string;
+  additionalBillableDays: number;
+  appliedDailyRate: number;
+  additionalRentalAmount: number;
+  additionalHotelDiscountAmount: number;
+  additionalCdwAmount: number;
+  additionalDriverAmount: number;
+  additionalAmount: number;
+  createdAt: string;
+  createdByAdminName: string | null;
 };
 
 export type AdminBookingDetail = {
@@ -145,6 +175,9 @@ export type AdminBookingDetail = {
   depositMethod: DepositMethod;
   totalDueOnline: number;
   totalDueLater: number;
+  loyaltyCreditAmount: number | null;
+  issuedLoyaltyCredit: AdminLoyaltyCredit | null;
+  redeemedLoyaltyCredit: AdminRedeemedLoyaltyCredit | null;
 
   termsAccepted: boolean;
   termsAcceptedAt: string | null;
@@ -153,6 +186,7 @@ export type AdminBookingDetail = {
 
   confirmationEmailStatus: ConfirmationEmailStatus;
   confirmationEmailSentAt: string | null;
+  reviewRequest: AdminBookingReviewRequest | null;
 
   paymentReceivedAmount: number | null;
   paymentMethod: PaymentMethod | null;
@@ -167,6 +201,36 @@ export type AdminBookingDetail = {
   completionNotes: string | null;
 
   statusHistory: AdminBookingStatusHistoryItem[];
+  extensions: AdminBookingExtensionItem[];
+  vehicleAssignments: AdminBookingVehicleAssignmentItem[];
+};
+
+export type AdminLoyaltyCredit = {
+  amount: number;
+  status: "AVAILABLE" | "REDEEMED";
+  issuedAt: string;
+  redeemedAt: string | null;
+  redeemedBookingId: string | null;
+  redeemedBookingReference: string | null;
+};
+
+export type AdminRedeemedLoyaltyCredit = {
+  amount: number;
+  sourceBookingReference: string | null;
+};
+
+export type AdminBookingReviewRequest = {
+  status: ReviewRequestStatus;
+  scheduledAt: string;
+  sentAt: string | null;
+  lastSentAt: string | null;
+  attempts: number;
+  lastError: string | null;
+  skippedReason: string | null;
+  processingStartedAt: string | null;
+  manualResendCount: number;
+  lastManualResendAt: string | null;
+  lastManualResendByName: string | null;
 };
 
 export type AdminBookingVehicleOption = {

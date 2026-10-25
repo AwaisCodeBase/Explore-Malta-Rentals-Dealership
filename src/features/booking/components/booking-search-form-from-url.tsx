@@ -4,7 +4,16 @@ import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { BookingSearchForm } from "./booking-search-form";
 import { VEHICLE_TYPES } from "@/features/vehicles/data/vehicles";
-import { parseBrandSearchParam } from "@/features/vehicles/lib/booking-search-params";
+import {
+  parseBrandSearchParam,
+  parseCcSearchParam,
+  parseColorSearchParam,
+  parseSeatsSearchParam,
+  parseTransmissionSearchParam,
+  vehicleColorToUrlParam,
+  type EngineCcFilter,
+} from "@/features/vehicles/lib/booking-search-params";
+import type { VehicleColor } from "@/features/vehicles/data/vehicles";
 
 /**
  * Thin wrapper around BookingSearchForm that reads current URL search params and
@@ -16,10 +25,17 @@ import { parseBrandSearchParam } from "@/features/vehicles/lib/booking-search-pa
  */
 export function BookingSearchFormFromUrl({
   brandOptions,
-}: Readonly<{ brandOptions?: readonly string[] }> = {}) {
+  vehicleListingFilters = false,
+  listingColorOptions = [],
+}: Readonly<{
+  brandOptions?: readonly string[];
+  /** Extra transmission / seats / color fields for `/vehicles` only. */
+  vehicleListingFilters?: boolean;
+  listingColorOptions?: readonly VehicleColor[];
+}> = {}) {
   const searchParams = useSearchParams();
 
-  const initialValues = useMemo(() => {
+  const { initialValues, activeEngineCc } = useMemo(() => {
     const pickupDate =
       searchParams.get("pickupDate") ?? searchParams.get("date") ?? undefined;
     const dropoffDate =
@@ -36,10 +52,35 @@ export function BookingSearchFormFromUrl({
 
     const brand = parseBrandSearchParam(searchParams.get("brand"));
 
-    return { pickupDate, dropoffDate, pickupTime, dropoffTime, vehicleType, brand };
+    const transmission = parseTransmissionSearchParam(searchParams.get("transmission"));
+    const seats = parseSeatsSearchParam(searchParams.get("seats"));
+    const colorParsed = parseColorSearchParam(searchParams.get("color"));
+    const engineCc: EngineCcFilter = parseCcSearchParam(searchParams.get("cc"));
+
+    return {
+      activeEngineCc: engineCc,
+      initialValues: {
+        pickupDate,
+        dropoffDate,
+        pickupTime,
+        dropoffTime,
+        vehicleType,
+        brand,
+        transmission:
+          transmission === "All" ? "all" : transmission.toLowerCase(),
+        seats: seats === "All" ? "all" : String(seats),
+        color: colorParsed === "All" ? "all" : vehicleColorToUrlParam(colorParsed),
+      },
+    };
   }, [searchParams]);
 
   return (
-    <BookingSearchForm initialValues={initialValues} brandOptions={brandOptions} />
+    <BookingSearchForm
+      initialValues={initialValues}
+      brandOptions={brandOptions}
+      vehicleListingFilters={vehicleListingFilters}
+      listingColorOptions={listingColorOptions}
+      activeEngineCc={activeEngineCc}
+    />
   );
 }

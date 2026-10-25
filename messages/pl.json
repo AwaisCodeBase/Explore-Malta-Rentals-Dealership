@@ -79,6 +79,7 @@
     "heroDescription": "Wypożyczalnia motocykli, quadów i rowerów. Wycieczki z przewodnikiem."
   },
   "Home": {
+    "heroWatchVideo": "Obejrzyj wideo",
     "heroBookRide": "Zarezerwuj przejazd",
     "heroViewFleet": "Zobacz flotę",
     "heroTrust1": "Dostępne wycieczki z przewodnikiem",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "Dostawa/zwrot do hotelu",
         "description": "Tam, gdzie ma to zastosowanie, możemy pomóc w wygodnym nadaniu i odbiorze."
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "Świetne na jednodniowe wycieczki",
         "bullet2": "Zrównoważony komfort + kontrola",
         "subtitle": "Motocykl"
-      }
+      },
+      "includesLabel": "Zawiera:"
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "Zaufany pilot",
     "testimonialsExcellent": "Doskonały",
     "testimonialsMarqueeAria": "Referencje klientów, przewijanie",
-    "ratingStarsAria": "{rating} z 5"
+    "ratingStarsAria": "{rating} z 5",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "Otwarte na dzisiejsze wypożyczenia",
+    "heroScrollCue": "Przewiń, aby odkrywać",
+    "heroMetaCategory": "Wypożyczalnia premium",
+    "heroMetaRental": "Wypożyczenia dzienne i tygodniowe",
+    "heroTrustVerified": "Zweryfikowana flota",
+    "heroConsoleTitle": "Sprawdź dostępność",
+    "heroConsoleNote": "Bez ukrytych opłat. Elastyczne opcje odbioru.",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "Kategorie floty",
+    "sectionServicesTitleLine1": "Usługi i",
+    "sectionServicesTitleLine2": "korzyści",
+    "highlightedServicesHowWeWork": "Zobacz, jak działamy",
+    "highlightedServicesInfoLabel": "Info"
   },
   "Faq": {
-    "title": "Często zadawane pytania (FAQ)",
+    "title": "Często zadawane pytania",
     "subtitleLead": "Nie możesz znaleźć tego, czego szukasz? Sięgnij dalej",
     "subtitleTail": "lub skorzystaj z sekcji kontaktowej poniżej.",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "Jakie są zasady anulowania rezerwacji?",
-        "answer": "Zasady mogą się różnić w zależności od pory roku i pojazdu. Skontaktuj się z nami, podając szczegóły rezerwacji, a wyjaśnimy dostępne opcje. Staramy się zachować uczciwość i przejrzystość, abyś mógł bezpiecznie zaplanować swoją podróż na Maltę."
+        "answer": "Anulacje dokonane ponad 48 godzin przed planowaną godziną rozpoczęcia wynajmu uprawniają do zwrotu 50% kwoty rezerwacji. Explore Malta Rentals zatrzymuje pozostałe 50%. Anulacje w ciągu 48 godzin przed tą godziną rozpoczęcia są bezzwrotne, a pełna kwota rezerwacji zostaje zatrzymana."
       },
       "invoice": {
         "question": "Czy w cenę wliczone są kaski i sprzęt ochronny?",
@@ -236,7 +323,12 @@
     "description": "Zadzwoń, napisz wiadomość lub odwiedź — jesteśmy tutaj, aby pomóc Ci wybrać odpowiedni przejazd. Twój numer telefonu komórkowego i lokalizacja na mapie znajdują się poniżej.",
     "whatsappTitle": "Wyślij wiadomość WhatsApp",
     "whatsappBody": "Pomożemy Ci wybrać odpowiedni przejazd i odpowiemy na pytania dotyczące dostępności.",
-    "envWhatsappHint": "Ustaw NEXT_PUBLIC_WHATSAPP_NUMBER, aby włączyć przycisk WhatsApp."
+    "envWhatsappHint": "Ustaw NEXT_PUBLIC_WHATSAPP_NUMBER, aby włączyć przycisk WhatsApp.",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "Dom",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "Wymagany jest czas odbioru",
     "returnDateRequired": "Wymagana jest data powrotu",
     "returnTimeRequired": "Wymagany jest czas powrotu",
-    "minRental": "Minimalny czas wynajmu to 24 godziny",
+    "minRental": "Godzina zwrotu musi być późniejsza niż godzina odbioru.",
     "maxRental": "Maksymalny okres wynajmu to 4 tygodnie",
     "pickupAddressDelivery": "Do dostawy wymagany jest adres odbioru",
     "dropoffAddressRequired": "Adres nadania jest wymagany",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "Dłuższe wynajmy odblokowują rabaty za czas trwania przed dodatkami — użyj ich jako wskazówki podczas wyszukiwania.",
     "ariaFilters": "Filtry samochodowe",
-    "ariaRates": "Orientacyjne stawki dzienne"
+    "ariaRates": "Orientacyjne stawki dzienne",
+    "group50": "Skutery 50cc",
+    "group125": "Motocykle 125cc",
+    "groupOther": "Inne pojazdy",
+    "groupCount": "{count, plural, one {# pojazd} other {# pojazdy}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "Wyszukiwanie pojazdu",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}: {percent} % rabatu za czas trwania · Cena końcowa zależy od pojazdu i dodatków.",
-    "durationDiscountSummaryMax": "Wynajmij na 7+ dni i zaoszczędź do {percent} % · Cena końcowa zależy od pojazdu i dodatków."
+    "durationDiscountSummaryMax": "Wynajmij na 7+ dni i zaoszczędź do {percent} % · Cena końcowa zależy od pojazdu i dodatków.",
+    "moreFilters": "Więcej filtrów",
+    "fewerFilters": "Mniej filtrów"
   },
   "BookingForm": {
     "invalidPickupDate": "Nieprawidłowa data odbioru",
@@ -811,11 +909,11 @@
       "returnTime": "Czas powrotu",
       "sectionDuration": "Sekcja: Czas wynajmu (wyświetlanie)",
       "autoDuration": "Automatycznie obliczony czas trwania:",
-      "durationLine": "{days} dni ({hours}h)",
+      "durationLine": "{hours} godz. · naliczane jako {days, plural, one {# dzień} other {# dni}}",
       "durationInvalid": "Data/godzina zwrotu musi przypadać po odbiorze",
       "durationWaiting": "Czekam na ważne daty",
       "notesTitle": "Uwagi:",
-      "noteMin": "Minimalny czas wynajmu to 24 godziny.",
+      "noteMin": "Godzina zwrotu musi być późniejsza niż godzina odbioru.",
       "noteDayCharge": "Jeśli mniej niż 24 godziny, naliczana jest opłata za cały dzień.",
       "noteMax": "Maksymalny okres wynajmu to 4 tygodnie.",
       "noteRenew": "Dostępna jest opcja odnawialna."
@@ -837,8 +935,8 @@
       "rentalDates": "Terminy wynajmu:",
       "to": "Do",
       "billableDuration": "Rozliczeniowy czas trwania:",
-      "dayCount": "{count} dni",
-      "actualHours": "(rzeczywiste {hours}h)",
+      "dayCount": "naliczane jako {count, plural, one {# dzień} other {# dni}}",
+      "actualHours": "{hours} godz.",
       "pickupMethod": "Sposób odbioru:",
       "pickupAddress": "Adres odbioru:",
       "dropoffMethod": "Metoda zrzutu:",
@@ -855,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Dodatkowy sterownik:",
       "storageCost": "Pudełko do przechowywania:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Suma częściowa:",
       "pricingPending": "Podgląd cen pojawi się, gdy daty/godziny wynajmu pojazdu i wynajmu staną się ważne.",
       "section3": "Sekcja 3 – Depozyt i sumy",

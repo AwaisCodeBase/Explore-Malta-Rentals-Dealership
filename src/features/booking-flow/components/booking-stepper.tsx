@@ -38,7 +38,7 @@ export function BookingStepper() {
         {/* Connecting progress track — decorative, sits behind the step markers. */}
         <li
           aria-hidden
-          className="pointer-events-none absolute top-[1.0625rem] right-[12.5%] left-[12.5%] hidden h-[3px] rounded-full bg-[var(--surface-sunken)] lg:block"
+          className="pointer-events-none absolute top-[calc(0.5rem+1.0625rem)] right-[12.5%] left-[12.5%] z-0 hidden h-[3px] -translate-y-1/2 rounded-full bg-[var(--surface-sunken)] lg:block"
         >
           <span
             className="block h-full rounded-full bg-orange-400 transition-[width] duration-[var(--dur-slow)] ease-[var(--ease-out-expo)]"
@@ -58,7 +58,7 @@ export function BookingStepper() {
               : "border-[var(--line)] bg-[var(--surface-card)] text-[var(--text-faint)]";
 
           return (
-            <li key={step.id} className="relative lg:z-10">
+            <li key={step.id} className="relative z-10">
               <button
                 type="button"
                 onClick={() => goToStep(step.id)}
@@ -71,19 +71,19 @@ export function BookingStepper() {
                   isActive ? "bg-orange-50/70" : "bg-transparent",
                   isAccessible
                     ? "cursor-pointer hover:bg-[var(--surface-soft)]"
-                    : "cursor-not-allowed opacity-55",
+                    : "cursor-not-allowed",
                 ].join(" ")}
               >
                 <span
                   className={[
-                    "flex h-[2.125rem] w-[2.125rem] shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold tabular-nums transition duration-[var(--dur-base)] ease-[var(--ease-standard)]",
+                    "relative z-10 flex h-[2.125rem] w-[2.125rem] shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold tabular-nums transition duration-[var(--dur-base)] ease-[var(--ease-standard)]",
                     markerClass,
                   ].join(" ")}
                   aria-hidden
                 >
                   {isComplete ? <Check className="h-4 w-4" strokeWidth={3} /> : index + 1}
                 </span>
-                <span className="min-w-0">
+                <span className={["min-w-0", isAccessible ? "" : "opacity-55"].join(" ")}>
                   <span
                     className={[
                       "type-spec block",

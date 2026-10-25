@@ -2,8 +2,6 @@
 
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { X } from "lucide-react";
-import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Link, usePathname } from "@/i18n/navigation";
 import {
   Suspense,
@@ -19,10 +17,18 @@ import {
   SITE_SHELL_OUTER,
   SITE_SHELL_CONTAINER,
   SITE_SHELL_INNER_PAD,
+  SITE_NAV_CONTROL_BORDER,
+  SITE_NAV_CONTROL_RADIUS,
 } from "@/components/site-shell";
-import { LanguageSwitcher, MobileLanguageList } from "@/components/language-switcher";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const LOGO_SRC = "/explore%20malta%20rentals%20logo.png";
+
+function isBookingEnabled() {
+  const raw = process.env.NEXT_PUBLIC_BOOKING_ENABLED?.trim().toLowerCase();
+  if (!raw) return true;
+  return raw !== "false" && raw !== "0" && raw !== "no";
+}
 
 function joinClasses(...classes: Array<string | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -41,38 +47,24 @@ function navLinkIsActive(href: string, pathname: string, hash: string): boolean 
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-const navLinkClass = joinClasses(
-  "group relative inline-flex items-center py-1.5 text-sm font-semibold tracking-[-0.02em]",
-  "transition-colors duration-[var(--dur-fast)] ease-[var(--ease-standard)]",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-4 focus-visible:ring-offset-transparent",
-);
-
-/**
- * Underline indicator. Scales in from the leading edge on hover and stays
- * pinned open for the current page — cheaper than a shared layout animation
- * and it works identically under `domAnimation`.
- */
-const navUnderlineClass = joinClasses(
-  "pointer-events-none absolute inset-x-0 -bottom-0.5 h-[2px] rounded-full bg-[var(--orange-400)]",
-  "origin-left transition-transform duration-[var(--dur-base)] ease-[var(--ease-out-expo)] motion-reduce:transition-none",
-);
-
-const switcherFallbackClass =
-  "h-9 w-[6.5rem] rounded-full bg-[var(--surface-sunken)] shadow-[inset_0_0_0_1px_var(--line-subtle)]";
+const navLinkBaseClass =
+  "text-[10px] font-medium normal-case tracking-normal transition-colors lg:text-[11px]";
+const navLinkInactiveClass = `${navLinkBaseClass} text-white/90 hover:text-white`;
+const navLinkActiveClass = `${navLinkBaseClass} text-[var(--brand-orange)] hover:text-[var(--brand-orange-strong)]`;
 
 export function SiteNavbar() {
   const t = useTranslations("Nav");
+  const tBanner = useTranslations("SiteBanner");
+  const bookingEnabled = isBookingEnabled();
+  const bookingDisabledMessage =
+    process.env.NEXT_PUBLIC_BOOKING_DISABLED_MESSAGE?.trim() ||
+    tBanner("onlineBookingUnavailable");
   const pathname = usePathname();
-  const reduceMotion = useReducedMotion();
   const [hash, setHash] = useState("");
-  const [scrolled, setScrolled] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [languageListOpen, setLanguageListOpen] = useState(false);
-  const mobileNavRef = useRef<HTMLDivElement>(null);
-  const mobilePanelRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const mobileMenuId = useId();
   const [portalReady, setPortalReady] = useState(false);
+  const mobilePanelRef = useRef<HTMLDivElement>(null);
+  const mobileMenuId = useId();
 
   const navLinks = [
     { href: "/" as const, labelKey: "home" as const },
@@ -85,14 +77,18 @@ export function SiteNavbar() {
     { href: "/#services" as const, labelKey: "services" as const },
   ] as const;
 
-  const closeMobileNav = useCallback(() => {
-    setMobileNavOpen(false);
-    setLanguageListOpen(false);
-  }, []);
+  const closeMobileNav = useCallback(() => setMobileNavOpen(false), []);
 
   useEffect(() => {
     setPortalReady(true);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("booking-banner-hidden", bookingEnabled);
+    return () => {
+      document.documentElement.classList.remove("booking-banner-hidden");
+    };
+  }, [bookingEnabled]);
 
   useEffect(() => {
     const sync = () => setHash(typeof window !== "undefined" ? window.location.hash : "");
@@ -102,13 +98,6 @@ export function SiteNavbar() {
   }, [pathname]);
 
   useEffect(() => {
-    const sync = () => setScrolled(window.scrollY > 4);
-    sync();
-    window.addEventListener("scroll", sync, { passive: true });
-    return () => window.removeEventListener("scroll", sync);
-  }, []);
-
-  useEffect(() => {
     startTransition(() => {
       closeMobileNav();
     });
@@ -116,294 +105,277 @@ export function SiteNavbar() {
 
   useEffect(() => {
     if (!mobileNavOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      if (languageListOpen) {
-        setLanguageListOpen(false);
-        return;
-      }
-      closeMobileNav();
-    };
-    const onPointerDown = (e: PointerEvent) => {
-      const target = e.target as Node;
-      if (mobileNavRef.current?.contains(target) || mobilePanelRef.current?.contains(target)) {
-        return;
-      }
-      closeMobileNav();
+      if (e.key === "Escape") closeMobileNav();
     };
     document.addEventListener("keydown", onKeyDown);
-    document.addEventListener("pointerdown", onPointerDown, true);
     return () => {
+      document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("pointerdown", onPointerDown, true);
     };
-  }, [mobileNavOpen, languageListOpen, closeMobileNav]);
-
-  useEffect(() => {
-    const desktop = window.matchMedia("(min-width: 768px)");
-    const closeOnDesktop = () => {
-      if (desktop.matches) closeMobileNav();
-    };
-    desktop.addEventListener("change", closeOnDesktop);
-    return () => desktop.removeEventListener("change", closeOnDesktop);
-  }, [closeMobileNav]);
+  }, [mobileNavOpen, closeMobileNav]);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    requestAnimationFrame(() => closeButtonRef.current?.focus());
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
+    const closeBtn = mobilePanelRef.current?.querySelector<HTMLElement>(
+      "[data-mobile-menu-close]",
+    );
+    requestAnimationFrame(() => closeBtn?.focus());
   }, [mobileNavOpen]);
 
-  return (
-    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 pt-[max(0px,env(safe-area-inset-top))]">
-      <nav
-        aria-label={t("primary")}
-        data-scrolled={scrolled ? "true" : undefined}
-        className={joinClasses(
-          "site-navbar pointer-events-auto w-full max-w-full text-[var(--text-primary)]",
-          "backdrop-blur-xl backdrop-saturate-150",
-          "transition-[background-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-standard)]",
-          // The hairline is a box-shadow rather than a border so toggling it on
-          // scroll never nudges the layout by a pixel.
-          scrolled
-            ? "bg-white/96 supports-[backdrop-filter:blur(0px)]:bg-white/86 shadow-[0_1px_0_0_var(--line),var(--elev-2)]"
-            : "bg-white/94 supports-[backdrop-filter:blur(0px)]:bg-white/70 shadow-[0_1px_0_0_transparent]",
-        )}
-      >
-        {/* Brand hairline: blue → orange, reads as an intentional accent rather
-            than the leftover red artifact it replaces. */}
-        <div
-          className="h-0.5 w-full shrink-0 bg-[linear-gradient(90deg,var(--blue-600),var(--blue-400)_38%,var(--orange-400)_78%,var(--orange-500))]"
-          aria-hidden
-        />
-        <div className={SITE_SHELL_OUTER}>
-          <div className={SITE_SHELL_CONTAINER}>
+  const mobileMenuOverlay =
+    portalReady && mobileNavOpen
+      ? createPortal(
+          <div
+            ref={mobilePanelRef}
+            id={mobileMenuId}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("primary")}
+            className="fixed inset-0 z-[120] flex flex-col bg-[#f7f5f1]/92 backdrop-blur-2xl md:hidden"
+          >
             <div
-              className={joinClasses(
-                SITE_SHELL_INNER_PAD,
-                "grid min-h-16 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 py-2 sm:gap-y-2",
-                "md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-x-6",
-              )}
-            >
+              aria-hidden
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_10%_0%,rgba(251,191,36,0.22),transparent_55%),radial-gradient(ellipse_50%_35%_at_90%_15%,rgba(148,163,184,0.2),transparent_50%),radial-gradient(ellipse_45%_30%_at_70%_85%,rgba(249,115,22,0.12),transparent_55%)]"
+            />
+
+            <div className="relative z-[1] flex items-center justify-between gap-4 px-5 pb-3 pt-[max(1rem,calc(env(safe-area-inset-top)+0.75rem))]">
               <Link
                 href="/"
-                className={joinClasses(
-                  "relative flex min-w-0 max-w-[min(22rem,calc(100vw-9rem))] justify-self-start overflow-hidden rounded-[var(--r-field)]",
-                  "transition-opacity duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:opacity-80",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2",
-                )}
+                className="relative inline-flex shrink-0 items-center overflow-hidden rounded-sm"
+                onClick={closeMobileNav}
               >
                 <Image
                   src={LOGO_SRC}
                   alt={t("logoAlt")}
                   width={320}
                   height={56}
-                  className="h-10 w-auto max-w-full object-contain object-left sm:h-11"
+                  className="block h-10 w-auto max-w-none object-contain object-left"
                   style={{ width: "auto" }}
                   priority
                 />
               </Link>
 
-              <ul
-                className={joinClasses(
-                  "hidden list-none items-center justify-center justify-self-center gap-6 md:flex",
-                  "lg:gap-8",
-                )}
+              <button
+                type="button"
+                data-mobile-menu-close
+                aria-label={t("close")}
+                onClick={closeMobileNav}
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200/80 text-slate-700 shadow-sm transition-colors hover:bg-slate-300/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue)] focus-visible:ring-offset-2"
               >
-                {navLinks.map(({ href, labelKey }) => {
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.25"
+                  strokeLinecap="round"
+                  aria-hidden
+                >
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+
+            <nav className="relative z-[1] flex min-h-0 flex-1 flex-col px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-1">
+              <ul className="m-0 flex min-h-0 flex-1 list-none flex-col justify-evenly overflow-hidden p-0">
+                {navLinks.map(({ href, labelKey }, index) => {
                   const active = navLinkIsActive(href, pathname, hash);
+                  const indexLabel = String(index + 1).padStart(2, "0");
                   return (
-                    <li key={href}>
+                    <li key={href} className="border-b border-slate-300/70">
                       <Link
                         href={href}
-                        className={joinClasses(
-                          navLinkClass,
-                          active
-                            ? "text-[var(--ink-950)]"
-                            : "text-[var(--text-secondary)] hover:text-[var(--ink-950)]",
-                        )}
                         aria-current={active ? "page" : undefined}
+                        onClick={closeMobileNav}
+                        className="group relative flex items-baseline gap-2.5 overflow-hidden py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue)] focus-visible:ring-offset-2"
                       >
-                        {t(labelKey)}
+                        {active ? (
+                          <span
+                            aria-hidden
+                            className="pointer-events-none absolute inset-y-0.5 -inset-x-3 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(251,191,36,0.55)_0%,rgba(249,115,22,0.22)_42%,transparent_72%)] blur-[1px]"
+                          />
+                        ) : (
+                          <span
+                            aria-hidden
+                            className="pointer-events-none absolute inset-y-0.5 -inset-x-3 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(251,191,36,0.4)_0%,rgba(249,115,22,0.14)_42%,transparent_72%)] opacity-0 blur-[1px] transition-opacity duration-300 group-hover:opacity-100"
+                          />
+                        )}
+                        <span className="relative z-[1] shrink-0 text-[0.65rem] font-medium tabular-nums tracking-[0.04em] text-slate-400">
+                          {indexLabel}
+                        </span>
                         <span
-                          aria-hidden
                           className={joinClasses(
-                            navUnderlineClass,
-                            active
-                              ? "scale-x-100"
-                              : "scale-x-0 group-hover:scale-x-100 group-focus-visible:scale-x-100",
+                            "relative z-[1] block text-[1.05rem] font-semibold tracking-[-0.02em] sm:text-[1.125rem]",
+                            active ? "text-slate-950" : "text-slate-800",
                           )}
-                        />
+                        >
+                          {t(labelKey)}
+                        </span>
                       </Link>
                     </li>
                   );
                 })}
               </ul>
 
-              <div className="flex shrink-0 items-center justify-self-end gap-2 sm:gap-2.5">
-                <div className="hidden md:block">
-                  <Suspense fallback={<div className={switcherFallbackClass} aria-hidden />}>
-                    <LanguageSwitcher />
-                  </Suspense>
-                </div>
+              <div className="relative z-[2] shrink-0 border-t border-slate-300/70 pt-3 font-sans">
+                <p className="mb-1.5 text-[0.65rem] font-medium tracking-[0.04em] text-slate-400">
+                  {t("language")}
+                </p>
+                <Suspense
+                  fallback={
+                    <div
+                      className="h-8 w-full rounded-md border border-slate-200 bg-white/70"
+                      aria-hidden
+                    />
+                  }
+                >
+                  <LanguageSwitcher variant="expanded" />
+                </Suspense>
+              </div>
+            </nav>
+          </div>,
+          document.body,
+        )
+      : null;
 
-                <div ref={mobileNavRef} className="relative z-[60] md:hidden">
-                  <button
-                    type="button"
-                    id={`${mobileMenuId}-trigger`}
-                    className={joinClasses(
-                      "flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-full px-3.5 py-1.5 text-xs font-semibold tracking-[-0.02em] sm:text-sm",
-                      "bg-white text-[var(--ink-900)] shadow-[inset_0_0_0_1px_var(--line),var(--elev-1)]",
-                      "transition-[background-color,box-shadow,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)]",
-                      "hover:bg-[var(--surface-soft)] hover:shadow-[inset_0_0_0_1px_var(--line-strong),var(--elev-2)] active:scale-[0.97]",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2",
-                      mobileNavOpen
-                        ? "bg-[var(--surface-soft)] shadow-[inset_0_0_0_1px_var(--line-strong),var(--elev-2)]"
-                        : undefined,
-                    )}
-                    aria-expanded={mobileNavOpen}
-                    aria-controls={mobileMenuId}
-                    onClick={() => setMobileNavOpen((open) => !open)}
-                  >
-                    {t("menu")}
-                  </button>
-                </div>
-                {portalReady
-                  ? createPortal(
-                      <AnimatePresence initial={false}>
-                        {mobileNavOpen ? (
-                          <m.div
-                            ref={mobilePanelRef}
-                            id={mobileMenuId}
-                            role="dialog"
-                            aria-modal="true"
-                            aria-label={t("primary")}
-                            initial={reduceMotion ? false : { opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: reduceMotion ? 0.01 : 0.28, ease: [0.16, 1, 0.3, 1] }}
-                            className="fixed inset-0 z-[80] flex flex-col bg-[#f6f1ea]/58 text-[var(--ink-950)] backdrop-blur-[28px] backdrop-saturate-150 supports-[not_((backdrop-filter:blur(1px)))]:bg-[#f6f1ea]/94"
-                          >
-                            <div className={SITE_SHELL_OUTER}>
-                              <div className={SITE_SHELL_CONTAINER}>
-                                <div
-                                  className={joinClasses(
-                                    SITE_SHELL_INNER_PAD,
-                                    "flex items-center justify-between gap-4 pb-2 pt-[max(0.85rem,env(safe-area-inset-top))]",
-                                  )}
-                                >
-                                  <Link
-                                    href="/"
-                                    onClick={closeMobileNav}
-                                    className="relative flex min-w-0 max-w-[min(16rem,calc(100vw-6.5rem))] overflow-hidden rounded-[var(--r-field)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2"
-                                  >
-                                    <Image
-                                      src={LOGO_SRC}
-                                      alt={t("logoAlt")}
-                                      width={320}
-                                      height={56}
-                                      className="h-10 w-auto max-w-full object-contain object-left"
-                                      style={{ width: "auto" }}
-                                    />
-                                  </Link>
-                                  <button
-                                    ref={closeButtonRef}
-                                    type="button"
-                                    onClick={closeMobileNav}
-                                    aria-label={t("close")}
-                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white/55 text-[var(--ink-800)] shadow-[0_1px_2px_rgba(16,24,40,0.06)] backdrop-blur-md transition-colors hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-2"
-                                  >
-                                    <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-
-                            <ul className="m-0 min-h-0 flex-1 list-none overflow-y-auto px-7 pb-6 pt-8 sm:px-10">
-                              {languageListOpen ? (
-                                <Suspense fallback={null}>
-                                  <MobileLanguageList onSelect={closeMobileNav} />
-                                </Suspense>
-                              ) : (
-                                navLinks.map(({ href, labelKey }, index) => {
-                                  const active = navLinkIsActive(href, pathname, hash);
-                                  return (
-                                    <m.li
-                                      key={href}
-                                      className="border-b border-black/10"
-                                      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      transition={{
-                                        duration: reduceMotion ? 0.01 : 0.35,
-                                        delay: reduceMotion ? 0 : 0.04 + index * 0.035,
-                                        ease: [0.16, 1, 0.3, 1],
-                                      }}
-                                    >
-                                      <Link
-                                        href={href}
-                                        className="block py-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-4 sm:py-4"
-                                        aria-current={active ? "page" : undefined}
-                                        onClick={closeMobileNav}
-                                      >
-                                        <span className="block text-[0.68rem] font-medium tabular-nums tracking-[0.08em] text-[var(--text-muted)]">
-                                          {String(index + 1).padStart(2, "0")}
-                                        </span>
-                                        <span
-                                          className={joinClasses(
-                                            "mt-1 block text-[1.65rem] font-medium leading-none tracking-[-0.03em] sm:text-[1.85rem]",
-                                            active ? "text-[var(--ink-950)]" : "text-[var(--ink-800)]",
-                                          )}
-                                        >
-                                          {t(labelKey)}
-                                        </span>
-                                      </Link>
-                                    </m.li>
-                                  );
-                                })
-                              )}
-                            </ul>
-
-                            <div className="px-7 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 sm:px-10">
-                              <Suspense
-                                fallback={
-                                  <div className={joinClasses(switcherFallbackClass, "w-full")} aria-hidden />
-                                }
-                              >
-                                <LanguageSwitcher
-                                  languageListOpen={languageListOpen}
-                                  onLanguageListToggle={() => setLanguageListOpen((open) => !open)}
-                                />
-                              </Suspense>
-                            </div>
-                          </m.div>
-                        ) : null}
-                      </AnimatePresence>,
-                      document.body,
-                    )
-                  : null}
-
-                <Link
-                  href="/booking"
+  return (
+    <>
+      <header
+        className={joinClasses(
+          "pointer-events-none fixed inset-x-0 top-0 z-50",
+          SITE_SHELL_OUTER,
+          "pt-[max(0.75rem,calc(env(safe-area-inset-top)+0.75rem))] sm:pt-[max(1rem,calc(env(safe-area-inset-top)+1rem))]",
+        )}
+      >
+        <div className={SITE_SHELL_CONTAINER}>
+          <div className={SITE_SHELL_INNER_PAD}>
+            <div className="site-navbar-shell pointer-events-auto w-full">
+              <nav aria-label={t("primary")} className="site-navbar w-full text-white">
+                <div
                   className={joinClasses(
-                    "inline-flex min-h-9 min-w-[2.5rem] items-center justify-center rounded-full px-4 py-2 text-xs font-semibold tracking-[-0.02em] sm:min-h-10 sm:px-5 sm:text-sm",
-                    "bg-[var(--orange-400)] text-[var(--ink-950)] shadow-[var(--elev-orange)]",
-                    "transition-[transform,box-shadow,background-color] duration-[var(--dur-base)] ease-[var(--ease-out-expo)] motion-reduce:transition-none",
-                    "hover:bg-[var(--orange-500)] hover:shadow-[var(--elev-orange-lift)] motion-safe:hover:-translate-y-0.5",
-                    "active:translate-y-0 active:bg-[var(--orange-600)] active:shadow-[var(--elev-orange)]",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--orange-600)] focus-visible:ring-offset-2",
+                    "grid min-h-10 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 py-1.5 pl-1.5 pr-3 sm:min-h-11 sm:gap-y-2 sm:py-1.5 sm:pl-1.5 sm:pr-4 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-x-4 md:pl-1.5 md:pr-5",
                   )}
                 >
-                  {t("bookNow")}
-                </Link>
-              </div>
+                  <Link
+                    href="/"
+                    className="site-navbar__logo relative inline-flex shrink-0 items-center self-center justify-self-start overflow-hidden rounded-sm"
+                  >
+                    <Image
+                      src={LOGO_SRC}
+                      alt={t("logoAlt")}
+                      width={320}
+                      height={56}
+                      className="block h-9 w-auto max-w-none object-contain object-left sm:h-10"
+                      style={{ width: "auto" }}
+                      priority
+                    />
+                  </Link>
+
+                  <ul
+                    className={joinClasses(
+                      "hidden list-none items-center justify-center justify-self-center gap-4 md:flex",
+                      "lg:gap-6",
+                    )}
+                  >
+                    {navLinks.map(({ href, labelKey }) => {
+                      const active = navLinkIsActive(href, pathname, hash);
+                      return (
+                        <li key={href}>
+                          <Link
+                            href={href}
+                            className={active ? navLinkActiveClass : navLinkInactiveClass}
+                            aria-current={active ? "page" : undefined}
+                          >
+                            {t(labelKey)}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  <div className="flex shrink-0 items-center justify-self-end gap-2">
+                    <div className="hidden font-sans md:block">
+                      <Suspense
+                        fallback={
+                          <div
+                            className="h-8 w-[5.5rem] rounded-md border border-white/25 bg-white/15 backdrop-blur-sm"
+                            aria-hidden
+                          />
+                        }
+                      >
+                        <LanguageSwitcher />
+                      </Suspense>
+                    </div>
+
+                    <button
+                      type="button"
+                      id={`${mobileMenuId}-trigger`}
+                      className={joinClasses(
+                        "flex min-h-8 min-w-8 cursor-pointer items-center justify-center rounded-md border border-white/25 bg-white/10 px-2.5 py-1.5 text-[10px] font-medium normal-case tracking-normal text-white backdrop-blur-sm hover:bg-white/20 md:hidden",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue)] focus-visible:ring-offset-2",
+                        mobileNavOpen ? "border-white/35 bg-white/20" : undefined,
+                      )}
+                      aria-expanded={mobileNavOpen}
+                      aria-controls={mobileMenuId}
+                      onClick={() => setMobileNavOpen((open) => !open)}
+                    >
+                      {mobileNavOpen ? t("close") : t("menu")}
+                    </button>
+
+                    <Link
+                      href="/booking"
+                      className={joinClasses(
+                        "group relative inline-flex min-h-8 shrink-0 items-center justify-center gap-1.5 overflow-hidden whitespace-nowrap px-3.5 py-1.5 text-[10px] font-bold normal-case tracking-[-0.01em] text-white sm:text-[11px]",
+                        SITE_NAV_CONTROL_RADIUS,
+                        SITE_NAV_CONTROL_BORDER,
+                        "bg-gradient-to-br from-[#ffa939] via-[#f9900f] to-[#c45f0a] shadow-[0_12px_28px_-14px_rgba(196,95,10,0.88),0_5px_14px_-10px_rgba(15,23,42,0.6)]",
+                        "transition-all duration-300 hover:-translate-y-0.5 hover:border-white/40 hover:from-[#ffb54d] hover:via-[#ffa01a] hover:to-[#d96b0c] hover:shadow-[0_15px_32px_-14px_rgba(196,95,10,0.95),0_9px_18px_-12px_rgba(15,23,42,0.65)]",
+                        "active:translate-y-0 active:scale-[0.98]",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
+                      )}
+                    >
+                      <span
+                        className="pointer-events-none absolute inset-0 bg-[linear-gradient(110deg,transparent_30%,rgba(255,255,255,0.38)_48%,transparent_66%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                        aria-hidden
+                      />
+                      <span className="relative z-10">{t("bookNow")}</span>
+                      <span
+                        className="relative z-10 inline-flex translate-x-0 transition-transform duration-300 group-hover:translate-x-0.5"
+                        aria-hidden
+                      >
+                        <svg
+                          viewBox="0 0 16 16"
+                          className="h-3 w-3"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M3.5 8h8" />
+                          <path d="m8.5 4 4 4-4 4" />
+                        </svg>
+                      </span>
+                    </Link>
+                  </div>
+                </div>
+              </nav>
             </div>
+            {!bookingEnabled ? (
+              <div
+                role="status"
+                className="pointer-events-auto mt-2 rounded-xl border border-black/10 bg-[var(--brand-orange-strong)] px-4 py-2.5 text-center text-sm font-semibold tracking-wide text-white shadow-[0_12px_32px_-16px_rgba(15,23,42,0.35),inset_0_-1px_0_rgba(0,0,0,0.08)]"
+              >
+                {bookingDisabledMessage}
+              </div>
+            ) : null}
           </div>
         </div>
-      </nav>
-    </header>
+      </header>
+      {mobileMenuOverlay}
+    </>
   );
 }

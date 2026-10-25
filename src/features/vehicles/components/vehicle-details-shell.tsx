@@ -51,8 +51,8 @@ function formatTierRateEur(value: number): string {
   return roundPricingAmount(value).toFixed(2).replace(/\.00$/, "");
 }
 
-function isTripCommitted(pd: string, rd: string): boolean {
-  return Boolean(pd && rd && rd > pd);
+function isTripCommitted(pd: string, pt: string, rd: string, rt: string): boolean {
+  return getBillableRentalDays(pd, pt, rd, rt) > 0;
 }
 
 /** Every block heading on the detail page shares the display face and spacing. */
@@ -290,12 +290,19 @@ function BookingSidebar({
   const [showColorWarning, setShowColorWarning] = useState(false);
 
   /* When dates arrive from the URL they're already committed — skip the picker */
-  const datesFromUrl = isTripCommitted(initialPickupDate, initialReturnDate);
+  const datesFromUrl = isTripCommitted(
+    initialPickupDate,
+    initialPickupTime || defaultTime,
+    initialReturnDate,
+    initialReturnTime || defaultTime,
+  );
   const [showDatePicker, setShowDatePicker] = useState(!datesFromUrl);
 
   const days = getBillableRentalDays(pickupDate, pickupTime, returnDate, returnTime);
 
-  const tripCommitted = isTripCommitted(pickupDate, returnDate);
+  const tripCommitted = isTripCommitted(pickupDate, pickupTime, returnDate, returnTime);
+  const tripOrderInvalid =
+    Boolean(pickupDate && pickupTime && returnDate && returnTime) && !tripCommitted;
 
   const availability = useVehicleAvailabilityCheck(
     vehicle.id,
@@ -400,10 +407,10 @@ function BookingSidebar({
             </p>
           ) : null}
         </div>
-        <span className="type-spec shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-emerald-800">
-          Free cancellation
-        </span>
       </div>
+      <p className="mt-3 text-xs leading-relaxed text-[var(--text-secondary)]">
+        Cancellations more than 48 hours before the scheduled rental start receive a 50% refund of the booking amount. Within 48 hours, the booking is non-refundable.
+      </p>
 
       <hr className="rule-fade my-5" />
 
@@ -438,7 +445,7 @@ function BookingSidebar({
                   onChange={(e) => {
                     const v = e.target.value;
                     setPickupDate(v);
-                    if (returnDate && v && returnDate <= v) setReturnDate("");
+                    if (returnDate && v && returnDate < v) setReturnDate("");
                     if (v) setShowDateWarning(false);
                   }}
                   className={dateInputClass(showDateWarning && !pickupDate)}
@@ -495,6 +502,11 @@ function BookingSidebar({
                 </select>
               </div>
             </div>
+            {tripOrderInvalid ? (
+              <p className="mt-2 text-xs font-medium text-rose-600" role="alert">
+                The return time must be later than the pickup time.
+              </p>
+            ) : null}
           </>
         ) : (
           <div className="rounded-[var(--r-card)] bg-[var(--surface-sunken)] px-4 py-3.5 text-sm shadow-[inset_0_0_0_1px_var(--line-subtle)]">
@@ -947,7 +959,9 @@ export function VehicleDetailsShell({
             ) : (
               <p className="text-sm font-semibold text-[var(--text-secondary)]">Price on request</p>
             )}
-            <p className="mt-1.5 text-xs text-[var(--text-muted)]">Free cancellation</p>
+            <p className="mt-1.5 text-xs leading-snug text-[var(--text-muted)]">
+              50% refund more than 48h before start. Within 48h, non-refundable.
+            </p>
           </div>
           <Link
             href={(() => {

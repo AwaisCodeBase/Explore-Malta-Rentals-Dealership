@@ -79,6 +79,7 @@
     "heroDescription": "मोटरसाइकिल, ATV और साइकिल किराया। गाइडेड टूर।"
   },
   "Home": {
+    "heroWatchVideo": "वीडियो देखें",
     "heroBookRide": "अपनी सवारी बुक करें",
     "heroViewFleet": "फ्लीट देखें",
     "heroTrust1": "गाइडेड टूर उपलब्ध",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "होटल डिलीवरी / वापसी",
         "description": "जहां लागू हो, हम सुविधाजनक ड्रॉप-ऑफ और कलेक्शन में मदद कर सकते हैं।"
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "दिन की यात्राओं के लिए बढ़िया",
         "bullet2": "संतुलित आराम + नियंत्रण",
         "subtitle": "मोटरसाइकिल"
-      }
+      },
+      "includesLabel": "शामिल है:"
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "Trustpilot",
     "testimonialsExcellent": "उत्कृष्ट",
     "testimonialsMarqueeAria": "ग्राहक प्रशंसापत्र, स्क्रॉलिंग",
-    "ratingStarsAria": "5 में से {rating}"
+    "ratingStarsAria": "5 में से {rating}",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "आज की बुकिंग के लिए उपलब्ध",
+    "heroScrollCue": "एक्सप्लोर करने के लिए स्क्रॉल करें",
+    "heroMetaCategory": "प्रीमियम बाइक किराया",
+    "heroMetaRental": "दैनिक और साप्ताहिक किराया",
+    "heroTrustVerified": "सत्यापित फ्लीट",
+    "heroConsoleTitle": "उपलब्धता जांचें",
+    "heroConsoleNote": "कोई छिपा शुल्क नहीं। लचीले पिकअप विकल्प।",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "फ्लीट श्रेणियाँ",
+    "sectionServicesTitleLine1": "सेवाएं और",
+    "sectionServicesTitleLine2": "लाभ",
+    "highlightedServicesHowWeWork": "हम कैसे काम करते हैं",
+    "highlightedServicesInfoLabel": "जानकारी"
   },
   "Faq": {
-    "title": "अक्सर पूछे जाने वाले प्रश्न (FAQ)",
+    "title": "अक्सर पूछे जाने वाले प्रश्न",
     "subtitleLead": "जो ढूंढ रहे हैं वह नहीं मिला? हमसे ",
     "subtitleTail": " पर संपर्क करें या नीचे संपर्क अनुभाग का उपयोग करें।",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "आपकी रद्दीकरण नीति क्या है?",
-        "answer": "नीतियां मौसम और वाहन के अनुसार भिन्न हो सकती हैं। अपने बुकिंग विवरण के साथ हमसे संपर्क करें और हम विकल्प समझाएंगे। हम निष्पक्ष और स्पष्ट रहने का प्रयास करते हैं ताकि आप आत्मविश्वास से Malta यात्रा की योजना बना सकें।"
+        "answer": "निर्धारित किराया प्रारंभ समय से 48 घंटे से अधिक पहले रद्द करने पर बुकिंग राशि का 50% रिफंड मिलता है। शेष 50% Explore Malta Rentals अपने पास रखती है। निर्धारित प्रारंभ समय के 48 घंटे के भीतर रद्दीकरण अप्रतिदेय है, और पूरी बुकिंग राशि रख ली जाती है।"
       },
       "invoice": {
         "question": "क्या हेलमेट और सुरक्षा गियर शामिल है?",
@@ -236,7 +323,12 @@
     "description": "कॉल करें, संदेश भेजें, या आएं — हम आपको सही सवारी चुनने में मदद करने के लिए यहाँ हैं। आपका मोबाइल नंबर और मानचित्र स्थान नीचे है।",
     "whatsappTitle": "WhatsApp संदेश भेजें",
     "whatsappBody": "हम आपको सही सवारी चुनने और उपलब्धता के प्रश्नों का उत्तर देने में मदद करेंगे।",
-    "envWhatsappHint": "WhatsApp बटन सक्षम करने के लिए NEXT_PUBLIC_WHATSAPP_NUMBER सेट करें।"
+    "envWhatsappHint": "WhatsApp बटन सक्षम करने के लिए NEXT_PUBLIC_WHATSAPP_NUMBER सेट करें।",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "होम",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "पिकअप समय आवश्यक है",
     "returnDateRequired": "वापसी तारीख आवश्यक है",
     "returnTimeRequired": "वापसी समय आवश्यक है",
-    "minRental": "न्यूनतम किराया 24 घंटे है",
+    "minRental": "वापसी का समय पिकअप के समय के बाद होना चाहिए।",
     "maxRental": "अधिकतम किराया 4 सप्ताह है",
     "pickupAddressDelivery": "डिलीवरी के लिए पिकअप पता आवश्यक है",
     "dropoffAddressRequired": "ड्रॉप-ऑफ पता आवश्यक है",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "लंबी किराये पर अवधि छूट एक्स्ट्रा से पहले लागू होती है — खोजते समय मार्गदर्शन के रूप में उपयोग करें।",
     "ariaFilters": "वाहन फ़िल्टर",
-    "ariaRates": "सांकेतिक दैनिक दरें"
+    "ariaRates": "सांकेतिक दैनिक दरें",
+    "group50": "50cc स्कूटर",
+    "group125": "125cc बाइक",
+    "groupOther": "अन्य वाहन",
+    "groupCount": "{count, plural, one {# वाहन} other {# वाहन}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "वाहन खोज",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}: {percent}% अवधि छूट · अंतिम मूल्य वाहन और ऐड-ऑन पर निर्भर करता है।",
-    "durationDiscountSummaryMax": "7+ दिन किराए पर {percent}% तक बचाएं · अंतिम मूल्य वाहन और ऐड-ऑन पर निर्भर करता है।"
+    "durationDiscountSummaryMax": "7+ दिन किराए पर {percent}% तक बचाएं · अंतिम मूल्य वाहन और ऐड-ऑन पर निर्भर करता है।",
+    "moreFilters": "और फ़िल्टर",
+    "fewerFilters": "कम फ़िल्टर"
   },
   "BookingForm": {
     "invalidPickupDate": "अमान्य पिकअप तारीख",
@@ -811,11 +909,11 @@
       "returnTime": "वापसी समय",
       "sectionDuration": "अनुभाग: किराया अवधि (प्रदर्शन)",
       "autoDuration": "स्वतः-गणित अवधि:",
-      "durationLine": "{days} दिन ({hours}घं)",
+      "durationLine": "{hours} घंटे · {days, plural, one {# दिन} other {# दिन}} के रूप में शुल्क",
       "durationInvalid": "वापसी तारीख/समय पिकअप के बाद होना चाहिए",
       "durationWaiting": "वैध तारीखों की प्रतीक्षा",
       "notesTitle": "नोट्स:",
-      "noteMin": "न्यूनतम किराया 24 घंटे है।",
+      "noteMin": "वापसी का समय पिकअप के समय के बाद होना चाहिए।",
       "noteDayCharge": "यदि 24 घंटे से कम है, तो पूरे दिन का शुल्क लिया जाता है।",
       "noteMax": "अधिकतम किराया 4 सप्ताह है।",
       "noteRenew": "नवीकरणीय विकल्प उपलब्ध है।"
@@ -837,8 +935,8 @@
       "rentalDates": "किराया तारीखें:",
       "to": "से",
       "billableDuration": "बिल योग्य अवधि:",
-      "dayCount": "{count} दिन",
-      "actualHours": " (वास्तविक {hours}घं)",
+      "dayCount": "{count, plural, one {# दिन} other {# दिन}} के रूप में शुल्क",
+      "actualHours": "{hours} घंटे",
       "pickupMethod": "पिकअप विधि:",
       "pickupAddress": "पिकअप पता:",
       "dropoffMethod": "ड्रॉप-ऑफ विधि:",
@@ -855,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "अतिरिक्त ड्राइवर:",
       "storageCost": "स्टोरेज बॉक्स:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "उप-योग:",
       "pricingPending": "वाहन और किराया तारीखें/समय वैध होने के बाद मूल्य निर्धारण पूर्वावलोकन दिखाई देगा।",
       "section3": "अनुभाग 3 - जमा और कुल",

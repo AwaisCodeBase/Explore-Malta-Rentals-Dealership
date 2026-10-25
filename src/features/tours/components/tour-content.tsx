@@ -1,7 +1,5 @@
 import Image from "next/image";
 
-import { Reveal } from "@/components/motion/reveal";
-import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { Container } from "@/components/ui/container";
 import { SiteShell } from "@/components/site-shell";
 import { BrandBlueUnderlinedText } from "@/features/guide/components/brand-blue-underlined-text";
@@ -12,24 +10,21 @@ import { getTranslations } from "next-intl/server";
 
 const TOUR_BIKES_PHOTO_SRC = `/TourPage-images/${encodeURIComponent("TOURS PAGE BIKES PHOTO.webp")}`;
 const TOUR_QUAD_PHOTO_SRC = `/TourPage-images/${encodeURIComponent("TOURS PAGE PHOTO QUAD.jpg")}`;
+const LOCAL_EXPERTS_BG_SRC = "/local-experts.png";
 
 function BulletList({ items }: Readonly<{ items: readonly string[] }>) {
   return (
-    <Stagger
-      as="ul"
-      className="mt-2 space-y-4 text-left text-[0.9375rem] leading-[1.7] text-[var(--text-secondary)]"
-      step={0.06}
-    >
+    <ul className="mt-6 space-y-3 text-left text-sm leading-relaxed text-slate-700 sm:text-[0.9375rem] sm:leading-7">
       {items.map((item) => (
-        <StaggerItem as="li" key={item} className="flex gap-4" y={14}>
+        <li key={item} className="flex gap-3">
           <span
-            className="mt-[0.5rem] h-2 w-2 shrink-0 rounded-full bg-orange-400 ring-4 ring-orange-400/15"
+            className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--brand-orange)]"
             aria-hidden
           />
           <span>{item}</span>
-        </StaggerItem>
+        </li>
       ))}
-    </Stagger>
+    </ul>
   );
 }
 
@@ -56,43 +51,34 @@ export async function TourContent({ contact }: Readonly<{ contact: TourSiteConta
       <section
         id="tours-hero"
         aria-labelledby="tours-hero-title"
-        className="relative isolate flex min-h-svh scroll-mt-28 flex-col overflow-hidden bg-[var(--surface-card)] pt-[var(--site-header-offset)]"
+        className="relative isolate flex min-h-svh scroll-mt-28 flex-col overflow-hidden border-t border-slate-200/70 bg-[var(--surface-elevated)] pt-20 sm:pt-24"
       >
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-cover bg-[center_38%] bg-no-repeat"
           style={{
             backgroundImage: [
-              "linear-gradient(100deg, rgba(251,251,250,0.96) 0%, rgba(243,245,248,0.90) 42%, rgba(238,244,250,0.80) 100%)",
+              "linear-gradient(100deg, rgba(255,255,255,0.94) 0%, rgba(248,250,252,0.88) 42%, rgba(245,251,255,0.78) 100%)",
               `url("${TOUR_BIKES_PHOTO_SRC}")`,
             ].join(", "),
           }}
         />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(180deg,transparent,var(--surface-card))]"
-        />
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col justify-center py-16 sm:py-20 lg:py-24">
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col justify-center py-10 sm:py-12 lg:py-14">
           <SiteShell>
-            <div className="grid w-full items-center gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
-              <Reveal className="min-w-0 max-w-2xl" y={26} duration={0.8}>
+            <div className="grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-12">
+              <div className="min-w-0 max-w-2xl">
                 <h1
                   id="tours-hero-title"
-                  className="type-h1 flex flex-col items-start gap-1 text-[var(--text-primary)] sm:gap-2"
+                  className="flex flex-col items-start gap-1 text-4xl font-bold leading-[1.08] tracking-[-0.04em] text-slate-950 sm:gap-1.5 sm:text-5xl sm:leading-[1.06] lg:text-[3.15rem]"
                 >
-                  <span>{t("heroLine1")}</span>
+                  <span className="text-slate-950">{t("heroLine1")}</span>
                   <BrandBlueUnderlinedText>{t("heroLine2")}</BrandBlueUnderlinedText>
                 </h1>
-                <p className="mt-8 max-w-[54ch] text-[length:var(--text-lead)] leading-[1.68] text-[var(--text-secondary)]">
+                <p className="mt-6 max-w-xl text-base font-normal leading-7 text-slate-800 sm:text-lg sm:leading-8">
                   {t("heroLead", { companyName })}
                 </p>
-              </Reveal>
-              <Reveal
-                className="relative mx-auto hidden min-h-[min(20rem,44svh)] w-full max-w-md overflow-hidden rounded-[var(--r-feature)] shadow-[var(--elev-4)] ring-1 ring-inset ring-[var(--line)] sm:min-h-[min(22rem,46svh)] lg:block lg:max-w-none"
-                y={28}
-                delay={0.1}
-                scale={0.985}
-              >
+              </div>
+              <div className="relative mx-auto hidden min-h-[min(18rem,42svh)] w-full max-w-md overflow-hidden rounded-xl border border-slate-200/90 bg-[color-mix(in_srgb,var(--surface-card)_88%,transparent)] shadow-md ring-1 ring-slate-950/[0.04] sm:min-h-[min(20rem,44svh)] lg:block lg:max-w-none">
                 <Image
                   src={TOUR_QUAD_PHOTO_SRC}
                   alt={t("quadPhotoAlt")}
@@ -103,12 +89,12 @@ export async function TourContent({ contact }: Readonly<{ contact: TourSiteConta
                 />
                 <div
                   aria-hidden
-                  className="absolute inset-0 bg-[linear-gradient(180deg,transparent_35%,rgba(10,20,32,0.68)_100%)]"
+                  className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent"
                 />
-                <p className="absolute bottom-5 left-6 right-6 text-sm font-semibold leading-snug text-white [text-shadow:0_1px_12px_rgba(0,0,0,0.4)]">
+                <p className="absolute bottom-4 left-4 right-4 text-sm font-medium text-white drop-shadow-sm">
                   {t("quadImageCaption")}
                 </p>
-              </Reveal>
+              </div>
             </div>
           </SiteShell>
         </div>
@@ -117,25 +103,22 @@ export async function TourContent({ contact }: Readonly<{ contact: TourSiteConta
       <section
         id="custom-tours"
         aria-labelledby="custom-tours-title"
-        className="scroll-mt-28 border-t border-[var(--line-subtle)] bg-[var(--surface-card)] py-20 sm:py-24 lg:py-28"
+        className="scroll-mt-28 border-t border-slate-200/80 bg-[var(--surface-elevated)] py-12 sm:py-14 lg:py-16"
       >
         <Container>
-          <div className="mx-auto w-full max-w-[68ch]">
-            <Reveal y={18}>
-              <h2 id="custom-tours-title" className="type-h2 text-center text-[var(--text-primary)]">
-                {t("customTitle")}
-              </h2>
-            </Reveal>
-            <Reveal
-              className="mt-10 space-y-6 text-left text-[length:var(--text-lead)] leading-[1.72] text-[var(--text-secondary)]"
-              y={20}
-              delay={0.06}
+          <div className="mx-auto w-full max-w-prose">
+            <h2
+              id="custom-tours-title"
+              className="text-center text-2xl font-bold tracking-[-0.03em] text-slate-950 sm:text-[1.65rem]"
             >
+              {t("customTitle")}
+            </h2>
+            <div className="mt-6 space-y-5 text-left text-sm leading-relaxed text-slate-600 sm:mt-7 sm:text-[0.9375rem] sm:leading-7">
               <p>{t("customP1")}</p>
-              <p className="rounded-r-[var(--r-card)] border-l-[3px] border-l-blue-400 bg-blue-50/70 px-5 py-4 text-[0.9375rem] leading-[1.7] text-[var(--ink-800)]">
+              <p className="rounded-xl border border-slate-200/90 bg-[var(--surface-soft)] px-4 py-3 text-slate-700">
                 {t("customHighlight")}
               </p>
-            </Reveal>
+            </div>
           </div>
         </Container>
       </section>
@@ -143,22 +126,29 @@ export async function TourContent({ contact }: Readonly<{ contact: TourSiteConta
       <section
         id="guided-tours"
         aria-labelledby="guided-tours-title"
-        className="scroll-mt-28 border-t border-[var(--line-subtle)] bg-[var(--surface-band)] py-20 sm:py-24 lg:py-28"
+        className="relative isolate scroll-mt-28 overflow-hidden border-t border-slate-200/70 py-12 sm:py-14 lg:py-16"
       >
-        <Container>
-          <div className="mx-auto w-full max-w-[68ch]">
-            <Reveal y={18}>
-              <h2 id="guided-tours-title" className="type-h2 text-center text-[var(--text-primary)]">
-                {t("guidedTitle")}
-              </h2>
-            </Reveal>
-            <Reveal
-              className="mt-10 text-left text-[length:var(--text-lead)] leading-[1.72] text-[var(--text-secondary)]"
-              y={20}
-              delay={0.06}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: [
+              "linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(248,250,252,0.78) 50%, rgba(241,245,249,0.84) 100%)",
+              `url("${LOCAL_EXPERTS_BG_SRC}")`,
+            ].join(", "),
+          }}
+        />
+        <Container className="relative z-10">
+          <div className="mx-auto w-full max-w-prose">
+            <h2
+              id="guided-tours-title"
+              className="text-center text-2xl font-bold tracking-[-0.03em] text-slate-950 sm:text-[1.65rem]"
             >
-              <p>{t("guidedBody")}</p>
-            </Reveal>
+              {t("guidedTitle")}
+            </h2>
+            <p className="mt-6 text-left text-sm leading-relaxed text-slate-600 sm:text-[0.9375rem] sm:leading-7">
+              {t("guidedBody")}
+            </p>
           </div>
         </Container>
       </section>
@@ -166,21 +156,17 @@ export async function TourContent({ contact }: Readonly<{ contact: TourSiteConta
       <section
         id="tour-options"
         aria-labelledby="tour-options-title"
-        className="scroll-mt-28 border-t border-[var(--line-subtle)] bg-[var(--surface-card)] py-20 sm:py-24 lg:py-28"
+        className="scroll-mt-28 border-t border-slate-200/70 bg-[var(--surface-elevated)] py-14 sm:py-16"
       >
         <Container>
-          <Reveal y={18}>
-            <SectionHeader
-              titleId="tour-options-title"
-              title={t("optionsTitle")}
-              tone="light"
-              description={t("optionsDescription")}
-            />
-          </Reveal>
-          <div className="mx-auto mt-12 max-w-[46rem]">
-            <div className="surface-panel px-7 py-8 sm:px-9 sm:py-10">
-              <BulletList items={tourOptions} />
-            </div>
+          <SectionHeader
+            titleId="tour-options-title"
+            title={t("optionsTitle")}
+            tone="light"
+            description={t("optionsDescription")}
+          />
+          <div className="mx-auto mt-2 max-w-xl">
+            <BulletList items={tourOptions} />
           </div>
         </Container>
       </section>
@@ -188,21 +174,17 @@ export async function TourContent({ contact }: Readonly<{ contact: TourSiteConta
       <section
         id="why-choose-tours"
         aria-labelledby="why-choose-tours-title"
-        className="scroll-mt-28 border-t border-[var(--line-subtle)] bg-[var(--surface-band)] py-20 sm:py-24 lg:py-28"
+        className="scroll-mt-28 border-t border-slate-200/70 bg-[var(--surface-soft)] py-14 sm:py-16"
       >
         <Container>
-          <Reveal y={18}>
-            <SectionHeader
-              titleId="why-choose-tours-title"
-              title={t("whyTitle")}
-              tone="light"
-              description={t("whyDescription")}
-            />
-          </Reveal>
-          <div className="mx-auto mt-12 max-w-[46rem]">
-            <div className="surface-panel px-7 py-8 sm:px-9 sm:py-10">
-              <BulletList items={whyChoose} />
-            </div>
+          <SectionHeader
+            titleId="why-choose-tours-title"
+            title={t("whyTitle")}
+            tone="light"
+            description={t("whyDescription")}
+          />
+          <div className="mx-auto mt-2 max-w-xl">
+            <BulletList items={whyChoose} />
           </div>
         </Container>
       </section>
@@ -210,14 +192,10 @@ export async function TourContent({ contact }: Readonly<{ contact: TourSiteConta
       <section
         id="book-tour-cta"
         aria-labelledby="book-tour-title"
-        className="scroll-mt-28 border-t border-[var(--line-subtle)] bg-[var(--surface-sunken)] py-20 sm:py-24 lg:py-28"
+        className="scroll-mt-28 border-t border-slate-200/70 bg-[var(--surface-soft)] py-14 sm:py-16"
       >
         <Container>
-          <Reveal
-            className="relative isolate min-h-[min(19rem,50svh)] overflow-hidden rounded-[var(--r-feature)] shadow-[var(--elev-4)] ring-1 ring-inset ring-[var(--line)] sm:min-h-[min(21rem,46svh)]"
-            y={24}
-            scale={0.99}
-          >
+          <div className="relative isolate min-h-[min(18rem,48svh)] overflow-hidden rounded-lg border border-slate-200/60 shadow-md ring-1 ring-black/[0.04] sm:min-h-[min(19rem,44svh)]">
             <Image
               src={TOUR_BIKES_PHOTO_SRC}
               alt={t("bikesPhotoAlt")}
@@ -227,45 +205,48 @@ export async function TourContent({ contact }: Readonly<{ contact: TourSiteConta
             />
             <div
               aria-hidden
-              className="absolute inset-0 bg-gradient-to-r from-[rgba(10,20,32,0.94)] via-[rgba(10,20,32,0.76)] to-[rgba(10,20,32,0.34)] sm:via-[rgba(10,20,32,0.64)] sm:to-[rgba(10,20,32,0.24)]"
+              className="absolute inset-0 bg-gradient-to-r from-slate-950/[0.92] via-slate-950/72 to-slate-900/35 sm:via-slate-950/62 sm:to-slate-900/28"
             />
-            <div className="relative flex min-h-[inherit] flex-col justify-center px-7 py-11 sm:px-10 sm:py-12 lg:max-w-2xl lg:py-14 lg:pl-12 lg:pr-8">
-              <h2 id="book-tour-title" className="type-h2 text-white">
+            <div className="relative flex min-h-[inherit] flex-col justify-center px-6 py-9 sm:px-9 sm:py-10 lg:max-w-2xl lg:py-11 lg:pl-10 lg:pr-8">
+              <h2
+                id="book-tour-title"
+                className="text-2xl font-bold tracking-[-0.03em] text-white sm:text-[1.65rem] sm:leading-snug"
+              >
                 {t("ctaTitle")}
               </h2>
-              <p className="mt-5 max-w-[52ch] text-[length:var(--text-lead)] leading-[1.62] text-white/88">
+              <p className="mt-3 max-w-prose text-sm leading-6 text-white/90 sm:text-[0.9375rem] sm:leading-7">
                 {t("ctaBody", { companyName })}
               </p>
-              <p className="mt-6 max-w-[48ch] text-[0.9375rem] font-semibold leading-snug text-orange-300">
+              <p className="mt-5 max-w-prose text-sm font-semibold leading-snug text-[var(--brand-orange)] sm:text-[0.9375rem]">
                 {t("ctaTagline")}
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   href="/booking"
-                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--r-field)] bg-orange-400 px-6 py-2.5 text-sm font-semibold tracking-tight text-[var(--ink-950)] shadow-[var(--elev-orange)] transition-[background-color,box-shadow,transform] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:-translate-y-0.5 hover:bg-orange-500 hover:shadow-[var(--elev-orange-lift)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ink-950)] motion-reduce:hover:translate-y-0"
+                  className="inline-flex min-h-10 items-center justify-center rounded-md bg-[var(--brand-orange)] px-5 py-2.5 text-sm font-medium tracking-tight text-slate-950 transition-colors hover:bg-[var(--brand-orange-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                 >
                   {t("ctaRequestTour")}
                 </Link>
                 <Link
                   href="/#booking-preview"
-                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--r-field)] bg-white/10 px-6 py-2.5 text-sm font-semibold tracking-tight text-white ring-1 ring-inset ring-white/25 backdrop-blur-sm transition-[background-color,box-shadow] duration-[var(--dur-base)] ease-[var(--ease-standard)] hover:bg-white/18 hover:ring-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--ink-950)]"
+                  className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/20 bg-white px-5 py-2.5 text-sm font-medium tracking-tight text-slate-900 transition-colors hover:bg-white/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                 >
                   {t("ctaVehicleRental")}
                 </Link>
               </div>
             </div>
-          </Reveal>
+          </div>
         </Container>
       </section>
 
       <section
         id="tour-contact"
         aria-labelledby="tour-contact-title"
-        className="scroll-mt-28 border-t border-[var(--line-subtle)] bg-[var(--surface-card)] py-20 sm:py-24 lg:py-32"
+        className="scroll-mt-28 border-t border-slate-200/70 bg-[var(--surface-elevated)] py-14 sm:py-16"
       >
         <Container>
-          <div className="grid gap-12 lg:grid-cols-12 lg:items-start lg:gap-16">
-            <Reveal className="lg:col-span-5" y={20}>
+          <div className="grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-12">
+            <div className="lg:col-span-5">
               <SectionHeader
                 titleId="tour-contact-title"
                 title={t("contactTitle")}
@@ -273,14 +254,11 @@ export async function TourContent({ contact }: Readonly<{ contact: TourSiteConta
                 align="left"
                 description={t("contactDescription")}
               />
-              <hr className="rule-fade my-7" aria-hidden />
-              <p className="text-[0.9375rem] leading-[1.7] text-[var(--text-secondary)]">
-                {t("contactWhatsAppHint")}
-              </p>
-            </Reveal>
-            <Reveal className="lg:col-span-7" y={24} delay={0.08}>
+              <p className="mt-6 text-sm leading-6 text-slate-600">{t("contactWhatsAppHint")}</p>
+            </div>
+            <div className="lg:col-span-7">
               <TourRequestForm />
-            </Reveal>
+            </div>
           </div>
         </Container>
       </section>

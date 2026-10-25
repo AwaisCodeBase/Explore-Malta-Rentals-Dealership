@@ -74,10 +74,12 @@ const hasCurrentPrismaDelegates = (client: PrismaClient | undefined): client is 
   const delegateClient = client as PrismaClient & {
     vehicle?: unknown;
     adminSession?: unknown;
+    bookingExtension?: unknown;
   };
   return (
     typeof delegateClient.vehicle !== "undefined" &&
-    typeof delegateClient.adminSession !== "undefined"
+    typeof delegateClient.adminSession !== "undefined" &&
+    typeof delegateClient.bookingExtension !== "undefined"
   );
 };
 

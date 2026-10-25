@@ -1,19 +1,10 @@
-import { Clock, Mail, MapPin, Phone } from "lucide-react";
 import { GoogleMapEmbed } from "@/components/google-map-embed";
 import { Container } from "@/components/ui/container";
-import { Reveal } from "@/components/motion/reveal";
+import { Reveal } from "@/components/ui/reveal";
 import { SectionHeader } from "@/features/home/components/section-header";
 import { getEnvValue } from "@/components/footer/footer-utils";
 import { SITE_CONTACT, SITE_GOOGLE_MAPS_URL } from "@/lib/site-brand-copy";
 import { getTranslations } from "next-intl/server";
-
-const iconPlateClass =
-  "flex size-10 shrink-0 items-center justify-center rounded-[var(--r-field)] bg-[color-mix(in_srgb,var(--blue-500)_10%,white)] text-blue-700 shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--blue-500)_20%,transparent)]";
-
-const rowLabelClass = "type-spec text-ink-500";
-
-const inlineLinkClass =
-  "underline decoration-[color-mix(in_srgb,var(--orange-400)_55%,transparent)] underline-offset-4 transition-colors duration-[var(--dur-fast)] hover:text-orange-700 hover:decoration-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--blue-500)]";
 
 export async function ContactSection() {
   const t = await getTranslations("Contact");
@@ -30,10 +21,10 @@ export async function ContactSection() {
     <section
       id="contact"
       aria-labelledby="contact-title"
-      className="scroll-mt-28 bg-[var(--surface-page)] py-20 sm:py-24 lg:py-32"
+      className="scroll-mt-28 border-t border-slate-200/70 bg-white py-16"
     >
       <Container>
-        <Reveal as="div" y={22} className="mx-auto max-w-2xl">
+        <div className="mx-auto max-w-2xl">
           <SectionHeader
             title={t("title")}
             titleId="contact-title"
@@ -41,93 +32,68 @@ export async function ContactSection() {
             tone="light"
             align="center"
           />
-        </Reveal>
+        </div>
 
-        <Reveal as="div" delay={0.06} y={26} className="mt-14">
-          <div className="grid gap-6 lg:grid-cols-2 lg:items-stretch">
-            <div className="surface-panel flex flex-col p-6 sm:p-8">
-              <div className="flex items-start gap-4">
-                <span className={iconPlateClass} aria-hidden>
-                  <Phone className="size-[1.125rem]" strokeWidth={1.9} />
-                </span>
-                <div className="min-w-0">
-                  <p className={rowLabelClass}>{tCommon("mobile")}</p>
-                  <a
-                    href={telHref}
-                    className="mt-1.5 block text-2xl font-bold tracking-[-0.03em] tabular-nums text-ink-900 transition-colors duration-[var(--dur-fast)] hover:text-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--blue-500)] sm:text-3xl"
-                  >
-                    {phoneRaw}
-                  </a>
-                  <p className="mt-2 text-sm leading-[1.6] text-ink-500">
-                    {tCommon("tapToCall")}
-                  </p>
-                </div>
+        <div className="mt-10">
+          <Reveal className="grid gap-6 lg:grid-cols-2 lg:items-stretch">
+            <div className="rounded-md border border-slate-200/90 bg-white p-6 shadow-[0_18px_50px_-35px_rgba(2,6,23,0.12)]">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  {tCommon("mobile")}
+                </p>
+                <a
+                  href={telHref}
+                  className="mt-2 block text-2xl font-bold tracking-tight text-slate-950 transition-colors hover:text-[var(--brand-orange-strong)] sm:text-3xl"
+                >
+                  {phoneRaw}
+                </a>
+                <p className="mt-2 text-sm text-slate-600">{tCommon("tapToCall")}</p>
               </div>
 
-              <div className="mt-7 flex items-start gap-4 border-t border-[var(--line-subtle)] pt-7">
-                <span className={iconPlateClass} aria-hidden>
-                  <Mail className="size-[1.125rem]" strokeWidth={1.9} />
-                </span>
-                <div className="min-w-0">
-                  <p className={rowLabelClass}>{tCommon("email")}</p>
-                  <a
-                    href={mailHref}
-                    className={`mt-1.5 block break-words text-[0.9375rem] font-semibold text-ink-800 ${inlineLinkClass}`}
-                  >
-                    {email}
-                  </a>
-                </div>
+              <div className="mt-6 border-t border-slate-100 pt-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  {tCommon("email")}
+                </p>
+                <a
+                  href={mailHref}
+                  className="mt-2 block text-base font-semibold text-slate-900 underline decoration-[var(--brand-orange)]/45 underline-offset-4 transition-colors hover:text-[var(--brand-orange-strong)] hover:decoration-[var(--brand-orange)]"
+                >
+                  {email}
+                </a>
               </div>
 
-              <div className="mt-7 flex items-start gap-4 border-t border-[var(--line-subtle)] pt-7">
-                <span className={iconPlateClass} aria-hidden>
-                  <MapPin className="size-[1.125rem]" strokeWidth={1.9} />
-                </span>
-                <div className="min-w-0">
-                  <p className={rowLabelClass}>{tCommon("address")}</p>
-                  <p className="mt-1.5 text-[0.9375rem] font-medium leading-[1.65] text-ink-800">
-                    {address}
-                  </p>
-                  <a
-                    href={SITE_GOOGLE_MAPS_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`mt-3 inline-flex text-sm font-semibold text-ink-900 ${inlineLinkClass}`}
-                  >
-                    {tCommon("openInMaps")}
-                  </a>
-                </div>
+              <div className="mt-6 border-t border-slate-100 pt-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  {tCommon("address")}
+                </p>
+                <p className="mt-2 text-sm font-medium leading-relaxed text-slate-800">{address}</p>
+                <a
+                  href={SITE_GOOGLE_MAPS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex text-sm font-semibold text-slate-900 underline decoration-[var(--brand-orange)]/45 underline-offset-4 transition-colors hover:text-[var(--brand-orange-strong)] hover:decoration-[var(--brand-orange)]"
+                >
+                  {tCommon("openInMaps")}
+                </a>
               </div>
             </div>
 
-            <div className="surface-panel flex min-h-[22rem] flex-col overflow-hidden lg:min-h-0">
-              <p className="border-b border-[var(--line-subtle)] px-5 py-4 type-spec text-ink-500">
+            <div className="flex min-h-[320px] flex-col overflow-hidden rounded-md border border-slate-200/90 bg-white shadow-[0_18px_50px_-35px_rgba(2,6,23,0.12)] lg:min-h-0">
+              <p className="border-b border-slate-100 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                 {tCommon("location")}
               </p>
               <GoogleMapEmbed
-                className="min-h-[18rem] w-full flex-1 lg:min-h-0"
+                className="min-h-[280px] w-full flex-1 lg:min-h-0"
                 query={address}
               />
             </div>
-          </div>
+          </Reveal>
 
-          <div className="surface-card mt-6 flex items-start gap-4 p-6 sm:p-7">
-            <span
-              className="flex size-10 shrink-0 items-center justify-center rounded-[var(--r-field)] bg-[color-mix(in_srgb,var(--orange-400)_16%,white)] text-orange-700 shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--orange-400)_28%,transparent)]"
-              aria-hidden
-            >
-              <Clock className="size-[1.125rem]" strokeWidth={1.9} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[0.9375rem] font-semibold text-ink-900">
-                {tCommon("responseTimeTitle")}
-              </p>
-              <p className="mt-1.5 text-sm leading-[1.65] text-ink-600">
-                {tCommon("responseTimeBody")}
-              </p>
-            </div>
-          </div>
-        </Reveal>
+          <Reveal as="div" delay={120} className="mt-6 rounded-md border border-slate-200/90 bg-white p-6 shadow-[0_18px_50px_-35px_rgba(2,6,23,0.08)]">
+            <p className="text-sm font-semibold text-slate-950">{tCommon("responseTimeTitle")}</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{tCommon("responseTimeBody")}</p>
+          </Reveal>
+        </div>
       </Container>
     </section>
   );

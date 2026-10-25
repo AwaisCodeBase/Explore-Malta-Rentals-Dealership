@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 
 import { buildAdminBookingPriceBuildup } from "@/lib/admin/bookings/build-admin-booking-price-buildup";
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
+import { formatMaltaDateTime } from "@/lib/format-malta-datetime";
 
 type AdminBookingPriceBuildupProps = Readonly<{
   locale: string;
@@ -266,7 +267,7 @@ export async function AdminBookingPriceBuildup({ locale, booking }: AdminBooking
             value={formatEur(buildup.subtotal.storageBoxCost)}
           />
           <BuildupRow
-            emphasis
+            emphasis={buildup.subtotal.loyaltyCreditAmount <= 0}
             label={
               <FormulaLabel
                 label={t("details.fields.bookingChargesTotal")}
@@ -275,7 +276,44 @@ export async function AdminBookingPriceBuildup({ locale, booking }: AdminBooking
             }
             value={formatEur(buildup.subtotal.subtotal)}
           />
+          {buildup.subtotal.loyaltyCreditAmount > 0 ? (
+            <>
+              <BuildupRow
+                label={t("details.priceBuildup.loyaltyCredit")}
+                value={formatSignedEur(buildup.subtotal.loyaltyCreditAmount, true)}
+              />
+              <BuildupRow
+                emphasis
+                label={t("details.priceBuildup.chargesAfterLoyalty")}
+                value={formatEur(buildup.subtotal.chargesAfterLoyalty)}
+              />
+            </>
+          ) : null}
+          {buildup.extensionAmountDue > 0 ? (
+            <BuildupRow
+              emphasis
+              label={t("details.priceBuildup.extensionAmountDue")}
+              value={formatEur(buildup.extensionAmountDue)}
+            />
+          ) : null}
         </BuildupSubsection>
+
+        {booking.extensions.length > 0 ? (
+          <BuildupSubsection title={t("details.priceBuildup.extensionsTitle")}>
+            {booking.extensions.map((extension) => (
+              <BuildupRow
+                key={extension.id}
+                label={t("details.priceBuildup.extensionLine", {
+                  from: formatMaltaDateTime(extension.previousReturnDateTime, locale),
+                  to: formatMaltaDateTime(extension.newReturnDateTime, locale),
+                  days: extension.additionalBillableDays,
+                })}
+                value={formatEur(extension.additionalAmount)}
+              />
+            ))}
+            <p className="pt-2 text-xs text-slate-500">{t("details.priceBuildup.extensionAmountDueNote")}</p>
+          </BuildupSubsection>
+        ) : null}
 
         <BuildupSubsection title={t("details.priceBuildup.paymentSummaryTitle")}>
           <BuildupRow

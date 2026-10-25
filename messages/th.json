@@ -79,6 +79,7 @@
     "heroDescription": "บริการเช่ารถจักรยานยนต์ รถเอทีวี และจักรยาน ไกด์นำเที่ยว"
   },
   "Home": {
+    "heroWatchVideo": "ดูวิดีโอ",
     "heroBookRide": "จองรถของคุณ",
     "heroViewFleet": "ดูเรือเดินสมุทร",
     "heroTrust1": "มีไกด์นำเที่ยวให้บริการ",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "จัดส่ง/คืนที่โรงแรม",
         "description": "ในกรณีที่มีผลบังคับใช้ เราสามารถช่วยส่งและรับสินค้าได้อย่างสะดวก"
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "เหมาะสำหรับการเดินทางแบบไปเช้าเย็นกลับ",
         "bullet2": "ความสะดวกสบาย + การควบคุมที่สมดุล",
         "subtitle": "มอเตอร์ไซค์"
-      }
+      },
+      "includesLabel": "รวมถึง:"
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "ทรัสต์ไพลอต",
     "testimonialsExcellent": "ยอดเยี่ยม",
     "testimonialsMarqueeAria": "คำรับรองจากลูกค้าเลื่อน",
-    "ratingStarsAria": "{rating} เต็ม 5"
+    "ratingStarsAria": "{rating} เต็ม 5",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "เปิดให้เช่าสำหรับวันนี้",
+    "heroScrollCue": "เลื่อนเพื่อสำรวจ",
+    "heroMetaCategory": "บริการเช่ารถระดับพรีเมียม",
+    "heroMetaRental": "เช่ารายวันและรายสัปดาห์",
+    "heroTrustVerified": "ฟลีตที่ผ่านการตรวจสอบ",
+    "heroConsoleTitle": "ตรวจสอบสถานะว่าง",
+    "heroConsoleNote": "ไม่มีค่าใช้จ่ายแอบแฝง รับรถได้หลายจุด",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "หมวดหมู่ยานพาหนะ",
+    "sectionServicesTitleLine1": "บริการและ",
+    "sectionServicesTitleLine2": "สิทธิประโยชน์",
+    "highlightedServicesHowWeWork": "ดูวิธีการทำงานของเรา",
+    "highlightedServicesInfoLabel": "ข้อมูล"
   },
   "Faq": {
-    "title": "คำถามที่พบบ่อย (FAQ)",
+    "title": "คำถามที่พบบ่อย",
     "subtitleLead": "ไม่พบสิ่งที่คุณกำลังมองหา? เอื้อมมือออกไป",
     "subtitleTail": "หรือใช้ส่วนการติดต่อด้านล่าง",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "นโยบายการยกเลิกของคุณคืออะไร?",
-        "answer": "นโยบายอาจแตกต่างกันไปตามฤดูกาลและยานพาหนะ ติดต่อเราพร้อมรายละเอียดการจองของคุณ แล้วเราจะอธิบายตัวเลือกต่างๆ เรามุ่งมั่นที่จะยุติธรรมและชัดเจน เพื่อให้คุณสามารถวางแผนการเดินทางมอลตาได้อย่างมั่นใจ"
+        "answer": "การยกเลิกมากกว่า 48 ชั่วโมงก่อนเวลาเริ่มเช่าที่กำหนด มีสิทธิ์ได้รับเงินคืน 50% ของจำนวนเงินการจอง Explore Malta Rentals จะเก็บอีก 50% ที่เหลือ การยกเลิกภายใน 48 ชั่วโมงก่อนเวลาเริ่มเช่าที่กำหนด ไม่สามารถขอคืนเงินได้ และจะเก็บจำนวนเงินการจองทั้งหมด"
       },
       "invoice": {
         "question": "รวมหมวกกันน็อคและอุปกรณ์นิรภัยหรือไม่?",
@@ -236,7 +323,12 @@
     "description": "โทร ส่งข้อความ หรือเยี่ยมชม — เราพร้อมช่วยคุณเลือกการเดินทางที่เหมาะสม หมายเลขโทรศัพท์มือถือและตำแหน่งแผนที่ของคุณอยู่ด้านล่าง",
     "whatsappTitle": "ส่งข้อความ WhatsApp",
     "whatsappBody": "เราจะช่วยคุณเลือกรถที่เหมาะสมและตอบคำถามเกี่ยวกับความพร้อมให้บริการ",
-    "envWhatsappHint": "ตั้งค่า NEXT_PUBLIC_WHATSAPP_NUMBER เพื่อเปิดใช้งานปุ่ม WhatsApp"
+    "envWhatsappHint": "ตั้งค่า NEXT_PUBLIC_WHATSAPP_NUMBER เพื่อเปิดใช้งานปุ่ม WhatsApp",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "บ้าน",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "ต้องระบุเวลารับ",
     "returnDateRequired": "ต้องระบุวันที่เดินทางกลับ",
     "returnTimeRequired": "ต้องระบุเวลาส่งคืน",
-    "minRental": "เช่าขั้นต่ำคือ 24 ชั่วโมง",
+    "minRental": "เวลาคืนต้องอยู่หลังเวลารับ",
     "maxRental": "ค่าเช่าสูงสุดคือ 4 สัปดาห์",
     "pickupAddressDelivery": "ต้องระบุที่อยู่สำหรับรับสินค้าในการจัดส่ง",
     "dropoffAddressRequired": "ต้องระบุที่อยู่สำหรับส่งรถ",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "เช่าระยะยาวจะได้ส่วนลดตามระยะเวลาก่อนส่วนเสริม — ใช้เป็นคำแนะนำขณะค้นหา",
     "ariaFilters": "ตัวกรองยานพาหนะ",
-    "ariaRates": "อัตรารายวันที่บ่งชี้"
+    "ariaRates": "อัตรารายวันที่บ่งชี้",
+    "group50": "สกู๊ตเตอร์ 50cc",
+    "group125": "มอเตอร์ไซค์ 125cc",
+    "groupOther": "ยานพาหนะอื่น ๆ",
+    "groupCount": "{count, plural, one {# คัน} other {# คัน}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "ค้นหายานพาหนะ",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}: ส่วนลดระยะเวลา {percent}% · ราคาสุดท้ายขึ้นอยู่กับยานพาหนะและส่วนเสริม",
-    "durationDiscountSummaryMax": "เช่า 7+ วัน ประหยัดได้สูงสุด {percent}% · ราคาสุดท้ายขึ้นอยู่กับยานพาหนะและส่วนเสริม"
+    "durationDiscountSummaryMax": "เช่า 7+ วัน ประหยัดได้สูงสุด {percent}% · ราคาสุดท้ายขึ้นอยู่กับยานพาหนะและส่วนเสริม",
+    "moreFilters": "ตัวกรองเพิ่มเติม",
+    "fewerFilters": "ตัวกรองน้อยลง"
   },
   "BookingForm": {
     "invalidPickupDate": "วันที่รับไม่ถูกต้อง",
@@ -811,11 +909,11 @@
       "returnTime": "เวลากลับ",
       "sectionDuration": "ส่วน: ระยะเวลาการเช่า (ดิสเพลย์)",
       "autoDuration": "ระยะเวลาที่คำนวณอัตโนมัติ:",
-      "durationLine": "{days} วัน ({hours}h)",
+      "durationLine": "{hours} ชั่วโมง · คิดเป็น {days, plural, one {# วัน} other {# วัน}}",
       "durationInvalid": "วันที่/เวลาคืนจะต้องอยู่หลังรับของ",
       "durationWaiting": "กำลังรอวันที่ที่ถูกต้อง",
       "notesTitle": "หมายเหตุ:",
-      "noteMin": "เช่าขั้นต่ำคือ 24 ชั่วโมง",
+      "noteMin": "เวลาคืนต้องอยู่หลังเวลารับ",
       "noteDayCharge": "หากเกิน 24 ชั่วโมง จะถูกเรียกเก็บเงินเต็มวัน",
       "noteMax": "ค่าเช่าสูงสุดคือ 4 สัปดาห์",
       "noteRenew": "มีตัวเลือกทดแทนให้เลือก"
@@ -837,8 +935,8 @@
       "rentalDates": "วันที่เช่า:",
       "to": "ถึง",
       "billableDuration": "ระยะเวลาที่เรียกเก็บเงินได้:",
-      "dayCount": "{count} วัน",
-      "actualHours": "(ตามจริง {hours}h)",
+      "dayCount": "คิดเป็น {count, plural, one {# วัน} other {# วัน}}",
+      "actualHours": "{hours} ชั่วโมง",
       "pickupMethod": "วิธีรับ:",
       "pickupAddress": "ที่อยู่สำหรับรับ:",
       "dropoffMethod": "วิธีการส่ง:",
@@ -855,6 +953,8 @@
       "cdwCost": "ซีดีดับบลิว:",
       "addDriverCost": "ไดรเวอร์เพิ่มเติม:",
       "storageCost": "กล่องเก็บของ:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "ผลรวมย่อย:",
       "pricingPending": "การแสดงตัวอย่างราคาจะปรากฏขึ้นเมื่อยานพาหนะและวันที่/เวลาเช่าถูกต้อง",
       "section3": "ส่วนที่ 3 - เงินฝากและยอดรวม",

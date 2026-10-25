@@ -1,6 +1,13 @@
 import type { BookingFormValues } from "@/features/booking/lib/booking-schema";
 import { BOOKING_SHOP_LABEL } from "@/features/booking/lib/booking-schema";
-import { brandToUrlParam } from "@/features/vehicles/lib/booking-search-params";
+import {
+  brandToUrlParam,
+  parseTransmissionSearchParam,
+  seatsFilterToUrlParam,
+  transmissionToUrlParam,
+  vehicleColorToUrlParam,
+} from "@/features/vehicles/lib/booking-search-params";
+import type { VehicleColor, VehicleSeatsFilter } from "@/features/vehicles/data/vehicles";
 
 function buildPickupLabel(values: BookingFormValues): string {
   if (values.alternatePickupRequested && values.alternatePickupAddress?.trim()) {
@@ -39,6 +46,43 @@ export function buildVehiclesSearchUrl(values: BookingFormValues): string {
   const brand = values.brand?.trim();
   if (brand && brand !== "all") {
     params.set("brand", brandToUrlParam(brand));
+  }
+
+  const transmissionRaw = values.transmission?.trim().toLowerCase();
+  if (transmissionRaw && transmissionRaw !== "all") {
+    const transmission = parseTransmissionSearchParam(transmissionRaw);
+    if (transmission !== "All") {
+      params.set("transmission", transmissionToUrlParam(transmission));
+    }
+  }
+
+  const seatsRaw = values.seats?.trim().toLowerCase();
+  if (seatsRaw && seatsRaw !== "all") {
+    const seats: VehicleSeatsFilter =
+      seatsRaw === "1" ? 1 : seatsRaw === "2" ? 2 : seatsRaw === "3" ? 3 : "All";
+    if (seats !== "All") {
+      params.set("seats", seatsFilterToUrlParam(seats));
+    }
+  }
+
+  const colorRaw = values.color?.trim().toLowerCase();
+  if (colorRaw && colorRaw !== "all") {
+    const colorLabels: Record<string, VehicleColor> = {
+      black: "Black",
+      white: "White",
+      grey: "Grey",
+      gray: "Grey",
+      red: "Red",
+      blue: "Blue",
+      silver: "Silver",
+      orange: "Orange",
+      green: "Green",
+      cream: "Cream",
+    };
+    const color = colorLabels[colorRaw];
+    if (color) {
+      params.set("color", vehicleColorToUrlParam(color));
+    }
   }
 
   return `/vehicles?${params.toString()}`;

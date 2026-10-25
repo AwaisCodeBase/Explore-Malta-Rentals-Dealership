@@ -30,6 +30,8 @@ export type FindAvailableVehicleUnitsInput = {
   excludeHoldReference?: string;
   excludeSessionKey?: string;
   excludeVehicleUnitId?: string;
+  /** Ignore this booking's own occupancy and unit link so a model change cannot conflict with itself. */
+  excludeBookingId?: string;
 };
 
 export type AssignVehicleUnitInput = FindAvailableVehicleUnitsInput;

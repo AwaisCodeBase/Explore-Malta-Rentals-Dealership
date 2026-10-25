@@ -5,9 +5,9 @@ import {
   parseVehicleColorValue,
   vehicleColorToValue,
 } from "@/features/vehicles/lib/vehicle-color";
-import { findAvailableVehicleUnits } from "@/lib/vehicle-units/findAvailableVehicleUnits";
+import { batchFindAvailableVehicleUnits } from "@/lib/vehicle-units/findAvailableVehicleUnits";
 import { prisma } from "@/lib/prisma";
-import type { AvailableColorDto } from "@/lib/vehicle-units/types";
+import type { AvailableColorDto, VehicleUnitRecord } from "@/lib/vehicle-units/types";
 
 type VehicleUnitDbClient = typeof prisma | Prisma.TransactionClient;
 
@@ -19,7 +19,7 @@ export type BatchGetAvailableColorsInput = {
 };
 
 function groupUnitsByColorForVehicle(
-  units: Array<{ color: string | null }>,
+  units: ReadonlyArray<{ color: string | null }>,
 ): AvailableColorDto[] {
   const counts = new Map<string, { label: string; count: number }>();
 
@@ -47,9 +47,7 @@ function groupUnitsByColorForVehicle(
 }
 
 /**
- * Batch-fetch available colors for multiple vehicles without N+1 availability queries.
- * Runs findAvailableVehicleUnits per vehicle (unavoidable due to per-vehicle blocking logic)
- * but groups results efficiently.
+ * Batch-fetch available colors for multiple vehicles using a single unit-availability query.
  */
 export async function batchGetAvailableColorsForVehicles(
   input: BatchGetAvailableColorsInput,
@@ -61,20 +59,32 @@ export async function batchGetAvailableColorsForVehicles(
     return out;
   }
 
-  await Promise.all(
-    input.vehicleIds.map(async (vehicleId) => {
-      const availableUnits = await findAvailableVehicleUnits(
-        {
-          vehicleId,
-          requestedStart: input.requestedStart,
-          requestedEnd: input.requestedEnd,
-          excludeSessionKey: input.excludeSessionKey,
-        },
-        db,
-      );
-      out.set(vehicleId, groupUnitsByColorForVehicle(availableUnits));
-    }),
+  const availableByVehicle = await batchFindAvailableVehicleUnits(
+    {
+      vehicleIds: input.vehicleIds,
+      requestedStart: input.requestedStart,
+      requestedEnd: input.requestedEnd,
+      excludeSessionKey: input.excludeSessionKey,
+    },
+    db,
   );
 
+  for (const vehicleId of input.vehicleIds) {
+    const units = availableByVehicle.get(vehicleId) ?? [];
+    out.set(vehicleId, groupUnitsByColorForVehicle(units));
+  }
+
+  return out;
+}
+
+/** Derive color DTOs from a precomputed available-units map (avoids a second DB round-trip). */
+export function availableColorsFromUnitsMap(
+  vehicleIds: readonly string[],
+  availableByVehicle: ReadonlyMap<string, readonly VehicleUnitRecord[]>,
+): Map<string, AvailableColorDto[]> {
+  const out = new Map<string, AvailableColorDto[]>();
+  for (const vehicleId of vehicleIds) {
+    out.set(vehicleId, groupUnitsByColorForVehicle(availableByVehicle.get(vehicleId) ?? []));
+  }
   return out;
 }

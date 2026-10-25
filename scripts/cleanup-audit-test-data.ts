@@ -30,6 +30,15 @@ async function main(): Promise<void> {
        OR "reservationHoldId" IN (SELECT "id" FROM "ReservationHold" WHERE "customerEmail" LIKE '%@test.local')
   `;
 
+  await prisma.customerLoyaltyCredit.deleteMany({
+    where: {
+      OR: [
+        { sourceBooking: { OR: [{ customerEmail: TEST_EMAIL }, { customerEmail: { endsWith: "@test.local" } }] } },
+        { redeemedBooking: { OR: [{ customerEmail: TEST_EMAIL }, { customerEmail: { endsWith: "@test.local" } }] } },
+      ],
+    },
+  });
+
   const deletedBookings = await prisma.booking.deleteMany({
     where: {
       OR: [

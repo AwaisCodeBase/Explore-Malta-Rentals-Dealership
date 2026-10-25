@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/index";
 
+import { maltaCalendarDayRange } from "@/lib/admin/bookings/extension-calendar-days";
 import type {
   AdminBookingListFilters,
   AdminBookingListItem,
@@ -78,6 +79,16 @@ function buildBookingWhere(filters: AdminBookingListFilters): Prisma.BookingWher
       pickupFilter.lte = new Date(`${filters.pickupTo}T23:59:59.999Z`);
     }
     where.pickupDateTime = pickupFilter;
+  }
+
+  if (filters.returnDate) {
+    const range = maltaCalendarDayRange(filters.returnDate);
+    if (range) {
+      where.returnDateTime = {
+        gte: range.start,
+        lt: range.end,
+      };
+    }
   }
 
   return where;

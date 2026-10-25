@@ -20,6 +20,13 @@ export function isVehicleRentalWindowStatus(value: string): value is VehicleRent
   return (RENTAL_WINDOW_STATUSES as readonly string[]).includes(value);
 }
 
+/** Vehicles the customer can still book for the searched rental window. */
+export function isBookableRentalWindowStatus(
+  status: VehicleRentalWindowStatus | undefined,
+): boolean {
+  return status === "available" || status === "reserved_you";
+}
+
 export type VehicleImageDto = {
   imageUrl: string;
   altText: string | null;

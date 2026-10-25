@@ -79,6 +79,7 @@
     "heroDescription": "تأجير دراجات نارية وATVs ودراجات هوائية. جولات مع مرشدين."
   },
   "Home": {
+    "heroWatchVideo": "شاهد الفيديو",
     "heroBookRide": "احجز رحلتك",
     "heroViewFleet": "عرض الأسطول",
     "heroTrust1": "جولات مع مرشدين متاحة",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "التوصيل إلى الفندق / الإعادة",
         "description": "حيثما ينطبق ذلك، يمكننا المساعدة في الإيصال والاستلام المريح."
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "رائعة للرحلات اليومية",
         "bullet2": "راحة + تحكم متوازن",
         "subtitle": "دراجة نارية"
-      }
+      },
+      "includesLabel": "يشمل:"
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "Trustpilot",
     "testimonialsExcellent": "ممتاز",
     "testimonialsMarqueeAria": "شهادات العملاء، متحركة",
-    "ratingStarsAria": "{rating} من أصل 5"
+    "ratingStarsAria": "{rating} من أصل 5",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "متاح للتأجير اليوم",
+    "heroScrollCue": "مرّر للاستكشاف",
+    "heroMetaCategory": "تأجير دراجات فاخر",
+    "heroMetaRental": "تأجير يومي وأسبوعي",
+    "heroTrustVerified": "أسطول موثّق",
+    "heroConsoleTitle": "تحقق من التوفر",
+    "heroConsoleNote": "لا رسوم خفية. خيارات استلام مرنة.",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "فئات الأسطول",
+    "sectionServicesTitleLine1": "الخدمات و",
+    "sectionServicesTitleLine2": "المزايا",
+    "highlightedServicesHowWeWork": "اطلع على آلية عملنا",
+    "highlightedServicesInfoLabel": "معلومات"
   },
   "Faq": {
-    "title": "الأسئلة الشائعة (FAQ)",
+    "title": "الأسئلة الشائعة",
     "subtitleLead": "لم تجد ما تبحث عنه؟ تواصل معنا عبر ",
     "subtitleTail": " أو استخدم قسم الاتصال أدناه.",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "ما سياسة الإلغاء لديكم؟",
-        "answer": "قد تختلف السياسات حسب الموسم والمركبة. تواصل معنا بتفاصيل حجزك وسنشرح الخيارات المتاحة. نسعى إلى أن نكون عادلين وواضحين حتى تتمكن من التخطيط لرحلتك في Malta بثقة."
+        "answer": "يحق للعميل استرداد 50% من مبلغ الحجز عند الإلغاء قبل أكثر من 48 ساعة من وقت بدء الإيجار المحدد. تحتفظ Explore Malta Rentals بالنسبة المتبقية وقدرها 50%. الإلغاء خلال 48 ساعة من وقت بدء الإيجار المحدد غير قابل للاسترداد، ويُحتجز مبلغ الحجز بالكامل."
       },
       "invoice": {
         "question": "هل الخوذات ومعدات السلامة مشمولة؟",
@@ -236,7 +323,12 @@
     "description": "اتصل أو أرسل رسالة أو قم بزيارتنا — نحن هنا لمساعدتك في اختيار الركوب المناسب. رقم هاتفك المحمول وموقع الخريطة أدناه.",
     "whatsappTitle": "أرسل رسالة WhatsApp",
     "whatsappBody": "سنساعدك في اختيار الركوب المناسب والإجابة على أسئلة التوافر.",
-    "envWhatsappHint": "قم بتعيين NEXT_PUBLIC_WHATSAPP_NUMBER لتفعيل زر WhatsApp."
+    "envWhatsappHint": "قم بتعيين NEXT_PUBLIC_WHATSAPP_NUMBER لتفعيل زر WhatsApp.",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "الرئيسية",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "وقت الاستلام مطلوب",
     "returnDateRequired": "تاريخ الإعادة مطلوب",
     "returnTimeRequired": "وقت الإعادة مطلوب",
-    "minRental": "الحد الأدنى للإيجار 24 ساعة",
+    "minRental": "يجب أن يكون وقت الإعادة بعد وقت الاستلام.",
     "maxRental": "الحد الأقصى للإيجار 4 أسابيع",
     "pickupAddressDelivery": "عنوان الاستلام مطلوب للتوصيل",
     "dropoffAddressRequired": "عنوان التسليم مطلوب",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "الإيجارات الأطول تفتح خصومات المدة قبل الإضافات — استخدمها كدليل أثناء البحث.",
     "ariaFilters": "مرشحات المركبات",
-    "ariaRates": "الأسعار اليومية التوجيهية"
+    "ariaRates": "الأسعار اليومية التوجيهية",
+    "group50": "سكوترات 50cc",
+    "group125": "دراجات 125cc",
+    "groupOther": "مركبات أخرى",
+    "groupCount": "{count, plural, one {مركبة #} other {# مركبات}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "بحث المركبة",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}: خصم مدة {percent}٪ · السعر النهائي يعتمد على المركبة والإضافات.",
-    "durationDiscountSummaryMax": "أجرِ 7+ أيام ووفّر حتى {percent}٪ · السعر النهائي يعتمد على المركبة والإضافات."
+    "durationDiscountSummaryMax": "أجرِ 7+ أيام ووفّر حتى {percent}٪ · السعر النهائي يعتمد على المركبة والإضافات.",
+    "moreFilters": "المزيد من عوامل التصفية",
+    "fewerFilters": "تصفية أقل"
   },
   "BookingForm": {
     "invalidPickupDate": "تاريخ استلام غير صالح",
@@ -811,11 +909,11 @@
       "returnTime": "وقت الإعادة",
       "sectionDuration": "القسم: مدة الإيجار (العرض)",
       "autoDuration": "المدة المحسوبة تلقائياً:",
-      "durationLine": "{days} يوم ({hours} ساعة)",
+      "durationLine": "{hours} ساعة · تُحسب كـ {days, plural, one {# يوم} other {# أيام}}",
       "durationInvalid": "يجب أن يكون تاريخ/وقت الإعادة بعد الاستلام",
       "durationWaiting": "في انتظار تواريخ صالحة",
       "notesTitle": "ملاحظات:",
-      "noteMin": "الحد الأدنى للإيجار 24 ساعة.",
+      "noteMin": "يجب أن يكون وقت الإعادة بعد وقت الاستلام.",
       "noteDayCharge": "إذا كان أقل من 24 ساعة، تُحسب يوم كامل.",
       "noteMax": "الحد الأقصى للإيجار 4 أسابيع.",
       "noteRenew": "خيار التجديد متاح."
@@ -837,8 +935,8 @@
       "rentalDates": "تواريخ الإيجار:",
       "to": "إلى",
       "billableDuration": "المدة القابلة للفوترة:",
-      "dayCount": "{count} يوم",
-      "actualHours": " (فعلي {hours} ساعة)",
+      "dayCount": "تُحسب كـ {count, plural, one {# يوم} other {# أيام}}",
+      "actualHours": "{hours} ساعة",
       "pickupMethod": "طريقة الاستلام:",
       "pickupAddress": "عنوان الاستلام:",
       "dropoffMethod": "طريقة التسليم:",
@@ -855,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "السائق الإضافي:",
       "storageCost": "صندوق التخزين:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "المجموع الفرعي:",
       "pricingPending": "ستظهر معاينة التسعير بمجرد صلاحية المركبة وتواريخ/أوقات الإيجار.",
       "section3": "القسم 3 - الوديعة والإجماليات",

@@ -99,7 +99,7 @@ function SeatDropdownIndicator(
     <selectComponents.DropdownIndicator {...props}>
       <svg
         viewBox="0 0 20 20"
-        className="h-4 w-4 text-[var(--ink-500)]"
+        className="h-4 w-4 text-slate-500"
         fill="none"
         stroke="currentColor"
         strokeWidth="2"
@@ -122,19 +122,22 @@ function FilterSection({
   children,
   sleek,
 }: Readonly<{ title: string; children: ReactNode; sleek?: boolean }>) {
+  if (sleek) {
+    return (
+      <div className="border-b border-slate-200/35 pb-3.5 last:border-b-0 last:pb-0">
+        <h3 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+          {title}
+        </h3>
+        <div className="mt-2 flex flex-col gap-0.5">{children}</div>
+      </div>
+    );
+  }
   return (
-    <div>
-      <h3
-        className={joinClasses(
-          "type-eyebrow",
-          sleek ? "text-[var(--text-faint)]" : "text-[var(--text-muted)]",
-        )}
-      >
+    <div className="border-b border-slate-200/90 pb-5 last:border-b-0 last:pb-0">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
         {title}
       </h3>
-      <div className={joinClasses("flex flex-col gap-1", sleek ? "mt-2.5" : "mt-3")}>
-        {children}
-      </div>
+      <div className="mt-3 space-y-1.5">{children}</div>
     </div>
   );
 }
@@ -154,18 +157,28 @@ function RadioRow({
   onChange: () => void;
   sleek?: boolean;
 }>) {
+  if (sleek) {
+    return (
+      <label
+        htmlFor={id}
+        className="flex cursor-pointer items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 text-[13px] font-medium leading-snug text-slate-600 transition-[background-color,border-color,box-shadow,color] duration-150 hover:border-slate-200/70 hover:bg-white/60 has-[:checked]:border-[color-mix(in_srgb,var(--brand-orange)_28%,transparent)] has-[:checked]:bg-[color-mix(in_srgb,var(--brand-orange)_10%,white)] has-[:checked]:text-slate-800 has-[:checked]:shadow-[0_1px_3px_rgba(15,23,42,0.05)]"
+      >
+        <input
+          id={id}
+          name={name}
+          type="radio"
+          checked={checked}
+          onChange={onChange}
+          className="size-3.5 shrink-0 border-slate-300/80 text-[var(--brand-orange)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]/35"
+        />
+        <span>{label}</span>
+      </label>
+    );
+  }
   return (
     <label
       htmlFor={id}
-      className={joinClasses(
-        /* Hairline pill row: rest / hover / selected all read as distinct states. */
-        "flex cursor-pointer select-none items-center gap-2.5 rounded-full border border-transparent leading-snug text-[var(--text-secondary)]",
-        "transition-[background-color,border-color,color] duration-[var(--dur-fast)] ease-[var(--ease-standard)]",
-        "hover:border-[var(--line-subtle)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink-900)]",
-        "has-[:checked]:border-[color-mix(in_srgb,var(--orange-400)_46%,transparent)] has-[:checked]:bg-[color-mix(in_srgb,var(--orange-400)_11%,white)] has-[:checked]:font-semibold has-[:checked]:text-[var(--ink-900)]",
-        "has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--blue-500)]",
-        sleek ? "px-2.5 py-2 text-[13px] font-medium" : "px-3 py-2 text-sm font-medium",
-      )}
+      className="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-slate-700 transition-colors hover:bg-slate-100/80 has-[:checked]:bg-slate-100/90"
     >
       <input
         id={id}
@@ -173,14 +186,9 @@ function RadioRow({
         type="radio"
         checked={checked}
         onChange={onChange}
-        className="peer sr-only"
+        className="h-4 w-4 shrink-0 border-slate-300 text-[var(--brand-orange)] focus:ring-2 focus:ring-[var(--brand-orange)]/35"
       />
-      <span
-        aria-hidden
-        /* Ring + inset white core reads as a filled radio dot when selected. */
-        className="size-[1.0625rem] shrink-0 rounded-full border border-[var(--line-strong)] bg-[var(--surface-card)] transition-[background-color,border-color,box-shadow] duration-[var(--dur-fast)] ease-[var(--ease-standard)] peer-checked:border-[var(--orange-500)] peer-checked:bg-[var(--orange-400)] peer-checked:shadow-[inset_0_0_0_3px_var(--surface-card)]"
-      />
-      <span className="min-w-0">{label}</span>
+      <span>{label}</span>
     </label>
   );
 }
@@ -198,22 +206,26 @@ function SeatsDropdown({
     container: (base) => ({
       ...base,
       width: "100%",
+      marginTop: 8,
     }),
     control: (base, state) => ({
       ...base,
-      minHeight: sleek ? 38 : 40,
-      borderRadius: "var(--r-field)",
-      borderColor: state.isFocused ? "var(--blue-500)" : "var(--line)",
+      minHeight: sleek ? 36 : 38,
+      borderRadius: sleek ? 10 : 8,
+      borderColor: state.isFocused
+        ? "rgba(58,124,165,0.35)"
+        : sleek
+          ? "rgba(148,163,184,0.35)"
+          : "rgba(148,163,184,0.45)",
       boxShadow: state.isFocused
-        ? "0 0 0 3px color-mix(in srgb, var(--blue-500) 18%, transparent)"
-        : "var(--elev-1)",
-      backgroundColor: "var(--surface-card)",
+        ? "0 0 0 2px rgba(58,124,165,0.2)"
+        : "0 1px 2px rgba(15,23,42,0.04)",
+      backgroundColor: sleek ? "rgba(255,255,255,0.9)" : "#fff",
       cursor: "pointer",
       paddingLeft: 4,
       paddingRight: 4,
-      transition: "border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard)",
       ":hover": {
-        borderColor: "var(--line-strong)",
+        borderColor: "rgba(148,163,184,0.55)",
       },
     }),
     valueContainer: (base) => ({
@@ -223,29 +235,29 @@ function SeatsDropdown({
     singleValue: (base) => ({
       ...base,
       margin: 0,
-      color: "var(--ink-900)",
+      color: "#334155",
       fontWeight: 600,
       fontSize: sleek ? 13 : 14,
     }),
     indicatorSeparator: () => ({ display: "none" }),
     dropdownIndicator: (base) => ({
       ...base,
-      color: "var(--ink-500)",
+      color: "#64748b",
       padding: 3,
-      ":hover": { color: "var(--ink-800)" },
+      ":hover": { color: "#334155" },
     }),
     menu: (base) => ({
       ...base,
-      borderRadius: "var(--r-card)",
-      border: "1px solid var(--line-subtle)",
-      boxShadow: "var(--elev-4)",
+      borderRadius: 10,
+      border: "1px solid rgba(58,124,165,0.22)",
+      boxShadow: "0 16px 34px -22px rgba(15,23,42,0.45)",
       overflow: "hidden",
       zIndex: 9999,
     }),
     menuList: (base) => ({
       ...base,
-      paddingTop: 6,
-      paddingBottom: 6,
+      paddingTop: 4,
+      paddingBottom: 4,
     }),
     option: (base, state) => ({
       ...base,
@@ -253,15 +265,13 @@ function SeatsDropdown({
       fontWeight: 600,
       cursor: "pointer",
       backgroundColor: state.isSelected
-        ? "var(--blue-500)"
+        ? "var(--brand-blue)"
         : state.isFocused
-          ? "color-mix(in srgb, var(--blue-500) 10%, white)"
-          : "var(--surface-card)",
-      color: state.isSelected ? "#fff" : "var(--ink-800)",
+          ? "rgba(58,124,165,0.1)"
+          : "#fff",
+      color: state.isSelected ? "#fff" : "#334155",
       ":active": {
-        backgroundColor: state.isSelected
-          ? "var(--blue-600)"
-          : "color-mix(in srgb, var(--blue-500) 16%, white)",
+        backgroundColor: "rgba(58,124,165,0.18)",
       },
     }),
   };
@@ -313,20 +323,18 @@ export function VehicleListingSidebar({
   const surfaceClass =
     variant === "rail"
       ? "border-0 bg-transparent p-0 shadow-none backdrop-blur-none"
-      : "surface-card p-4 lg:sticky lg:top-24 lg:self-start";
+      : "rounded-xl border border-slate-200/90 bg-white/95 p-4 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.12)] backdrop-blur-sm lg:sticky lg:top-24 lg:self-start";
 
   const collapsibleRail = variant === "rail" && onToggleCollapsed;
 
   const filterPanelId = "vehicle-filters-panel";
   const sleekRail = variant === "rail";
 
-  /* Fading hairline between filter groups — reads quieter than a full-bleed border. */
-  const groupDivider = (
-    <hr className={joinClasses("rule-fade", sleekRail ? "my-4" : "my-5")} />
-  );
-
   const filterSections = (
-    <div id={filterPanelId}>
+    <div
+      id={filterPanelId}
+      className={sleekRail ? "space-y-3.5" : "space-y-5"}
+    >
       <FilterSection title="Brand" sleek={sleekRail}>
         <RadioRow
           name="brand"
@@ -349,8 +357,6 @@ export function VehicleListingSidebar({
         ))}
       </FilterSection>
 
-      {groupDivider}
-
       <FilterSection title="Vehicle type" sleek={sleekRail}>
         {VEHICLE_TYPE_OPTIONS.map((value) => (
           <RadioRow
@@ -364,8 +370,6 @@ export function VehicleListingSidebar({
           />
         ))}
       </FilterSection>
-
-      {groupDivider}
 
       <FilterSection title="Transmission" sleek={sleekRail}>
         {TRANSMISSIONS.map((value) => (
@@ -381,8 +385,6 @@ export function VehicleListingSidebar({
         ))}
       </FilterSection>
 
-      {groupDivider}
-
       <FilterSection title="Seats" sleek={sleekRail}>
         <SeatsDropdown
           value={selectedSeats}
@@ -390,8 +392,6 @@ export function VehicleListingSidebar({
           sleek={sleekRail}
         />
       </FilterSection>
-
-      {groupDivider}
 
       <FilterSection title="Color" sleek={sleekRail}>
         {colorOptions.map((value) => (
@@ -410,10 +410,10 @@ export function VehicleListingSidebar({
   );
 
   const expandedHeader = collapsibleRail ? (
-    <div className="mb-4 flex items-center justify-between gap-2">
+    <div className="mb-3.5 flex items-center justify-between gap-2">
       <p
         id="vehicle-filters-heading"
-        className="type-eyebrow text-[var(--ink-800)]"
+        className="text-[13px] font-semibold tracking-[-0.02em] text-slate-800"
       >
         Filters
       </p>
@@ -423,14 +423,14 @@ export function VehicleListingSidebar({
         aria-expanded="true"
         aria-controls={filterPanelId}
         title="Hide filters"
-        className="hidden size-8 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface-card)] text-[var(--text-muted)] shadow-sm transition-[color,box-shadow,background-color,transform] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:border-[var(--line-strong)] hover:text-[var(--ink-900)] hover:shadow-md active:scale-95 lg:inline-flex"
+        className="hidden size-8 items-center justify-center rounded-full border border-slate-200/70 bg-white/90 text-slate-500 shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-[color,box-shadow,background-color] hover:border-slate-300/80 hover:bg-white hover:text-slate-800 hover:shadow-[0_2px_6px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]/35 lg:inline-flex"
       >
         <ChevronLeftIcon />
         <span className="sr-only">Hide filters</span>
       </button>
     </div>
   ) : (
-    <p className="type-eyebrow mb-4 text-[var(--ink-800)]">Filters</p>
+    <p className="mb-4 text-sm font-semibold text-slate-900">Filters</p>
   );
 
   const expandedBody = (
@@ -453,7 +453,7 @@ export function VehicleListingSidebar({
         aria-expanded="false"
         aria-controls={filterPanelId}
         title="Show filters"
-        className="flex shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-field)] border-0 bg-transparent p-2 text-[var(--text-secondary)] transition-[color,background-color] duration-[var(--dur-fast)] ease-[var(--ease-standard)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink-900)]"
+        className="flex shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-2 text-slate-600 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)]/35 focus-visible:ring-offset-0"
       >
         <CollapsedRailFilterIcon />
         <span className="sr-only">Show filters</span>

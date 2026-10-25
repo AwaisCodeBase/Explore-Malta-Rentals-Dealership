@@ -79,6 +79,7 @@
     "heroDescription": "摩托车、ATV 和自行车租赁。导览服务。"
   },
   "Home": {
+    "heroWatchVideo": "观看视频",
     "heroBookRide": "预订您的行程",
     "heroViewFleet": "查看车队",
     "heroTrust1": "提供导览服务",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "酒店送车/还车",
         "description": "在适用情况下，我们可以帮助安排便捷的送还服务。"
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "非常适合一日游",
         "bullet2": "平衡舒适与操控",
         "subtitle": "摩托车"
-      }
+      },
+      "includesLabel": "包含："
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "Trustpilot",
     "testimonialsExcellent": "优秀",
     "testimonialsMarqueeAria": "客户评价，滚动中",
-    "ratingStarsAria": "{rating} 分（满分 5 分）"
+    "ratingStarsAria": "{rating} 分（满分 5 分）",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "今日租赁开放中",
+    "heroScrollCue": "滚动以探索",
+    "heroMetaCategory": "高端摩托租赁",
+    "heroMetaRental": "日租与周租",
+    "heroTrustVerified": "已认证车队",
+    "heroConsoleTitle": "查询可租车辆",
+    "heroConsoleNote": "无隐藏费用。灵活取车选择。",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "车队类别",
+    "sectionServicesTitleLine1": "服务与",
+    "sectionServicesTitleLine2": "优势",
+    "highlightedServicesHowWeWork": "了解我们的工作方式",
+    "highlightedServicesInfoLabel": "信息"
   },
   "Faq": {
-    "title": "常见问题（FAQ）",
+    "title": "常见问题",
     "subtitleLead": "找不到您要的答案？请通过 ",
     "subtitleTail": " 联系我们，或使用下方的联系部分。",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "您的取消政策是什么？",
-        "answer": "政策可能因季节和车辆而异。请联系我们并提供您的预订详情，我们会解释相关选项。我们力求公平透明，让您可以放心规划 Malta 之旅。"
+        "answer": "在预定租赁开始时间48小时之前取消，可退还预订金额的50%。Explore Malta Rentals保留其余50%。在预定租赁开始时间48小时以内取消不予退款，预订金额全额保留。"
       },
       "invoice": {
         "question": "是否含头盔和安全装备？",
@@ -236,7 +323,12 @@
     "description": "致电、发消息或来访——我们在这里帮助您选择合适的交通工具。您的手机号码和地图位置如下。",
     "whatsappTitle": "发送 WhatsApp 消息",
     "whatsappBody": "我们将帮助您选择合适的车辆并解答车辆情况问题。",
-    "envWhatsappHint": "设置 NEXT_PUBLIC_WHATSAPP_NUMBER 以启用 WhatsApp 按钮。"
+    "envWhatsappHint": "设置 NEXT_PUBLIC_WHATSAPP_NUMBER 以启用 WhatsApp 按钮。",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "首页",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "取车时间为必填项",
     "returnDateRequired": "还车日期为必填项",
     "returnTimeRequired": "还车时间为必填项",
-    "minRental": "最短租赁时间为 24 小时",
+    "minRental": "还车时间必须晚于取车时间。",
     "maxRental": "最长租赁时间为 4 周",
     "pickupAddressDelivery": "配送需要取车地址",
     "dropoffAddressRequired": "还车地址为必填项",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "租期越长，越可享受时长折扣（不含附加项目）——搜索时可作为参考。",
     "ariaFilters": "车辆筛选器",
-    "ariaRates": "参考日租价格"
+    "ariaRates": "参考日租价格",
+    "group50": "50cc 踏板车",
+    "group125": "125cc 摩托车",
+    "groupOther": "其他车辆",
+    "groupCount": "{count, plural, one {# 辆} other {# 辆}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "车辆搜索",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}：{percent}% 时长折扣 · 最终价格取决于车辆和附加项目。",
-    "durationDiscountSummaryMax": "租满 7 天以上最高可省 {percent}% · 最终价格取决于车辆和附加项目。"
+    "durationDiscountSummaryMax": "租满 7 天以上最高可省 {percent}% · 最终价格取决于车辆和附加项目。",
+    "moreFilters": "更多筛选",
+    "fewerFilters": "收起筛选"
   },
   "BookingForm": {
     "invalidPickupDate": "取车日期无效",
@@ -811,11 +909,11 @@
       "returnTime": "还车时间",
       "sectionDuration": "部分：租赁时长（显示）",
       "autoDuration": "自动计算时长：",
-      "durationLine": "{days} 天（{hours}小时）",
+      "durationLine": "{hours} 小时 · 按 {days, plural, one {# 天} other {# 天}}计费",
       "durationInvalid": "还车日期/时间必须在取车后",
       "durationWaiting": "等待有效日期",
       "notesTitle": "注意事项：",
-      "noteMin": "最短租赁时间为 24 小时。",
+      "noteMin": "还车时间必须晚于取车时间。",
       "noteDayCharge": "不足 24 小时按完整一天计费。",
       "noteMax": "最长租赁时间为 4 周。",
       "noteRenew": "可选续租。"
@@ -837,8 +935,8 @@
       "rentalDates": "租赁日期：",
       "to": "至",
       "billableDuration": "计费时长：",
-      "dayCount": "{count} 天",
-      "actualHours": "（实际 {hours} 小时）",
+      "dayCount": "按 {count, plural, one {# 天} other {# 天}}计费",
+      "actualHours": "{hours} 小时",
       "pickupMethod": "取车方式：",
       "pickupAddress": "取车地址：",
       "dropoffMethod": "还车方式：",
@@ -855,6 +953,8 @@
       "cdwCost": "CDW：",
       "addDriverCost": "附加驾驶员：",
       "storageCost": "储物箱：",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "小计：",
       "pricingPending": "车辆和租赁日期/时间有效后将显示定价预览。",
       "section3": "第 3 部分 - 押金与总计",

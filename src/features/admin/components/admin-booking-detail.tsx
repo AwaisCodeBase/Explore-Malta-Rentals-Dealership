@@ -4,6 +4,7 @@ import { ArrowLeft, BadgeCheck, CheckCircle2, KeyRound, RotateCcw, XCircle } fro
 import { getTranslations } from "next-intl/server";
 
 import { AdminBookingPriceBuildup } from "@/features/admin/components/admin-booking-price-buildup";
+import { AdminBookingReviewRequestButton } from "@/features/admin/components/admin-booking-review-request-button";
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import { formatMaltaDate, formatMaltaDateTime } from "@/lib/format-malta-datetime";
 
@@ -67,6 +68,133 @@ function unitStatusBadgeClass(status: string): string {
   if (status === "OUT_WITH_CUSTOMER") return "bg-violet-50 text-violet-700";
   if (status === "MAINTENANCE") return "bg-orange-50 text-orange-700";
   return "bg-slate-100 text-slate-600";
+}
+
+function reviewStatusClass(status: string): string {
+  if (status === "SENT") return "bg-emerald-50 text-emerald-700";
+  if (status === "FAILED") return "bg-rose-50 text-rose-700";
+  if (status === "SKIPPED") return "bg-slate-100 text-slate-600";
+  return "bg-amber-50 text-amber-800";
+}
+
+async function LoyaltyCreditSection({
+  locale,
+  booking,
+}: Readonly<{
+  locale: string;
+  booking: AdminBookingDetail;
+}>) {
+  const t = await getTranslations({ locale, namespace: "Admin.bookings" });
+  const issued = booking.issuedLoyaltyCredit;
+  const redeemed = booking.redeemedLoyaltyCredit;
+
+  return (
+    <DetailSection title={t("details.loyaltyCredit.title")}>
+      <dl>
+        {issued ? (
+          <>
+            <DetailRow label={t("details.loyaltyCredit.issued")} value={formatEur(issued.amount)} />
+            <DetailRow
+              label={t("details.loyaltyCredit.status")}
+              value={t(
+                `details.loyaltyCredit.statuses.${issued.status}` as "details.loyaltyCredit.statuses.AVAILABLE",
+              )}
+            />
+            <DetailRow label={t("details.loyaltyCredit.issuedAt")} value={formatMaltaDateTime(issued.issuedAt)} />
+            <DetailRow
+              label={t("details.loyaltyCredit.redeemedBooking")}
+              value={
+                issued.redeemedBookingId && issued.redeemedBookingReference ? (
+                  <a className="font-semibold text-teal-800 underline" href={`/${locale}/admin/bookings/${issued.redeemedBookingId}`}>
+                    {issued.redeemedBookingReference}
+                  </a>
+                ) : (
+                  "—"
+                )
+              }
+            />
+          </>
+        ) : null}
+        {redeemed ? (
+          <DetailRow
+            label={t("details.loyaltyCredit.appliedFrom")}
+            value={redeemed.sourceBookingReference ?? "—"}
+          />
+        ) : null}
+      </dl>
+      <p className="mt-3 text-sm text-slate-600">{t("details.loyaltyCredit.independentOfReview")}</p>
+    </DetailSection>
+  );
+}
+
+async function ReviewRequestSection({
+  locale,
+  booking,
+}: Readonly<{
+  locale: string;
+  booking: AdminBookingDetail;
+}>) {
+  const t = await getTranslations({ locale, namespace: "Admin.bookings" });
+  const review = booking.reviewRequest;
+  const canSend = booking.status === "RETURNED" || booking.status === "COMPLETED";
+  const actionLabel = review?.sentAt ? t("details.reviewRequest.resend") : t("details.reviewRequest.send");
+
+  return (
+    <DetailSection title={t("details.reviewRequest.title")}>
+      <dl>
+        <DetailRow
+          label={t("details.reviewRequest.status")}
+          value={
+            review ? (
+              <span className={["inline-flex rounded-full px-2 py-0.5 text-xs font-semibold", reviewStatusClass(review.status)].join(" ")}>
+                {t(`details.reviewRequest.statuses.${review.status}` as "details.reviewRequest.statuses.SENT")}
+              </span>
+            ) : (
+              t("details.reviewRequest.notScheduled")
+            )
+          }
+        />
+        {review && (review.status === "PENDING" || review.status === "PROCESSING") ? (
+          <DetailRow label={t("details.reviewRequest.scheduled")} value={formatMaltaDateTime(review.scheduledAt)} />
+        ) : null}
+        {review?.sentAt ? (
+          <DetailRow label={t("details.reviewRequest.sent")} value={formatMaltaDateTime(review.sentAt)} />
+        ) : null}
+        {review?.lastManualResendAt ? (
+          <DetailRow label={t("details.reviewRequest.lastResent")} value={formatMaltaDateTime(review.lastManualResendAt)} />
+        ) : null}
+        {review?.lastManualResendByName ? (
+          <DetailRow label={t("details.reviewRequest.resentBy")} value={review.lastManualResendByName} />
+        ) : null}
+        {review?.lastError ? (
+          <DetailRow label={t("details.reviewRequest.error")} value={review.lastError} />
+        ) : null}
+      </dl>
+      {review?.status === "PENDING" || review?.status === "PROCESSING" ? (
+        <p className="mt-3 text-sm text-slate-500">{t("details.reviewRequest.scheduledHint")}</p>
+      ) : null}
+      {!review ? <p className="mt-3 text-sm text-slate-500">{t("details.reviewRequest.notScheduledHint")}</p> : null}
+      {review?.status === "SKIPPED" ? (
+        <p className="mt-3 text-sm text-slate-500">
+          {review.skippedReason === "invalid_customer_email"
+            ? t("details.reviewRequest.skippedHint")
+            : t("details.reviewRequest.skippedGeneric")}
+        </p>
+      ) : null}
+      {canSend ? (
+        <div className="mt-4">
+          <AdminBookingReviewRequestButton
+            bookingId={booking.id}
+            disabled={review?.status === "PROCESSING"}
+            label={actionLabel}
+            sendingLabel={t("details.reviewRequest.sending")}
+            successMessage={t("details.reviewRequest.resendSuccess")}
+            fallbackError={t("details.reviewRequest.fallbackError")}
+          />
+        </div>
+      ) : null}
+    </DetailSection>
+  );
 }
 
 function DetailSection({
@@ -203,6 +331,14 @@ export async function AdminBookingDetailView({ locale, booking }: AdminBookingDe
         </dl>
       </DetailSection>
 
+      {booking.reviewRequest || booking.status === "RETURNED" || booking.status === "COMPLETED" ? (
+        <ReviewRequestSection locale={locale} booking={booking} />
+      ) : null}
+
+      {booking.issuedLoyaltyCredit || booking.redeemedLoyaltyCredit ? (
+        <LoyaltyCreditSection locale={locale} booking={booking} />
+      ) : null}
+
       <div className="grid gap-5 lg:grid-cols-2">
         <DetailSection title={t("details.sections.customer")}>
           <dl>
@@ -270,6 +406,36 @@ export async function AdminBookingDetailView({ locale, booking }: AdminBookingDe
               value={booking.actualDurationHours.toFixed(2)}
             />
           </dl>
+          {booking.vehicleAssignments.length > 0 ? (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {t("details.fields.vehicleHistory")}
+              </h4>
+              <ol className="mt-3 space-y-3">
+                {booking.vehicleAssignments.map((assignment) => (
+                  <li key={assignment.id} className="text-sm text-slate-800">
+                    <p className="font-semibold text-slate-950">
+                      {assignment.vehicleName}
+                      {assignment.licensePlate ? ` · ${assignment.licensePlate}` : ""}
+                      {assignment.color ? ` · ${assignment.color}` : ""}
+                    </p>
+                    <p className="text-slate-600">
+                      {formatMaltaDateTime(assignment.startedAt)}
+                      {" → "}
+                      {assignment.endedAt
+                        ? formatMaltaDateTime(assignment.endedAt)
+                        : t("details.fields.vehicleHistoryCurrent")}
+                    </p>
+                    {assignment.endDisposition ? (
+                      <p className="text-slate-500">
+                        {t(`lifecycle.unitStatus.${assignment.endDisposition}` as "lifecycle.unitStatus.AVAILABLE")}
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
         </DetailSection>
       </div>
 

@@ -1,6 +1,7 @@
 import { mapVehicleListItemToVehicle, type Vehicle } from "@/features/vehicles/data/vehicles";
 import { enrichVehicleListWithRentalWindow } from "@/lib/vehicles/enrichVehicleListWithRentalWindow";
 import { getVehicles } from "@/lib/vehicles";
+import { isBookableRentalWindowStatus } from "@/lib/vehicles/types";
 
 export type RentalWindowParams = Readonly<{
   pickupDate: string;
@@ -25,7 +26,9 @@ export async function getInitialVehiclesForListing(
 
     try {
       const enriched = await Promise.race([enrichPromise, timeoutPromise]);
-      listItems = enriched.filter((vehicle) => vehicle.rentalWindowStatus !== "unavailable");
+      listItems = enriched.filter((vehicle) =>
+        isBookableRentalWindowStatus(vehicle.rentalWindowStatus),
+      );
     } catch (error) {
       console.warn(
         "[vehicles] Availability enrichment failed, returning unenriched list",

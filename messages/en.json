@@ -80,6 +80,7 @@
   },
   "Home": {
     "heroBookRide": "Book Your Ride",
+    "heroWatchVideo": "Watch Our Video",
     "heroViewFleet": "View Fleet",
     "heroTrust1": "Guided tours available",
     "heroTrust2": "Well-maintained vehicles",
@@ -97,13 +98,15 @@
     "aboutParagraph1": "We rent motorcycles, ATVs, and bikes from Pietà, Malta, so exploring the island feels straightforward, not stressful.",
     "aboutParagraph2": "We help you pick the right vehicle and plan; our team is safety-minded, service-focused, and built for visitors.",
     "quickCtaKicker": "Your next chapter",
-    "quickCtaTitle": "Malta is waiting, Make it yours.",
+    "quickCtaTitle": "Malta is waiting,\nMake it yours.",
     "quickCtaDescription": "Explore Malta Rentals, your go-to choice to experience Malta your way. From affordable self-drive options to guided tours, we are passionate about helping locals and visitors experience the beauty of Malta in the most free, flexible, and affordable way possible. It starts with one booking.",
     "quickCtaPrimary": "Start your journey",
     "quickCtaSecondary": "Contact us",
     "sectionFleetTitle": "Our fleet & categories",
     "sectionFleetDescription": "Pick the ride that matches your licence, comfort level, and Malta itinerary — from nimble scooters to adventure-ready ATVs.",
     "sectionServicesTitle": "Services & benefits",
+    "sectionServicesTitleLine1": "Services &",
+    "sectionServicesTitleLine2": "benefits",
     "sectionServicesDescription": "Straightforward rental support, safety-first kit, and flexible options so your Malta trip stays easy from pickup to return.",
     "testimonialsTitle": "What riders say",
     "testimonialsDescription": "Real feedback from visitors who explored Malta with us — quick handovers, clear guidance, and memorable rides.",
@@ -127,9 +130,30 @@
       "hotel": {
         "title": "Hotel delivery / return",
         "description": "Where it applies, we can help with convenient drop-off and collection."
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
+      "includesLabel": "Includes:",
       "50cc": {
         "title": "50cc Bikes",
         "description": "Easy to ride, perfect for cruising Malta's coast and city streets with confidence.",
@@ -166,8 +190,11 @@
       }
     },
     "sectionBikePickerTitle": "Choose your ride",
-    "sectionBikePickerDescription": "Pick the right engine size for your Malta plan — then we'll help you book confidently.",
+    "sectionBikePickerDescription": "Pick the right engine size for your Malta plan, then we'll help you book confidently.",
+    "sectionBikePickerKicker": "Fleet categories",
     "highlightedServicesKicker": "Malta Rentals",
+    "highlightedServicesHowWeWork": "See how we work",
+    "highlightedServicesInfoLabel": "Info",
     "highlightedServicesDescription": "Premium support from pickup to drop-off — so you focus on the ride, not the paperwork.",
     "highlightedExploreRentals": "Explore rentals",
     "highlightedExploreHint": "See bikes, ATVs, and bicycles — then lock in your dates in minutes.",
@@ -182,10 +209,70 @@
     "testimonialsTrustLine": "Trustpilot",
     "testimonialsExcellent": "Excellent",
     "testimonialsMarqueeAria": "Customer testimonials, scrolling",
-    "ratingStarsAria": "{rating} out of 5"
+    "ratingStarsAria": "{rating} out of 5",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "Open for today's rentals",
+    "heroScrollCue": "Scroll to explore",
+    "heroMetaCategory": "Premium bike rental",
+    "heroMetaRental": "Daily & weekly rentals",
+    "heroTrustVerified": "Verified fleet",
+    "heroConsoleTitle": "Check Availability",
+    "heroConsoleNote": "No hidden charges. Flexible pickup options.",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    }
   },
   "Faq": {
-    "title": "Frequently Asked Questions (FAQs)",
+    "title": "Frequently Asked Questions",
     "subtitleLead": "Can't find what you're looking for? Reach out on ",
     "subtitleTail": " or use the contact section below.",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "What is your cancellation policy?",
-        "answer": "Policies can vary by season and vehicle. Contact us with your booking details and we will explain the options. We aim to be fair and clear so you can plan your Malta trip with confidence."
+        "answer": "Cancellations made more than 48 hours before the scheduled rental start time are eligible for a 50% refund of the booking amount. Explore Malta Rentals retains the remaining 50%. Cancellations made within 48 hours of the scheduled rental start time are non-refundable, and the full booking amount is retained."
       },
       "invoice": {
         "question": "Are helmets and safety gear included?",
@@ -236,7 +323,12 @@
     "description": "Call, message, or visit, we're here to help you choose the right ride. Your mobile number and map location are below.",
     "whatsappTitle": "Send a WhatsApp message",
     "whatsappBody": "We'll help you pick the right ride and answer availability questions.",
-    "envWhatsappHint": "Set NEXT_PUBLIC_WHATSAPP_NUMBER to enable the WhatsApp button."
+    "envWhatsappHint": "Set NEXT_PUBLIC_WHATSAPP_NUMBER to enable the WhatsApp button.",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "Home",
@@ -476,7 +568,7 @@
     "pickupTimeRequired": "Pickup time is required",
     "returnDateRequired": "Return date is required",
     "returnTimeRequired": "Return time is required",
-    "minRental": "Minimum rental is 24 hours",
+    "minRental": "The return time must be later than the pickup time.",
     "maxRental": "Maximum rental is 4 weeks",
     "pickupAddressDelivery": "Pickup address is required for delivery",
     "deliveryUnavailableSunday": "Delivery is unavailable on Sundays. Please select Office Pickup.",
@@ -683,7 +775,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "Longer rentals unlock duration discounts before extras — use these as a guide while you search.",
     "ariaFilters": "Vehicle filters",
-    "ariaRates": "Indicative daily rates"
+    "ariaRates": "Indicative daily rates",
+    "group50": "50cc scooters",
+    "group125": "125cc bikes",
+    "groupOther": "Other vehicles",
+    "groupCount": "{count, plural, one {# vehicle} other {# vehicles}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "Vehicle search",
@@ -768,6 +864,8 @@
     "durationDiscountSummaryMax": "Rent 7+ days and save up to {percent}% · Final price depends on vehicle and add-ons.",
     "vehicleTypeLabel": "Vehicle type",
     "vehicleTypeAll": "All types",
+    "moreFilters": "More filters",
+    "fewerFilters": "Fewer filters",
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "submitSearching": "Searching…",
@@ -827,12 +925,12 @@
       "pickupTime": "Pickup time",
       "returnTime": "Return time",
       "sectionDuration": "Section: Rental Duration (Display)",
-      "autoDuration": "Auto-calculated duration:",
-      "durationLine": "{days} day(s) ({hours}h)",
+      "autoDuration": "Rental length:",
+      "durationLine": "{hours} hours · charged as {days, plural, one {# day} other {# days}}",
       "durationInvalid": "Return date/time must be after pickup",
       "durationWaiting": "Waiting for valid dates",
       "notesTitle": "Notes:",
-      "noteMin": "Minimum rental is 24 hours.",
+      "noteMin": "The return time must be later than the pickup time.",
       "noteDayCharge": "If less than 24 hours, a full day is charged.",
       "noteMax": "Maximum rental is 4 weeks.",
       "noteRenew": "Renewable option is available."
@@ -854,9 +952,9 @@
       "categoryOnly": "Category only",
       "rentalDates": "Rental dates:",
       "to": "to",
-      "billableDuration": "Billable duration:",
-      "dayCount": "{count} day(s)",
-      "actualHours": " (actual {hours}h)",
+      "billableDuration": "Rental length:",
+      "dayCount": "charged as {count, plural, one {# day} other {# days}}",
+      "actualHours": "{hours} hours",
       "pickupMethod": "Pickup method:",
       "pickupAddress": "Pickup address:",
       "dropoffMethod": "Drop-off method:",
@@ -873,6 +971,8 @@
       "durationDiscount": "Duration discount: {percent}% → {rate}/day",
       "rentalCost": "Rental Cost:",
       "hotelDiscount": "Hotel discount ({percent}% via {hotel}): -{amount}",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "deliveryLine": "Delivery / Drop-off: {total} (pickup {pickup} + drop-off {dropoff}{discount})",
       "bundleDiscount": " - {amount} bundle discount",
       "cdwCost": "Insurance:",
@@ -1466,6 +1566,7 @@
         "allYears": "All years",
         "pickupFrom": "Pickup from",
         "pickupTo": "Pickup to",
+        "returnDate": "Return date",
         "apply": "Apply filters",
         "applying": "Applying…",
         "clear": "Clear",
@@ -1547,6 +1648,45 @@
           "history": "Status history",
           "lifecycle": "Lifecycle operations"
         },
+        "reviewRequest": {
+          "title": "Review request",
+          "status": "Status",
+          "scheduled": "Scheduled",
+          "sent": "Sent",
+          "lastResent": "Last resent",
+          "resentBy": "Resent by",
+          "error": "Last error",
+          "notScheduled": "Not scheduled",
+          "notScheduledHint": "A review request is created when the booking is marked returned.",
+          "scheduledHint": "The thank-you email is sent shortly after the vehicle is marked returned.",
+          "skippedHint": "No valid customer email was available, so the review email was not sent. The return itself was completed.",
+          "skippedGeneric": "The review email was not sent.",
+          "send": "Send review request",
+          "resend": "Resend review request",
+          "sending": "Sending…",
+          "resendSuccess": "Review request email sent.",
+          "fallbackError": "Unable to send the review request. Please try again.",
+          "statuses": {
+            "PENDING": "Scheduled",
+            "PROCESSING": "Sending",
+            "SENT": "Sent",
+            "FAILED": "Failed",
+            "SKIPPED": "Skipped"
+          }
+        },
+        "loyaltyCredit": {
+          "title": "Loyalty credit",
+          "issued": "Credit issued",
+          "status": "Status",
+          "issuedAt": "Issued",
+          "redeemedBooking": "Redeemed on",
+          "appliedFrom": "Applied from booking",
+          "independentOfReview": "This €5 credit is for completing the rental. It does not depend on a Google review.",
+          "statuses": {
+            "AVAILABLE": "Available",
+            "REDEEMED": "Redeemed"
+          }
+        },
         "fields": {
           "reference": "Booking reference",
           "status": "Booking status",
@@ -1568,6 +1708,8 @@
           "willPresentIdAtPickup": "Will present ID at pickup",
           "notes": "Special notes / requests",
           "vehicleName": "Vehicle",
+          "vehicleHistory": "Vehicle history",
+          "vehicleHistoryCurrent": "Current",
           "licensePlate": "License plate",
           "vehicleColor": "Vehicle color",
           "vehicleType": "Vehicle type",
@@ -1664,6 +1806,8 @@
           "plusCdwTotal": "+ CDW total",
           "plusAdditionalDriver": "+ Additional driver",
           "plusStorageBox": "+ Storage box",
+          "loyaltyCredit": "Loyalty credit",
+          "chargesAfterLoyalty": "Booking charges after loyalty credit",
           "paymentSummaryTitle": "Payment summary",
           "notApplicable": "Not applicable",
           "securityDepositHelperText": "Security deposit is separate from booking charges and may be refundable according to rental policy.",
@@ -1673,7 +1817,11 @@
           "onlinePaymentUnavailableNote": "Online payment is not active for this booking — booking charges and security deposit are due at pickup.",
           "depositTitle": "Deposit & payment",
           "depositDueOnlineNote": "Deposit is included in the total due online.",
-          "depositDueLaterNote": "Deposit is payable at pickup and shown in total due later."
+          "depositDueLaterNote": "Deposit is payable at pickup and shown in total due later.",
+          "extensionAmountDue": "Additional amount due from extensions",
+          "extensionAmountDueNote": "This extra rental charge is recorded on the booking. It is not collected automatically from the original online payment or the security deposit.",
+          "extensionsTitle": "Booking extensions",
+          "extensionLine": "{from} → {to} · {days, plural, one {# extra day} other {# extra days}}"
         }
       },
       "lifecycle": {
@@ -1702,7 +1850,7 @@
             "CONFIRMED": {
               "title": "Confirmed: reservation active",
               "description": "The booking is accepted and a physical unit is reserved. For online payments, money has already been confirmed by Stripe. Security deposit may still be collected at pickup depending on the customer's choice.",
-              "nextStep": "When the customer arrives for pickup or the vehicle is delivered, record the handover. If the booking will not go ahead, cancel it to release the unit."
+              "nextStep": "When the customer arrives for pickup or the vehicle is delivered, record the handover. If they want a different model before handover, change the booked vehicle. If the booking will not go ahead, cancel it to release the unit."
             },
             "VEHICLE_HANDED_OVER": {
               "title": "Vehicle handed over — rental in progress",
@@ -1744,6 +1892,18 @@
             "restore": {
               "summary": "Undo a cancellation and put the reservation back on the calendar.",
               "effects": "Restores the previous booking status and reserves the original vehicle unit for the original dates. Payment status is left unchanged."
+            },
+            "extend": {
+              "summary": "Keep the same vehicle for a later return time.",
+              "effects": "Moves the return time later when that unit is free. Extra days use this booking's original daily rate. Delivery, storage, and the deposit are unchanged."
+            },
+            "changeVehicle": {
+              "summary": "Change the booked bike model before the customer takes the vehicle.",
+              "effects": "Keeps this booking, the customer, and the dates. The replacement model must be free for the whole rental. A reserved unit is released and a unit of the new model is reserved. The agreed price stays unless you apply the new model's rate. Card payments are not charged or refunded."
+            },
+            "replaceVehicle": {
+              "summary": "Replace the physical bike the customer is already using.",
+              "effects": "Keeps this booking, the dates, and the agreed price. The previous bike stays in the vehicle history and leaves Out with customer. The replacement is handed over for the rest of the rental. Card payments are not charged or refunded."
             }
           },
           "effectsLabel": "Result"
@@ -1753,7 +1913,122 @@
           "markReturned": "Mark vehicle returned",
           "complete": "Complete booking",
           "cancel": "Cancel booking",
-          "restore": "Restore booking"
+          "restore": "Restore booking",
+          "extend": "Extend booking",
+          "changeVehicle": "Change vehicle",
+          "replaceVehicle": "Replace vehicle"
+        },
+        "extend": {
+          "title": "Extend booking",
+          "description": "Extend booking {reference} with the same vehicle unit and the original daily rate.",
+          "currentTitle": "Current booking",
+          "vehicle": "Vehicle",
+          "unit": "Assigned unit",
+          "pickup": "Pickup",
+          "return": "Current return",
+          "billableDays": "Billable days",
+          "dailyRate": "Original daily rate",
+          "newReturn": "New return date / time",
+          "returnTime": "Return time",
+          "maltaTime": "Times use Malta time. A later return cannot pass another booking on this unit, or the 28-day maximum.",
+          "loadingAvailability": "Checking this unit's availability…",
+          "unavailableDay": "Unavailable",
+          "availableDay": "Available",
+          "selectedDay": "Selected",
+          "thisBooking": "This booking",
+          "otherBooking": "Other booking",
+          "maxRentalDay": "Past 28-day maximum",
+          "maxRentalLimit": "Cannot extend past {date} — this booking already has {used} of {max} billable days.",
+          "blockedByBooking": "Cannot extend past {date} — another booking on this unit starts then.",
+          "otherBookingsTitle": "Other bookings on this unit",
+          "otherBookingsEmpty": "No other bookings for this unit in this period.",
+          "pickDay": "Choose an available day on the calendar. The price is calculated from this booking's original rate.",
+          "dayUnavailable": "That return is not available for this unit at the selected time.",
+          "preview": "Calculating extension…",
+          "previewTitle": "Extension preview",
+          "proposedReturn": "Proposed return",
+          "additionalDays": "Additional billable days",
+          "additionalRental": "Additional rental",
+          "additionalHotel": "Hotel discount on extra rental",
+          "additionalCdw": "Additional CDW",
+          "additionalDriver": "Additional driver",
+          "additionalAmount": "Additional amount due",
+          "updatedSubtotal": "Updated booking charges",
+          "updatedSubtotalSum": "{current} + {additional} = {total}",
+          "unchangedCharges": "Delivery and storage box charges stay as they are.",
+          "available": "The assigned unit is free for this extension.",
+          "confirm": "Confirm extension"
+        },
+        "changeVehicle": {
+          "title": "Change vehicle",
+          "description": "Change the booked model for {reference} without creating a new booking.",
+          "currentTitle": "Current vehicle",
+          "newTitle": "Replacement vehicle",
+          "vehicle": "Vehicle",
+          "color": "Color",
+          "unit": "Assigned unit",
+          "dates": "Rental period",
+          "loading": "Checking which models are free for these dates…",
+          "noAlternatives": "No other active models have a free unit for this rental period.",
+          "selectVehicle": "Select a vehicle",
+          "selectColor": "Select an available color",
+          "noColorRequired": "This model has no color choice for these dates.",
+          "perDay": "/day",
+          "priceMode": "Booking price",
+          "keepPrice": "Keep the agreed price",
+          "keepPriceHint": "The customer keeps the price already on this booking.",
+          "applyPrice": "Apply the new model's rate",
+          "applyPriceHint": "Recalculate the rental from the new model's current daily rate and this booking's length. Insurance, delivery, and the deposit stay as they are.",
+          "applyDisabled": "This booking was extended, so the agreed price stays.",
+          "previewTitle": "Change preview",
+          "currentPrice": "Current price",
+          "calculatedPrice": "New calculated price",
+          "difference": "Price difference",
+          "finalPrice": "Final booking price",
+          "keepFinal": "(keep existing)",
+          "applyFinal": "(new model rate)",
+          "assignedLater": "A unit will be assigned at handover",
+          "available": "This model is available for the full rental period.",
+          "typeNote": "This is a different vehicle type. Insurance priced for the original type stays unchanged.",
+          "paymentNote": "Card payments are not charged or refunded.",
+          "duesNote": "Amounts due on this booking are updated. Card payments are not charged or refunded.",
+          "preview": "Checking availability and price…",
+          "emptySelection": "Choose a replacement model to see the price and unit.",
+          "confirm": "Confirm vehicle change"
+        },
+        "replaceVehicle": {
+          "title": "Replace vehicle",
+          "description": "Replace the bike already with the customer for booking {reference}. This stays the same booking.",
+          "currentTitle": "Current active vehicle",
+          "replacementTitle": "Replacement vehicle",
+          "remainingTitle": "Remaining rental",
+          "handlingTitle": "Old vehicle handling",
+          "confirmTitle": "Confirm replacement",
+          "loading": "Checking which bikes are free for the rest of this rental…",
+          "noUnits": "No replacement vehicles are available for the remaining rental period.",
+          "selectUnit": "Select a replacement bike",
+          "plate": "Plate",
+          "color": "Color",
+          "type": "Type",
+          "status": "Status",
+          "effective": "Replacement effective",
+          "effectiveHint": "Recorded as the server time when you confirm. The replacement only needs to be free from then until the scheduled return.",
+          "return": "Scheduled return",
+          "previousStatus": "Old vehicle status after replacement",
+          "reason": "Reason",
+          "note": "Note",
+          "notePlaceholder": "What happened to the bike being returned?",
+          "priceUnchanged": "Booking price remains unchanged.",
+          "priceAmount": "Agreed booking charges stay {amount}. A different model rate is not applied.",
+          "back": "Back",
+          "review": "Review replacement",
+          "confirm": "Confirm replacement",
+          "reasons": {
+            "mechanical_issue": "Mechanical issue",
+            "damage": "Damage/problem",
+            "customer_requested": "Customer-requested replacement",
+            "other": "Other"
+          }
         },
         "handOver": {
           "title": "Hand over vehicle",

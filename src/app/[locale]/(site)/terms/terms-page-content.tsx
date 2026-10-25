@@ -25,7 +25,7 @@ import {
 import { Container } from "@/components/ui/container";
 import { SITE_CONTACT, SITE_LOCATION_KICKER } from "@/lib/site-brand-copy";
 
-const LAST_UPDATED = "20 August 2026";
+const LAST_UPDATED = "24 October 2026";
 const WEBSITE_URL = "https://exploremaltarentals.com";
 
 type TermsSection = Readonly<{
@@ -364,10 +364,17 @@ export function TermsPageContent() {
         title: "Cancellation Policy",
         icon: <CalendarClock className="h-5 w-5" />,
         content: (
-          <ul className="list-disc space-y-1 pl-5">
-            <li>Free cancellation up to 48 hours before rental start.</li>
-            <li>Cancellations under 48 hours are non-refundable.</li>
-          </ul>
+          <>
+            <p>
+              The 48-hour period is counted back from the scheduled rental start time, meaning the agreed pickup date and time.
+            </p>
+            <p>
+              Cancellations made more than 48 hours before the scheduled rental start time are eligible for a refund of <strong>50%</strong> of the booking amount. Explore Malta Rentals retains the remaining <strong>50%</strong>.
+            </p>
+            <p>
+              Cancellations made within 48 hours of the scheduled rental start time are <strong>non-refundable</strong>. Explore Malta Rentals retains the full booking amount.
+            </p>
+          </>
         ),
       },
       {

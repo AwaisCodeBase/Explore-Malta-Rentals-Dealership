@@ -16,6 +16,10 @@ import {
   localeMetadata,
 } from "@/i18n/locales";
 import { usePathname, useRouter } from "@/i18n/navigation";
+import {
+  SITE_NAV_CONTROL_BORDER,
+  SITE_NAV_CONTROL_RADIUS,
+} from "@/components/site-shell";
 
 function joinClasses(...classes: Array<string | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -54,30 +58,33 @@ function LocalePill({
       type="button"
       onClick={() => onSelect(loc)}
       className={joinClasses(
-        "min-h-7 min-w-8 cursor-pointer rounded-full px-2 py-1 sm:min-w-9",
-        "transition-[background-color,color,box-shadow] duration-[var(--dur-fast)] ease-[var(--ease-standard)]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)]",
+        `relative min-h-7 min-w-8 overflow-hidden ${SITE_NAV_CONTROL_RADIUS} px-2 py-1 transition-all duration-300 sm:min-w-9`,
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-orange)] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
         active
-          ? "bg-[var(--orange-400)] text-[var(--ink-950)] shadow-[var(--elev-1)]"
-          : "text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] hover:text-[var(--ink-900)]",
+          ? "bg-gradient-to-br from-[#ffa939] via-[#f9900f] to-[#c45f0a] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_8px_18px_-10px_rgba(196,95,10,0.85)]"
+          : "text-slate-600 hover:-translate-y-0.5 hover:bg-white/80 hover:text-slate-900 hover:shadow-[0_6px_14px_-12px_rgba(15,23,42,0.45)]",
       )}
       aria-current={active ? "true" : undefined}
       lang={loc}
     >
+      {active ? (
+        <span
+          className="pointer-events-none absolute inset-x-1 top-0 h-px bg-white/60"
+          aria-hidden
+        />
+      ) : null}
       {shortLabel}
     </button>
   );
 }
 
 type LanguageSwitcherProps = Readonly<{
-  /** When set, the globe reveals a list rendered by the parent instead of a dropdown. */
-  languageListOpen?: boolean;
-  onLanguageListToggle?: () => void;
+  /** `expanded` shows more quick pills (mobile menu). `compact` keeps the slim navbar row. */
+  variant?: "compact" | "expanded";
 }>;
 
 export function LanguageSwitcher({
-  languageListOpen = false,
-  onLanguageListToggle,
+  variant = "compact",
 }: LanguageSwitcherProps = {}) {
   const locale = useLocale() as AppLocale;
   const t = useTranslations("Nav");
@@ -87,6 +94,10 @@ export function LanguageSwitcher({
   const menuId = useId();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const expanded = variant === "expanded";
+  const visibleLocales = getVisibleLocaleButtons(locale, expanded ? 10 : 2);
+  const visibleSet = new Set(visibleLocales);
+  const overflowLocales = localeList.filter(({ code }) => !visibleSet.has(code));
 
   const query = searchParams.toString();
   const hrefSuffix = query ? `?${query}` : "";
@@ -98,8 +109,6 @@ export function LanguageSwitcher({
     },
     [hrefSuffix, pathname, router],
   );
-
-  const [primary, secondary] = getVisibleLocaleButtons(locale);
 
   useEffect(() => {
     if (!open) return;
@@ -126,134 +135,85 @@ export function LanguageSwitcher({
       aria-label={t("language")}
       data-testid="language-switcher"
       className={joinClasses(
-        "relative flex items-center gap-0.5 rounded-full bg-white/90 p-1 text-[0.65rem] font-bold tracking-wide sm:text-xs",
-        "text-[var(--text-secondary)] shadow-[inset_0_0_0_1px_var(--line),var(--elev-1)] backdrop-blur-sm",
+        "relative bg-white/80 p-0.5 text-[0.65rem] font-bold tracking-wide text-slate-700 backdrop-blur-xl backdrop-saturate-150 sm:text-xs",
+        expanded
+          ? "flex w-full flex-wrap items-center gap-1"
+          : "flex items-center gap-0.5",
+        SITE_NAV_CONTROL_RADIUS,
+        SITE_NAV_CONTROL_BORDER,
       )}
     >
-      <LocalePill loc={primary} active={locale === primary} onSelect={switchLocale} />
-      <LocalePill loc={secondary} active={locale === secondary} onSelect={switchLocale} />
+      {visibleLocales.map((loc) => (
+        <LocalePill
+          key={loc}
+          loc={loc}
+          active={locale === loc}
+          onSelect={switchLocale}
+        />
+      ))}
 
-      <div className="relative">
-        <button
-          type="button"
-          id={`${menuId}-trigger`}
-          aria-haspopup="listbox"
-          aria-expanded={onLanguageListToggle ? languageListOpen : open}
-          aria-controls={onLanguageListToggle ? undefined : `${menuId}-listbox`}
-          aria-label={t("selectLanguage")}
-          onClick={() => {
-            if (onLanguageListToggle) {
-              onLanguageListToggle();
-              return;
-            }
-            setOpen((v) => !v);
-          }}
-          className={joinClasses(
-            "flex min-h-7 min-w-8 cursor-pointer items-center justify-center rounded-full px-1.5 py-1 sm:min-w-9",
-            "text-[var(--text-muted)] transition-[background-color,color] duration-[var(--dur-fast)] ease-[var(--ease-standard)]",
-            "hover:bg-[var(--surface-sunken)] hover:text-[var(--ink-900)]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)]",
-            (onLanguageListToggle ? languageListOpen : open)
-              ? "bg-[var(--surface-sunken)] text-[var(--ink-900)]"
-              : undefined,
-          )}
-        >
-          <GlobeIcon />
-        </button>
-
-        {open && !onLanguageListToggle ? (
-          <ul
-            id={`${menuId}-listbox`}
-            role="listbox"
-            aria-labelledby={`${menuId}-trigger`}
+      {overflowLocales.length > 0 ? (
+        <div className="relative">
+          <button
+            type="button"
+            id={`${menuId}-trigger`}
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            aria-controls={`${menuId}-listbox`}
+            aria-label={t("selectLanguage")}
+            onClick={() => setOpen((v) => !v)}
             className={joinClasses(
-              "language-switcher-dropdown absolute end-0 top-[calc(100%+0.5rem)] z-50 max-h-[min(18rem,70vh)] min-w-[12rem] overflow-y-auto overscroll-contain sm:text-xs",
-              "rounded-[var(--r-card)] bg-[var(--surface-card)] p-1 text-[0.7rem] font-semibold text-[var(--ink-900)]",
-              "shadow-[inset_0_0_0_1px_var(--line-subtle),var(--elev-4)]",
+              `flex min-h-7 min-w-8 items-center justify-center ${SITE_NAV_CONTROL_RADIUS} px-1.5 py-1 text-slate-600 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/80 hover:text-slate-900 sm:min-w-9`,
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
+              open ? "bg-white text-slate-900 shadow-[0_6px_14px_-12px_rgba(15,23,42,0.5)]" : undefined,
             )}
           >
-            {localeList.map(({ code, label, nativeLabel }) => {
-              const active = code === locale;
-              return (
-                <li key={code} role="presentation">
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={active}
-                    lang={code}
-                    onClick={() => switchLocale(code)}
-                    className={joinClasses(
-                      "flex w-full cursor-pointer items-center justify-between gap-3 rounded-[var(--r-field)] px-3 py-2 text-start",
-                      "transition-[background-color,color] duration-[var(--dur-fast)] ease-[var(--ease-standard)]",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)]",
-                      active
-                        ? "bg-[var(--orange-50)] text-[var(--orange-700)]"
-                        : "hover:bg-[var(--surface-soft)]",
-                    )}
-                  >
-                    <span>{label}</span>
-                    <span className="text-[0.65rem] tracking-wide text-[var(--text-faint)]">
-                      {nativeLabel}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-      </div>
-    </div>
-  );
-}
+            <GlobeIcon />
+          </button>
 
-/** Full language list for the mobile menu. Replaces the nav links while open. */
-export function MobileLanguageList({
-  onSelect,
-}: Readonly<{ onSelect?: () => void }>) {
-  const locale = useLocale() as AppLocale;
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
-  const query = searchParams.toString();
-  const hrefSuffix = query ? `?${query}` : "";
-
-  const switchLocale = (loc: AppLocale) => {
-    router.replace(`${pathname}${hrefSuffix}`, { locale: loc });
-    onSelect?.();
-  };
-
-  return (
-    <>
-      {localeList.map(({ code, label, shortLabel, nativeLabel }) => {
-        const active = code === locale;
-        return (
-          <li key={code} className="border-b border-black/10">
-            <button
-              type="button"
-              lang={code}
-              aria-current={active ? "true" : undefined}
-              onClick={() => switchLocale(code)}
-              className="block w-full py-3.5 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--blue-500)] focus-visible:ring-offset-4 sm:py-4"
+          {open ? (
+            <ul
+              id={`${menuId}-listbox`}
+              role="listbox"
+              aria-labelledby={`${menuId}-trigger`}
+              className={joinClasses(
+                "language-switcher-dropdown absolute z-50 max-h-[min(18rem,70vh)] min-w-[11.5rem] overflow-y-auto overscroll-contain rounded-xl border border-white/70 bg-white/95 py-1.5 text-[0.7rem] font-semibold text-slate-800 shadow-[0_18px_42px_-18px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 backdrop-blur-xl sm:text-xs",
+                expanded
+                  ? "bottom-[calc(100%+0.45rem)] start-0"
+                  : "end-0 top-[calc(100%+0.45rem)]",
+              )}
             >
-              <span className="block text-[0.68rem] font-medium tracking-[0.08em] text-[var(--text-muted)]">
-                {shortLabel}
-              </span>
-              <span
-                className={joinClasses(
-                  "mt-1 block text-[1.65rem] font-medium leading-none tracking-[-0.03em] sm:text-[1.85rem]",
-                  active ? "text-[var(--ink-950)]" : "text-[var(--ink-800)]",
-                )}
-              >
-                {label}
-              </span>
-              {nativeLabel !== label ? (
-                <span className="mt-1.5 block text-sm text-[var(--text-muted)]">{nativeLabel}</span>
-              ) : null}
-            </button>
-          </li>
-        );
-      })}
-    </>
+              {(expanded ? overflowLocales : localeList).map(
+                ({ code, label, nativeLabel }) => {
+                  const active = code === locale;
+                  return (
+                    <li key={code} role="presentation">
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={active}
+                        lang={code}
+                        onClick={() => switchLocale(code)}
+                        className={joinClasses(
+                          "flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-start transition-colors duration-150",
+                          active
+                            ? "bg-[var(--brand-orange)]/12 text-[var(--brand-orange-strong)]"
+                            : "text-slate-800 hover:bg-slate-100 hover:text-slate-950",
+                        )}
+                      >
+                        <span>{label}</span>
+                        <span className="text-[0.65rem] tracking-wide text-slate-500">
+                          {nativeLabel}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                },
+              )}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }

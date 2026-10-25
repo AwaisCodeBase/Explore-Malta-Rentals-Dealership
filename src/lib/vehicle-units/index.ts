@@ -1,6 +1,9 @@
 export { assignAvailableVehicleUnit, NoAvailableVehicleUnitError } from "@/lib/vehicle-units/assignAvailableVehicleUnit";
 export { batchGetAvailableColorsForVehicles } from "@/lib/vehicle-units/batchGetAvailableColorsForVehicles";
-export { findAvailableVehicleUnits } from "@/lib/vehicle-units/findAvailableVehicleUnits";
+export {
+  batchFindAvailableVehicleUnits,
+  findAvailableVehicleUnits,
+} from "@/lib/vehicle-units/findAvailableVehicleUnits";
 export {
   getAvailableColorsForVehicle,
   getUnitColorsForVehicle,

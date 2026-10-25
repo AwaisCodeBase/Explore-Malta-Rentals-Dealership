@@ -79,6 +79,7 @@
     "heroDescription": "Cho thuê xe máy, ATV và xe đạp. Hướng dẫn du lịch."
   },
   "Home": {
+    "heroWatchVideo": "Xem video",
     "heroBookRide": "Đặt chuyến đi của bạn",
     "heroViewFleet": "Xem Hạm đội",
     "heroTrust1": "Có sẵn các chuyến tham quan có hướng dẫn",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "Giao/trả khách sạn",
         "description": "Khi áp dụng, chúng tôi có thể trợ giúp đưa và nhận hàng một cách thuận tiện."
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "Tuyệt vời cho chuyến đi trong ngày",
         "bullet2": "Cân bằng thoải mái + kiểm soát",
         "subtitle": "Xe máy"
-      }
+      },
+      "includesLabel": "Bao gồm:"
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "phi công đáng tin cậy",
     "testimonialsExcellent": "Xuất sắc",
     "testimonialsMarqueeAria": "Lời chứng thực của khách hàng, cuộn",
-    "ratingStarsAria": "{rating} trên 5"
+    "ratingStarsAria": "{rating} trên 5",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "Mở cho thuê hôm nay",
+    "heroScrollCue": "Cuộn để khám phá",
+    "heroMetaCategory": "Cho thuê xe cao cấp",
+    "heroMetaRental": "Cho thuê theo ngày & tuần",
+    "heroTrustVerified": "Đội xe đã kiểm định",
+    "heroConsoleTitle": "Kiểm tra tình trạng còn xe",
+    "heroConsoleNote": "Không phí ẩn. Tùy chọn nhận xe linh hoạt.",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "Danh mục đội xe",
+    "sectionServicesTitleLine1": "Dịch vụ &",
+    "sectionServicesTitleLine2": "lợi ích",
+    "highlightedServicesHowWeWork": "Xem cách chúng tôi hoạt động",
+    "highlightedServicesInfoLabel": "Thông tin"
   },
   "Faq": {
-    "title": "Câu hỏi thường gặp (FAQ)",
+    "title": "Câu hỏi thường gặp",
     "subtitleLead": "Không thể tìm thấy những gì bạn đang tìm kiếm? Tiếp cận",
     "subtitleTail": "hoặc sử dụng phần liên hệ bên dưới.",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "Chính sách hủy của bạn là gì?",
-        "answer": "Chính sách có thể thay đổi theo mùa và loại xe. Liên hệ với chúng tôi với chi tiết đặt phòng của bạn và chúng tôi sẽ giải thích các tùy chọn. Chúng tôi hướng tới sự công bằng và rõ ràng để bạn có thể tự tin lên kế hoạch cho chuyến đi Malta của mình."
+        "answer": "Hủy hơn 48 giờ trước thời điểm bắt đầu thuê đã đặt được hoàn 50% số tiền đặt chỗ. Explore Malta Rentals giữ lại 50% còn lại. Hủy trong vòng 48 giờ trước thời điểm bắt đầu thuê đã đặt không được hoàn tiền, và toàn bộ số tiền đặt chỗ được giữ lại."
       },
       "invoice": {
         "question": "Có mũ bảo hiểm và thiết bị an toàn kèm theo không?",
@@ -236,7 +323,12 @@
     "description": "Gọi điện, nhắn tin hoặc ghé thăm - chúng tôi sẵn sàng giúp bạn chọn chuyến đi phù hợp. Số điện thoại di động và vị trí bản đồ của bạn ở bên dưới.",
     "whatsappTitle": "Gửi tin nhắn WhatsApp",
     "whatsappBody": "Chúng tôi sẽ giúp bạn chọn chuyến đi phù hợp và trả lời các câu hỏi về tình trạng sẵn có.",
-    "envWhatsappHint": "Đặt NEXT_PUBLIC_WHATSAPP_NUMBER để bật nút WhatsApp."
+    "envWhatsappHint": "Đặt NEXT_PUBLIC_WHATSAPP_NUMBER để bật nút WhatsApp.",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "Trang chủ",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "Cần có thời gian đón",
     "returnDateRequired": "Ngày trở về là bắt buộc",
     "returnTimeRequired": "Cần có thời gian quay lại",
-    "minRental": "Thời gian thuê tối thiểu là 24 giờ",
+    "minRental": "Giờ trả xe phải sau giờ nhận xe.",
     "maxRental": "Thời gian thuê tối đa là 4 tuần",
     "pickupAddressDelivery": "Cần có địa chỉ nhận hàng để giao hàng",
     "dropoffAddressRequired": "Địa chỉ trả hàng là bắt buộc",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "Thuê dài hơn mở khóa giảm giá theo thời hạn trước phụ phí — dùng làm hướng dẫn khi tìm kiếm.",
     "ariaFilters": "Bộ lọc xe",
-    "ariaRates": "Tỷ lệ hàng ngày chỉ định"
+    "ariaRates": "Tỷ lệ hàng ngày chỉ định",
+    "group50": "Xe 50cc",
+    "group125": "Xe 125cc",
+    "groupOther": "Xe khác",
+    "groupCount": "{count, plural, one {# xe} other {# xe}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "Tìm kiếm xe",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}: giảm {percent}% theo thời hạn · Giá cuối phụ thuộc xe và phụ phí.",
-    "durationDiscountSummaryMax": "Thuê 7+ ngày tiết kiệm tới {percent}% · Giá cuối phụ thuộc xe và phụ phí."
+    "durationDiscountSummaryMax": "Thuê 7+ ngày tiết kiệm tới {percent}% · Giá cuối phụ thuộc xe và phụ phí.",
+    "moreFilters": "Thêm bộ lọc",
+    "fewerFilters": "Thu gọn bộ lọc"
   },
   "BookingForm": {
     "invalidPickupDate": "Ngày nhận hàng không hợp lệ",
@@ -811,11 +909,11 @@
       "returnTime": "Thời gian trở về",
       "sectionDuration": "Mục: Thời gian thuê (Hiển thị)",
       "autoDuration": "Thời lượng được tính toán tự động:",
-      "durationLine": "{days} ngày ({hours}h)",
+      "durationLine": "{hours} giờ · tính là {days, plural, one {# ngày} other {# ngày}}",
       "durationInvalid": "Ngày/giờ trả lại phải sau khi nhận hàng",
       "durationWaiting": "Đang chờ ngày hợp lệ",
       "notesTitle": "Ghi chú:",
-      "noteMin": "Thời gian thuê tối thiểu là 24 giờ.",
+      "noteMin": "Giờ trả xe phải sau giờ nhận xe.",
       "noteDayCharge": "Nếu dưới 24h tính cả ngày.",
       "noteMax": "Thời gian thuê tối đa là 4 tuần.",
       "noteRenew": "Tùy chọn tái tạo có sẵn."
@@ -837,8 +935,8 @@
       "rentalDates": "Ngày thuê:",
       "to": "ĐẾN",
       "billableDuration": "Thời hạn có thể thanh toán:",
-      "dayCount": "{count} ngày",
-      "actualHours": "(thực tế {hours}h)",
+      "dayCount": "tính là {count, plural, one {# ngày} other {# ngày}}",
+      "actualHours": "{hours} giờ",
       "pickupMethod": "Phương thức đón:",
       "pickupAddress": "Địa chỉ đón:",
       "dropoffMethod": "Phương pháp thả rơi:",
@@ -855,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Trình điều khiển bổ sung:",
       "storageCost": "Hộp lưu trữ:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Tổng phụ:",
       "pricingPending": "Bản xem trước giá sẽ xuất hiện sau khi ngày/giờ thuê xe và xe hợp lệ.",
       "section3": "Phần 3 - Tiền gửi & Tổng số",

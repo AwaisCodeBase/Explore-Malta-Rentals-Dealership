@@ -1,26 +1,30 @@
 import { FinalConversionCta } from "@/components/cta/final-conversion-cta";
-import { LOGO_PATH } from "@/lib/site-brand-copy";
+import {
+  splitQuickCtaDescription,
+  splitQuickCtaTitle,
+} from "@/features/home/lib/quick-cta-copy";
 import { getTranslations } from "next-intl/server";
 
 export async function QuickBookingCtaSection() {
   const t = await getTranslations("Home");
-  const tNav = await getTranslations("Nav");
   const tBrand = await getTranslations("Brand");
-  const footerLine = `${tBrand("locationKicker")} · ${tBrand("primarySupporting")}`;
+
+  const title = t("quickCtaTitle");
+  const description = t("quickCtaDescription");
+  const [titleLine1, titleLine2] = splitQuickCtaTitle(title);
+  const { muted, close } = splitQuickCtaDescription(description);
+  const aside = `${tBrand("locationKicker")}. ${tBrand("primarySupporting")}`;
 
   return (
     <FinalConversionCta
       titleId="quick-booking-title"
-      kicker={t("quickCtaKicker")}
-      title={t("quickCtaTitle")}
-      description={t("quickCtaDescription")}
+      titleLines={titleLine2 ? [titleLine1, titleLine2] : [titleLine1]}
+      bodyLead={`${t("quickCtaKicker")}.`}
+      bodyMuted={muted}
+      bodyClose={close}
+      aside={aside}
       primaryCta={{ href: "/booking", label: t("quickCtaPrimary") }}
       secondaryCta={{ href: "/#contact", label: t("quickCtaSecondary") }}
-      imageSrc={LOGO_PATH}
-      imageAlt={tNav("logoAlt")}
-      /* Logo is only a texture here — spread it wide so the CTA reads as light, not artwork. */
-      imageClassName="object-contain object-center scale-[1.15]"
-      footerLine={footerLine}
     />
   );
 }

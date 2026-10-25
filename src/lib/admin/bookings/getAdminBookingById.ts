@@ -90,6 +90,26 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
       depositMethod: true,
       totalDueOnline: true,
       totalDueLater: true,
+      loyaltyCreditAmount: true,
+      loyaltyCreditIssued: {
+        select: {
+          amount: true,
+          status: true,
+          issuedAt: true,
+          redeemedAt: true,
+          redeemedBooking: {
+            select: { id: true, bookingReference: true },
+          },
+        },
+      },
+      loyaltyCreditRedeemed: {
+        select: {
+          amount: true,
+          sourceBooking: {
+            select: { bookingReference: true },
+          },
+        },
+      },
       termsAccepted: true,
       termsAcceptedAt: true,
       termsVersion: true,
@@ -116,6 +136,57 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
           note: true,
           createdAt: true,
           changedBy: {
+            select: { name: true },
+          },
+        },
+      },
+      vehicleAssignments: {
+        orderBy: { startedAt: "asc" },
+        select: {
+          id: true,
+          vehicleNameSnapshot: true,
+          licensePlateSnapshot: true,
+          colorSnapshot: true,
+          vehicleTypeSnapshot: true,
+          startedAt: true,
+          endedAt: true,
+          endDisposition: true,
+          reason: true,
+          note: true,
+        },
+      },
+      extensions: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          previousReturnDateTime: true,
+          newReturnDateTime: true,
+          additionalBillableDays: true,
+          appliedDailyRate: true,
+          additionalRentalAmount: true,
+          additionalHotelDiscountAmount: true,
+          additionalCdwAmount: true,
+          additionalDriverAmount: true,
+          additionalAmount: true,
+          createdAt: true,
+          createdBy: {
+            select: { name: true },
+          },
+        },
+      },
+      reviewRequest: {
+        select: {
+          status: true,
+          scheduledAt: true,
+          sentAt: true,
+          lastSentAt: true,
+          attempts: true,
+          lastError: true,
+          skippedReason: true,
+          processingStartedAt: true,
+          manualResendCount: true,
+          lastManualResendAt: true,
+          lastManualResendBy: {
             select: { name: true },
           },
         },
@@ -204,12 +275,44 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
     depositMethod: booking.depositMethod,
     totalDueOnline: booking.totalDueOnline.toNumber(),
     totalDueLater: booking.totalDueLater.toNumber(),
+    loyaltyCreditAmount: decimalToNumber(booking.loyaltyCreditAmount),
+    issuedLoyaltyCredit: booking.loyaltyCreditIssued
+      ? {
+          amount: booking.loyaltyCreditIssued.amount.toNumber(),
+          status: booking.loyaltyCreditIssued.status,
+          issuedAt: booking.loyaltyCreditIssued.issuedAt.toISOString(),
+          redeemedAt: booking.loyaltyCreditIssued.redeemedAt?.toISOString() ?? null,
+          redeemedBookingId: booking.loyaltyCreditIssued.redeemedBooking?.id ?? null,
+          redeemedBookingReference: booking.loyaltyCreditIssued.redeemedBooking?.bookingReference ?? null,
+        }
+      : null,
+    redeemedLoyaltyCredit: booking.loyaltyCreditRedeemed
+      ? {
+          amount: booking.loyaltyCreditRedeemed.amount.toNumber(),
+          sourceBookingReference: booking.loyaltyCreditRedeemed.sourceBooking.bookingReference,
+        }
+      : null,
     termsAccepted: booking.termsAccepted,
     termsAcceptedAt: booking.termsAcceptedAt?.toISOString() ?? null,
     termsVersion: booking.termsVersion,
     consentSource: booking.consentSource,
     confirmationEmailStatus: booking.confirmationEmailStatus,
     confirmationEmailSentAt: booking.confirmationEmailSentAt?.toISOString() ?? null,
+    reviewRequest: booking.reviewRequest
+      ? {
+          status: booking.reviewRequest.status,
+          scheduledAt: booking.reviewRequest.scheduledAt.toISOString(),
+          sentAt: booking.reviewRequest.sentAt?.toISOString() ?? null,
+          lastSentAt: booking.reviewRequest.lastSentAt?.toISOString() ?? null,
+          attempts: booking.reviewRequest.attempts,
+          lastError: booking.reviewRequest.lastError,
+          skippedReason: booking.reviewRequest.skippedReason,
+          processingStartedAt: booking.reviewRequest.processingStartedAt?.toISOString() ?? null,
+          manualResendCount: booking.reviewRequest.manualResendCount,
+          lastManualResendAt: booking.reviewRequest.lastManualResendAt?.toISOString() ?? null,
+          lastManualResendByName: booking.reviewRequest.lastManualResendBy?.name ?? null,
+        }
+      : null,
     paymentReceivedAmount: decimalToNumber(booking.paymentReceivedAmount),
     paymentMethod: booking.paymentMethod,
     securityDepositCollectedAmount: decimalToNumber(booking.securityDepositCollectedAmount),
@@ -228,6 +331,32 @@ export async function getAdminBookingById(id: string): Promise<AdminBookingDetai
       note: entry.note,
       changedByAdminName: entry.changedBy?.name ?? null,
       createdAt: entry.createdAt.toISOString(),
+    })),
+    vehicleAssignments: booking.vehicleAssignments.map((entry) => ({
+      id: entry.id,
+      vehicleName: entry.vehicleNameSnapshot,
+      licensePlate: entry.licensePlateSnapshot,
+      color: entry.colorSnapshot,
+      vehicleType: entry.vehicleTypeSnapshot,
+      startedAt: entry.startedAt.toISOString(),
+      endedAt: entry.endedAt?.toISOString() ?? null,
+      endDisposition: entry.endDisposition,
+      reason: entry.reason,
+      note: entry.note,
+    })),
+    extensions: booking.extensions.map((entry) => ({
+      id: entry.id,
+      previousReturnDateTime: entry.previousReturnDateTime.toISOString(),
+      newReturnDateTime: entry.newReturnDateTime.toISOString(),
+      additionalBillableDays: entry.additionalBillableDays,
+      appliedDailyRate: entry.appliedDailyRate.toNumber(),
+      additionalRentalAmount: entry.additionalRentalAmount.toNumber(),
+      additionalHotelDiscountAmount: entry.additionalHotelDiscountAmount.toNumber(),
+      additionalCdwAmount: entry.additionalCdwAmount.toNumber(),
+      additionalDriverAmount: entry.additionalDriverAmount.toNumber(),
+      additionalAmount: entry.additionalAmount.toNumber(),
+      createdAt: entry.createdAt.toISOString(),
+      createdByAdminName: entry.createdBy?.name ?? null,
     })),
   };
 }

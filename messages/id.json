@@ -79,6 +79,7 @@
     "heroDescription": "Penyewaan sepeda motor, ATV, dan sepeda. Tur berpemandu."
   },
   "Home": {
+    "heroWatchVideo": "Tonton video",
     "heroBookRide": "Pesan Perjalanan Anda",
     "heroViewFleet": "Lihat Armada",
     "heroTrust1": "Tersedia tur berpemandu",
@@ -127,6 +128,26 @@
       "hotel": {
         "title": "Pengiriman / pengembalian hotel",
         "description": "Jika berlaku, kami dapat membantu pengantaran dan pengambilan dengan mudah."
+      },
+      "onlineBooking": {
+        "title": "Easy online booking",
+        "description": "Reserve your ride in minutes with a clear, simple booking flow."
+      },
+      "affordableRates": {
+        "title": "Affordable daily rates",
+        "description": "Straightforward pricing on scooters and bikes — great value for exploring Malta."
+      },
+      "routeTips": {
+        "title": "Local route tips",
+        "description": "Get practical suggestions for coastal roads, parking, and must-see stops."
+      },
+      "transparentPricing": {
+        "title": "Transparent pricing",
+        "description": "Clear rates and rental details up front — no guesswork at pickup."
+      },
+      "qualityFleet": {
+        "title": "Well-maintained fleet",
+        "description": "Clean, cared-for vehicles so every ride feels reliable from day one."
       }
     },
     "bikeCategories": {
@@ -143,7 +164,8 @@
         "bullet1": "Cocok untuk perjalanan sehari",
         "bullet2": "Kenyamanan + kontrol yang seimbang",
         "subtitle": "Sepeda motor"
-      }
+      },
+      "includesLabel": "Termasuk:"
     },
     "testimonials": {
       "t1": {
@@ -182,10 +204,75 @@
     "testimonialsTrustLine": "pilot kepercayaan",
     "testimonialsExcellent": "Bagus sekali",
     "testimonialsMarqueeAria": "Testimoni pelanggan, bergulir",
-    "ratingStarsAria": "{rating} dari 5"
+    "ratingStarsAria": "{rating} dari 5",
+    "heroExploreFleet": "Explore Fleet",
+    "heroBackdropWord": "Ride Malta",
+    "heroBikeAlt": "Premium rental motorcycle",
+    "heroLabelFleet": "Premium Fleet",
+    "heroLabelBooking": "Instant Booking",
+    "heroLabelHelmet": "Helmet Included",
+    "heroLabelTerrain": "City / Coast / Adventure",
+    "heroStatusPill": "Buka untuk penyewaan hari ini",
+    "heroScrollCue": "Gulir untuk menjelajahi",
+    "heroMetaCategory": "Sewa motor premium",
+    "heroMetaRental": "Sewa harian & mingguan",
+    "heroTrustVerified": "Armada terverifikasi",
+    "heroConsoleTitle": "Cek ketersediaan",
+    "heroConsoleNote": "Tanpa biaya tersembunyi. Opsi penjemputan fleksibel.",
+    "fleetMarquee": {
+      "aria": "Vehicle categories",
+      "explore": "Explore",
+      "premiumBikes": "Premium Bikes",
+      "scooters": "Scooters",
+      "cityRides": "City Rides",
+      "adventureRides": "Adventure Rides",
+      "longRental": "Long Rental"
+    },
+    "howItWorks": {
+      "kicker": "How it works",
+      "title": "Three steps to the open road",
+      "description": "From picking your ride to exploring the island, renting with us is quick, clear, and built for visitors.",
+      "steps": {
+        "choose": {
+          "title": "Choose your bike",
+          "description": "Browse the fleet and pick the scooter, motorcycle, or ATV that fits your licence and plans."
+        },
+        "schedule": {
+          "title": "Select pickup & return",
+          "description": "Set your dates and times, add hotel delivery if you need it, and confirm in minutes."
+        },
+        "ride": {
+          "title": "Ride and explore",
+          "description": "Collect your keys and helmet, then discover Malta's coast, city, and countryside your way."
+        }
+      }
+    },
+    "stats": {
+      "support": {
+        "title": "24/7 Support",
+        "sub": "Help whenever you need it"
+      },
+      "pickup": {
+        "title": "Fast Pickup",
+        "sub": "On the road in minutes"
+      },
+      "helmets": {
+        "title": "Premium Helmets",
+        "sub": "Safety kit included"
+      },
+      "duration": {
+        "title": "Flexible Duration",
+        "sub": "Short stays or long trips"
+      }
+    },
+    "sectionBikePickerKicker": "Kategori armada",
+    "sectionServicesTitleLine1": "Layanan &",
+    "sectionServicesTitleLine2": "manfaat",
+    "highlightedServicesHowWeWork": "Lihat cara kami bekerja",
+    "highlightedServicesInfoLabel": "Info"
   },
   "Faq": {
-    "title": "Pertanyaan yang Sering Diajukan (FAQ)",
+    "title": "Pertanyaan yang Sering Diajukan",
     "subtitleLead": "Tidak dapat menemukan apa yang Anda cari? Hubungi kami",
     "subtitleTail": "atau gunakan bagian kontak di bawah ini.",
     "items": {
@@ -199,7 +286,7 @@
       },
       "cancel": {
         "question": "Apa kebijakan pembatalan Anda?",
-        "answer": "Kebijakan dapat bervariasi berdasarkan musim dan kendaraan. Hubungi kami dengan rincian pemesanan Anda dan kami akan menjelaskan pilihannya. Kami bertujuan untuk bersikap adil dan jelas sehingga Anda dapat merencanakan perjalanan Anda ke Malta dengan percaya diri."
+        "answer": "Pembatalan lebih dari 48 jam sebelum waktu mulai sewa yang dijadwalkan berhak atas pengembalian 50% dari jumlah pemesanan. Explore Malta Rentals menahan 50% sisanya. Pembatalan dalam 48 jam sebelum waktu mulai sewa yang dijadwalkan tidak dapat dikembalikan, dan seluruh jumlah pemesanan ditahan."
       },
       "invoice": {
         "question": "Apakah helm dan perlengkapan keselamatan sudah termasuk?",
@@ -236,7 +323,12 @@
     "description": "Telepon, kirim pesan, atau kunjungi — kami siap membantu Anda memilih transportasi yang tepat. Nomor ponsel dan lokasi peta Anda ada di bawah.",
     "whatsappTitle": "Kirim pesan WhatsApp",
     "whatsappBody": "Kami akan membantu Anda memilih perjalanan yang tepat dan menjawab pertanyaan ketersediaan.",
-    "envWhatsappHint": "Setel NEXT_PUBLIC_WHATSAPP_NUMBER untuk mengaktifkan tombol WhatsApp."
+    "envWhatsappHint": "Setel NEXT_PUBLIC_WHATSAPP_NUMBER untuk mengaktifkan tombol WhatsApp.",
+    "heroTitle": "Need a ride to explore Malta? This is where to start.",
+    "heroDescription": "Explore Malta Rentals is an excellent choice for visitors discovering the island — friendly local advice, quick pickup in Pietà, and a well-kept fleet for every plan.",
+    "ctaButton": "Contact us",
+    "contactDetailsTitle": "Contact details",
+    "locationImageAlt": "Explore Malta Rentals — Pietà pickup location"
   },
   "Footer": {
     "exploreHome": "Rumah",
@@ -469,7 +561,7 @@
     "pickupTimeRequired": "Waktu penjemputan diperlukan",
     "returnDateRequired": "Tanggal pengembalian wajib diisi",
     "returnTimeRequired": "Waktu pengembalian diperlukan",
-    "minRental": "Minimal sewa 24 jam",
+    "minRental": "Waktu pengembalian harus setelah waktu pengambilan.",
     "maxRental": "Sewa maksimal 4 minggu",
     "pickupAddressDelivery": "Alamat penjemputan diperlukan untuk pengiriman",
     "dropoffAddressRequired": "Alamat pengantaran diperlukan",
@@ -666,7 +758,11 @@
     "noMatchBody": "Try another brand, type, transmission, seats, or color.",
     "ratesBlurb": "Sewa lebih lama membuka diskon durasi sebelum tambahan — gunakan sebagai panduan saat mencari.",
     "ariaFilters": "Filter kendaraan",
-    "ariaRates": "Tarif harian indikatif"
+    "ariaRates": "Tarif harian indikatif",
+    "group50": "Skuter 50cc",
+    "group125": "Motor 125cc",
+    "groupOther": "Kendaraan lain",
+    "groupCount": "{count, plural, one {# kendaraan} other {# kendaraan}}"
   },
   "VehicleFilters": {
     "ariaVehicleSearch": "Pencarian kendaraan",
@@ -754,7 +850,9 @@
     "brandLabel": "Brand",
     "brandAria": "Vehicle brand",
     "durationDiscountSummary": "{days} {dayLabel}: diskon durasi {percent}% · Harga akhir tergantung kendaraan dan tambahan.",
-    "durationDiscountSummaryMax": "Sewa 7+ hari dan hemat hingga {percent}% · Harga akhir tergantung kendaraan dan tambahan."
+    "durationDiscountSummaryMax": "Sewa 7+ hari dan hemat hingga {percent}% · Harga akhir tergantung kendaraan dan tambahan.",
+    "moreFilters": "Filter lainnya",
+    "fewerFilters": "Lebih sedikit filter"
   },
   "BookingForm": {
     "invalidPickupDate": "Tanggal pengambilan tidak valid",
@@ -811,11 +909,11 @@
       "returnTime": "Waktu kembali",
       "sectionDuration": "Bagian: Durasi Sewa (Tampilan)",
       "autoDuration": "Durasi yang dihitung secara otomatis:",
-      "durationLine": "{days} hari ({hours}h)",
+      "durationLine": "{hours} jam · ditagih sebagai {days, plural, one {# hari} other {# hari}}",
       "durationInvalid": "Tanggal/waktu pengembalian harus setelah pengambilan",
       "durationWaiting": "Menunggu tanggal yang valid",
       "notesTitle": "Catatan:",
-      "noteMin": "Minimal sewa 24 jam.",
+      "noteMin": "Waktu pengembalian harus setelah waktu pengambilan.",
       "noteDayCharge": "Jika kurang dari 24 jam, dikenakan biaya sehari penuh.",
       "noteMax": "Sewa maksimal 4 minggu.",
       "noteRenew": "Opsi terbarukan tersedia."
@@ -837,8 +935,8 @@
       "rentalDates": "Tanggal sewa:",
       "to": "ke",
       "billableDuration": "Durasi yang dapat ditagih:",
-      "dayCount": "{count} hari",
-      "actualHours": "(sebenarnya {hours}h)",
+      "dayCount": "ditagih sebagai {count, plural, one {# hari} other {# hari}}",
+      "actualHours": "{hours} jam",
       "pickupMethod": "Metode penjemputan:",
       "pickupAddress": "Alamat penjemputan:",
       "dropoffMethod": "Metode pengantaran:",
@@ -855,6 +953,8 @@
       "cdwCost": "Insurance:",
       "addDriverCost": "Pengemudi Tambahan:",
       "storageCost": "Kotak Penyimpanan:",
+      "loyaltyCredit": "Loyalty credit: -{amount}",
+      "loyaltyCreditNote": "€5 from a completed rental. Applied once. The security deposit is not reduced.",
       "subtotal": "Jumlah keseluruhan:",
       "pricingPending": "Pratinjau harga akan muncul setelah tanggal/waktu sewa kendaraan dan valid.",
       "section3": "Bagian 3 - Deposit & Total",

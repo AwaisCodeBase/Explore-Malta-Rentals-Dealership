@@ -73,6 +73,9 @@ const nextConfig: NextConfig = {
       process.env.whatsapp_number ??
       process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ??
       "",
+    NEXT_PUBLIC_BOOKING_ENABLED: process.env.BOOKING_ENABLED ?? "true",
+    NEXT_PUBLIC_BOOKING_DISABLED_MESSAGE:
+      process.env.BOOKING_DISABLED_MESSAGE ?? "",
   },
   images: {
     /* Default in Next 16 is [75]; `quality={80}` in components must be listed here */

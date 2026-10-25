@@ -12,7 +12,7 @@ import { AdminForbiddenError, AdminUnauthorizedError } from "../src/lib/admin-au
 import { requireAdminApiRole } from "../src/lib/admin-auth/require-admin-api-role";
 import type { AdminSessionRecord } from "../src/lib/admin-auth/types";
 import { handleAdminPaymentRefund } from "../src/app/api/admin/payments/[id]/refund/handle-admin-payment-refund";
-import type { CreateRefundResult } from "../src/lib/stripe/types";
+import type { CreateRefundInput, CreateRefundResult } from "../src/lib/stripe/types";
 
 function session(role: "ADMIN" | "STAFF", id = "user-1"): AdminSessionRecord {
   return {
@@ -22,6 +22,15 @@ function session(role: "ADMIN" | "STAFF", id = "user-1"): AdminSessionRecord {
     role,
     sessionId: "sess-1",
     expiresAt: new Date(Date.now() + 60_000),
+  };
+}
+
+function validBody(overrides: Record<string, unknown> = {}) {
+  return {
+    purpose: "RENTAL",
+    clientRequestId: "client-req-test-001",
+    reason: "requested_by_customer",
+    ...overrides,
   };
 }
 
@@ -44,10 +53,20 @@ async function testRequireAdminApiRole() {
 async function testRefundRouteAuthorization() {
   let refundCalls = 0;
   let paymentLookups = 0;
+  let lastInput: CreateRefundInput | null = null;
 
-  const createRefund = async (): Promise<CreateRefundResult> => {
+  const createRefund = async (input: CreateRefundInput): Promise<CreateRefundResult> => {
     refundCalls += 1;
-    return { ok: true, refundId: "re_test", amountEur: 10 };
+    lastInput = input;
+    return {
+      ok: true,
+      status: "succeeded",
+      refundId: "re_test",
+      requestId: "req_1",
+      clientRequestId: input.clientRequestId,
+      purpose: input.purpose,
+      amountEur: 10,
+    };
   };
 
   const findPaymentBookingId = async (): Promise<string | null> => {
@@ -55,11 +74,11 @@ async function testRefundRouteAuthorization() {
     return "booking-1";
   };
 
-  const request = () =>
+  const request = (body: Record<string, unknown> = validBody()) =>
     new Request("http://localhost/api/admin/payments/pay_1/refund", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ reason: "requested_by_customer" }),
+      body: JSON.stringify(body),
     });
 
   // Unauthenticated → 401; refund must not run
@@ -92,9 +111,24 @@ async function testRefundRouteAuthorization() {
   assert.equal(paymentLookups, 0);
   assert.deepEqual(await staff.json(), { success: false, message: "Forbidden" });
 
-  // ADMIN → proceeds; refund called once; response contract unchanged
+  // Missing purpose / clientRequestId → 400 before refund
+  refundCalls = 0;
+  const missing = await handleAdminPaymentRefund(
+    request({ reason: "requested_by_customer" }),
+    "pay_1",
+    {
+      authorize: async () => session("ADMIN", "admin-42"),
+      findPaymentBookingId,
+      createRefund,
+    },
+  );
+  assert.equal(missing.status, 400);
+  assert.equal(refundCalls, 0);
+
+  // ADMIN → proceeds; refund called once with purpose + clientRequestId
   refundCalls = 0;
   paymentLookups = 0;
+  lastInput = null;
   const admin = await handleAdminPaymentRefund(request(), "pay_1", {
     authorize: async () => session("ADMIN", "admin-42"),
     findPaymentBookingId,
@@ -103,16 +137,22 @@ async function testRefundRouteAuthorization() {
   assert.equal(admin.status, 200);
   assert.equal(refundCalls, 1);
   assert.equal(paymentLookups, 1);
+  assert.equal(lastInput?.purpose, "RENTAL");
+  assert.equal(lastInput?.clientRequestId, "client-req-test-001");
+  assert.equal(lastInput?.initiatedBy, "admin:admin-42");
   assert.deepEqual(await admin.json(), {
     success: true,
+    status: "succeeded",
     refundId: "re_test",
+    requestId: "req_1",
+    clientRequestId: "client-req-test-001",
+    purpose: "RENTAL",
     amountEur: 10,
-    message: "Refund of €10.00 initiated successfully",
+    message: "Refund of €10.00 succeeded",
   });
 }
 
 async function testAdminAuthorizeWiringMatchesRoleHelper() {
-  // Mirrors route.ts: authorize: () => requireAdminApiRole(["ADMIN"], ...)
   await assert.rejects(
     () => requireAdminApiRole(["ADMIN"], async () => session("STAFF")),
     AdminForbiddenError,

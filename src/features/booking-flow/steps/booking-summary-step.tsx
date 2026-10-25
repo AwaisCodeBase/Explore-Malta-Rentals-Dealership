@@ -189,8 +189,8 @@ export function BookingSummaryStep() {
     }`,
   ];
 
-  function selectStripeDeposit(method: "in_person" | "online") {
-    updateSection("deposit", { depositMethod: method });
+  function selectStripeOnlineDeposit() {
+    updateSection("deposit", { depositMethod: "online" });
     updateSection("payment", { mode: "stripe", proofPath: "" });
   }
 
@@ -199,7 +199,6 @@ export function BookingSummaryStep() {
     setProofModalOpen(true);
   }
 
-  const payInPersonSelected = !isAlreadyPaid && state.deposit.depositMethod !== "online";
   const payOnlineSelected = !isAlreadyPaid && state.deposit.depositMethod === "online";
 
   return (
@@ -341,29 +340,10 @@ export function BookingSummaryStep() {
             <p className="text-sm font-semibold tracking-[-0.01em] text-[var(--text-primary)]">
               {t("securityDepositMethod")}
             </p>
-            <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+            <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               <button
                 type="button"
-                onClick={() => selectStripeDeposit("in_person")}
-                className={`${depositOptionBase} ${
-                  payInPersonSelected ? depositOptionSelected : depositOptionIdle
-                }`}
-              >
-                {payInPersonSelected ? <DepositOptionCheck /> : null}
-                <span
-                  className={`pr-5 text-sm font-semibold tracking-[-0.01em] ${
-                    payInPersonSelected ? "text-blue-800" : "text-[var(--text-primary)]"
-                  }`}
-                >
-                  {t("payInPersonPickup")}
-                </span>
-                <span className="text-xs leading-relaxed text-[var(--text-secondary)]">
-                  {t("payAtPickupDescription")}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => selectStripeDeposit("online")}
+                onClick={selectStripeOnlineDeposit}
                 className={`${depositOptionBase} ${
                   payOnlineSelected ? depositOptionSelected : depositOptionIdle
                 }`}
@@ -480,10 +460,6 @@ export function BookingSummaryStep() {
             <p className="mt-2.5 rounded-[var(--r-field)] border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-relaxed text-emerald-800">
               {t("alreadyPaidNote")}
             </p>
-          ) : state.deposit.depositMethod !== "online" ? (
-            <p className="mt-2.5 rounded-[var(--r-field)] border border-[var(--line)] bg-[var(--surface-card)] px-3.5 py-2.5 text-sm leading-relaxed text-[var(--text-secondary)]">
-              {t("depositAtPickupNote")}
-            </p>
           ) : (
             <p className="mt-2.5 rounded-[var(--r-field)] border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm leading-relaxed text-emerald-800">
               {t("depositOnlineNote")}
@@ -511,7 +487,7 @@ export function BookingSummaryStep() {
           setProofModalOpen(false);
           if (!state.payment.proofPath.trim()) {
             updateSection("payment", { mode: "stripe", proofPath: "" });
-            updateSection("deposit", { depositMethod: state.deposit.depositMethod || "in_person" });
+            updateSection("deposit", { depositMethod: "online" });
           }
         }}
         onConfirm={() => setProofModalOpen(false)}

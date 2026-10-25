@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createCheckoutSession } from "@/lib/stripe/payment-service";
+import { evaluateCheckoutBookingEligibility } from "@/lib/stripe/checkout-session-policy";
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 
@@ -28,17 +29,30 @@ export async function GET(request: Request) {
       pickupDateTime: true,
       returnDateTime: true,
       totalDueOnline: true,
+      subtotal: true,
+      depositAmount: true,
+      depositMethod: true,
       paymentStatus: true,
+      paymentProofUploadPath: true,
       status: true,
     },
   });
 
-  if (
-    !booking ||
-    booking.paymentStatus === "PAID" ||
-    booking.status === "CANCELLED" ||
-    (booking.status !== "PENDING_PAYMENT" && booking.status !== "CONFIRMED")
-  ) {
+  if (!booking) {
+    return NextResponse.redirect(
+      new URL(`/${locale}/booking/payment/cancel?ref=${encodeURIComponent(bookingReference)}`, request.url),
+    );
+  }
+
+  const eligibility = evaluateCheckoutBookingEligibility({
+    status: booking.status,
+    paymentStatus: booking.paymentStatus,
+    depositMethod: booking.depositMethod,
+    totalDueOnline: booking.totalDueOnline.toNumber(),
+    paymentProofUploadPath: booking.paymentProofUploadPath,
+  });
+
+  if (!eligibility.ok) {
     return NextResponse.redirect(
       new URL(`/${locale}/booking/payment/cancel?ref=${encodeURIComponent(bookingReference)}`, request.url),
     );
@@ -53,6 +67,9 @@ export async function GET(request: Request) {
     pickupDate: format(booking.pickupDateTime, "dd MMM yyyy"),
     returnDate: format(booking.returnDateTime, "dd MMM yyyy"),
     amountEur: booking.totalDueOnline.toNumber(),
+    rentalSubtotalEur: booking.subtotal.toNumber(),
+    depositAmountEur: booking.depositAmount.toNumber(),
+    depositMethod: booking.depositMethod,
     locale,
   });
 

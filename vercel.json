@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/stripe-webhook-recovery",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/expired-holds-cleanup",
+      "schedule": "0 4 * * *"
+    }
+  ]
+}

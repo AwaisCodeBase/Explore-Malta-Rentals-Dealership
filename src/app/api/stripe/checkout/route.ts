@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createCheckoutSession } from "@/lib/stripe/payment-service";
+import { evaluateCheckoutBookingEligibility } from "@/lib/stripe/checkout-session-policy";
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 
@@ -32,7 +33,6 @@ export async function POST(request: Request) {
     ? ((body as Record<string, unknown>).locale as string)
     : "en";
 
-  // Look up the booking
   const booking = await prisma.booking.findUnique({
     where: { bookingReference },
     select: {
@@ -44,7 +44,11 @@ export async function POST(request: Request) {
       pickupDateTime: true,
       returnDateTime: true,
       totalDueOnline: true,
+      subtotal: true,
+      depositAmount: true,
+      depositMethod: true,
       paymentStatus: true,
+      paymentProofUploadPath: true,
       status: true,
     },
   });
@@ -53,34 +57,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Booking not found" }, { status: 404 });
   }
 
-  if (booking.status === "CANCELLED") {
+  const eligibility = evaluateCheckoutBookingEligibility({
+    status: booking.status,
+    paymentStatus: booking.paymentStatus,
+    depositMethod: booking.depositMethod,
+    totalDueOnline: booking.totalDueOnline.toNumber(),
+    paymentProofUploadPath: booking.paymentProofUploadPath,
+  });
+
+  if (!eligibility.ok) {
     return NextResponse.json(
-      { ok: false, error: "This booking was cancelled because payment was not completed in time" },
-      { status: 409 },
-    );
-  }
-
-  if (booking.status !== "PENDING_PAYMENT" && booking.status !== "CONFIRMED") {
-    return NextResponse.json(
-      { ok: false, error: "This booking cannot accept online payment" },
-      { status: 409 },
-    );
-  }
-
-  if (booking.paymentStatus === "PAID") {
-    return NextResponse.json({ ok: false, error: "This booking has already been paid" }, { status: 409 });
-  }
-
-  if (booking.paymentStatus === "REFUNDED") {
-    return NextResponse.json({ ok: false, error: "This booking has been refunded" }, { status: 409 });
-  }
-
-  const amountEur = booking.totalDueOnline.toNumber();
-
-  if (amountEur <= 0) {
-    return NextResponse.json(
-      { ok: false, error: "No online payment is due for this booking" },
-      { status: 422 },
+      { ok: false, error: eligibility.error },
+      { status: eligibility.httpStatus },
     );
   }
 
@@ -92,7 +80,10 @@ export async function POST(request: Request) {
     vehicleName: booking.vehicleNameSnapshot ?? "Vehicle",
     pickupDate: format(booking.pickupDateTime, "dd MMM yyyy"),
     returnDate: format(booking.returnDateTime, "dd MMM yyyy"),
-    amountEur,
+    amountEur: booking.totalDueOnline.toNumber(),
+    rentalSubtotalEur: booking.subtotal.toNumber(),
+    depositAmountEur: booking.depositAmount.toNumber(),
+    depositMethod: booking.depositMethod,
     locale,
   });
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createCheckoutSession } from "@/lib/stripe/payment-service";
 import { evaluateCheckoutBookingEligibility } from "@/lib/stripe/checkout-session-policy";
+import { chargesAfterLoyalty } from "@/lib/loyalty/loyalty-credit";
 import { prisma } from "@/lib/prisma";
 import { format } from "date-fns";
 
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
       returnDateTime: true,
       totalDueOnline: true,
       subtotal: true,
+      loyaltyCreditAmount: true,
       depositAmount: true,
       depositMethod: true,
       paymentStatus: true,
@@ -72,6 +74,11 @@ export async function POST(request: Request) {
     );
   }
 
+  const rentalDueOnlineEur = chargesAfterLoyalty(
+    booking.subtotal.toNumber(),
+    booking.loyaltyCreditAmount?.toNumber() ?? 0,
+  );
+
   const result = await createCheckoutSession({
     bookingId: booking.id,
     bookingReference: booking.bookingReference,
@@ -81,7 +88,7 @@ export async function POST(request: Request) {
     pickupDate: format(booking.pickupDateTime, "dd MMM yyyy"),
     returnDate: format(booking.returnDateTime, "dd MMM yyyy"),
     amountEur: booking.totalDueOnline.toNumber(),
-    rentalSubtotalEur: booking.subtotal.toNumber(),
+    rentalSubtotalEur: rentalDueOnlineEur,
     depositAmountEur: booking.depositAmount.toNumber(),
     depositMethod: booking.depositMethod,
     locale,

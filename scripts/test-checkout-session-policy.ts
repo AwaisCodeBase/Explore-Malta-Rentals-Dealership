@@ -111,6 +111,128 @@ function testReuseRequiresCompleteLineItems() {
   );
 }
 
+function depositOnlyAllocation() {
+  const result = allocateCombinedCheckoutAmounts({
+    totalDueOnlineEur: 250,
+    rentalSubtotalEur: 0,
+    depositAmountEur: 250,
+    depositMethod: "ONLINE",
+  });
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    throw new Error("expected deposit-only allocation");
+  }
+  return result;
+}
+
+function testDepositOnlySessionReuse() {
+  const allocation = depositOnlyAllocation();
+  const stored = {
+    id: "pay_dep",
+    stripeCheckoutSessionId: "cs_dep",
+    stripeStatus: "PENDING",
+    amountCents: allocation.amountCents,
+    rentalAmountCents: 0,
+    depositAmountCents: allocation.depositAmountCents,
+  };
+
+  const session: RetrievedCheckoutSession = {
+    id: "cs_dep",
+    status: "open",
+    url: "https://checkout.stripe.test/cs_dep",
+    currency: "eur",
+    amountTotal: allocation.amountCents,
+    paymentStatus: "unpaid",
+    clientReferenceId: "EMR-DEP",
+    metadata: {
+      bookingId: "booking_dep",
+      checkoutVersion: CHECKOUT_FORMAT_VERSION,
+      amountCents: String(allocation.amountCents),
+      rentalAmountCents: "0",
+      depositAmountCents: String(allocation.depositAmountCents),
+    },
+    lineItemsComplete: true,
+    lineItems: [
+      {
+        amountTotal: allocation.depositAmountCents,
+        amountSubtotal: allocation.depositAmountCents,
+        quantity: 1,
+        currency: "eur",
+      },
+    ],
+  };
+
+  assert.equal(
+    canReuseOpenCheckoutSession({
+      session,
+      bookingId: "booking_dep",
+      bookingReference: "EMR-DEP",
+      allocation,
+      storedPayment: stored,
+    }),
+    true,
+  );
+
+  // Two line items is invalid for deposit-only.
+  assert.equal(
+    canReuseOpenCheckoutSession({
+      session: {
+        ...session,
+        lineItems: [
+          ...session.lineItems,
+          { amountTotal: 100, amountSubtotal: 100, quantity: 1, currency: "eur" },
+        ],
+      },
+      bookingId: "booking_dep",
+      bookingReference: "EMR-DEP",
+      allocation,
+      storedPayment: stored,
+    }),
+    false,
+  );
+
+  // Wrong total / metadata rejected.
+  assert.equal(
+    canReuseOpenCheckoutSession({
+      session: { ...session, amountTotal: 30000 },
+      bookingId: "booking_dep",
+      bookingReference: "EMR-DEP",
+      allocation,
+      storedPayment: stored,
+    }),
+    false,
+  );
+
+  assert.equal(
+    canReuseOpenCheckoutSession({
+      session: {
+        ...session,
+        metadata: { ...session.metadata!, rentalAmountCents: "1" },
+      },
+      bookingId: "booking_dep",
+      bookingReference: "EMR-DEP",
+      allocation,
+      storedPayment: stored,
+    }),
+    false,
+  );
+
+  // Zero-amount line item rejected.
+  assert.equal(
+    canReuseOpenCheckoutSession({
+      session: {
+        ...session,
+        lineItems: [{ amountTotal: 0, amountSubtotal: 0, quantity: 1, currency: "eur" }],
+      },
+      bookingId: "booking_dep",
+      bookingReference: "EMR-DEP",
+      allocation,
+      storedPayment: stored,
+    }),
+    false,
+  );
+}
+
 function testIdempotencyKeyStabilityAndChange() {
   const allocation = validAllocation();
   const keyA = buildCheckoutIdempotencyKey({ bookingId: "booking_1", allocation });
@@ -189,6 +311,7 @@ async function testRenewHelperDelegatesToDeps() {
 
 async function main() {
   testReuseRequiresCompleteLineItems();
+  testDepositOnlySessionReuse();
   testIdempotencyKeyStabilityAndChange();
   testEligibilityRejectsRefunded();
   testErrorClassification();

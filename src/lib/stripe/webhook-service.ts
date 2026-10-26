@@ -51,6 +51,11 @@ import {
   type WebhookDispatchResult,
   type WebhookProcessingDeps,
 } from "./webhook-processing";
+import {
+  validateCheckoutSessionForConfirmation,
+  validatePaymentIntentForConfirmation,
+  type StoredPaymentIntegrityFields,
+} from "./payment-confirmation-integrity";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -211,13 +216,38 @@ async function dispatchStripeEvent(event: Stripe.Event): Promise<WebhookDispatch
 
 // ─── Event Handlers ────────────────────────────────────────────────────────────
 
+function storedPaymentIntegrityFields(row: {
+  amountCents: number;
+  rentalAmountCents: number;
+  depositAmountCents: number;
+  currency: string;
+  stripeCheckoutSessionId: string | null;
+  stripePaymentIntentId: string | null;
+}): StoredPaymentIntegrityFields {
+  return {
+    amountCents: row.amountCents,
+    rentalAmountCents: row.rentalAmountCents,
+    depositAmountCents: row.depositAmountCents,
+    currency: row.currency,
+    stripeCheckoutSessionId: row.stripeCheckoutSessionId,
+    stripePaymentIntentId: row.stripePaymentIntentId,
+  };
+}
+
+function throwPaymentIntegrityMismatch(message: string): never {
+  throw new WebhookPermanentError("PAYMENT_INTEGRITY_MISMATCH", message);
+}
+
 async function confirmBookingPayment(
   bookingId: string,
   paymentIntentId: string | null,
   checkoutSessionId?: string,
   amountCents?: number | null,
   currency?: string | null,
-): Promise<"payment_confirmed" | "already_succeeded"> {
+  integritySource: "checkout_session" | "payment_intent" = "checkout_session",
+): Promise<
+  "payment_confirmed" | "already_succeeded" | "deferred_awaiting_checkout_session"
+> {
   return prisma.$transaction(async (tx) => {
     const stripePayment = await tx.stripePayment.findUnique({ where: { bookingId } });
     if (!stripePayment) {
@@ -225,6 +255,8 @@ async function confirmBookingPayment(
     }
 
     // Paid-lineage rows must never be overwritten back to SUCCEEDED.
+    // Duplicate / refund-replay paths skip charge-amount revalidation so a
+    // post-refund balance cannot be mistaken for the original Checkout total.
     if (isPaidLineageStripePaymentStatus(stripePayment.stripeStatus)) {
       // Success-page / partial-refund path: still promote PENDING_PAYMENT when allowed.
       if (isConfirmationEligibleStripePaymentStatus(stripePayment.stripeStatus)) {
@@ -235,6 +267,42 @@ async function confirmBookingPayment(
         );
       }
       return "already_succeeded";
+    }
+
+    const stored = storedPaymentIntegrityFields(stripePayment);
+    if (integritySource === "checkout_session") {
+      if (!checkoutSessionId) {
+        throwPaymentIntegrityMismatch(
+          `checkout confirmation missing session id for booking ${bookingId}`,
+        );
+      }
+      const check = validateCheckoutSessionForConfirmation(stored, {
+        id: checkoutSessionId,
+        payment_status: "paid",
+        amount_total: amountCents,
+        currency,
+      });
+      if (!check.ok) {
+        throwPaymentIntegrityMismatch(`${check.code}: ${check.message}`);
+      }
+    } else {
+      if (!paymentIntentId) {
+        throwPaymentIntegrityMismatch(
+          `payment_intent confirmation missing intent id for booking ${bookingId}`,
+        );
+      }
+      const check = validatePaymentIntentForConfirmation(stored, {
+        id: paymentIntentId,
+        amount: amountCents,
+        currency,
+      });
+      if (!check.ok) {
+        if (check.code === "PAYMENT_ASSOCIATION_INSUFFICIENT") {
+          // Wait for a verifiable Checkout Session event; do not confirm from metadata alone.
+          return "deferred_awaiting_checkout_session";
+        }
+        throwPaymentIntegrityMismatch(`${check.code}: ${check.message}`);
+      }
     }
 
     const updated = await tx.stripePayment.updateMany({
@@ -329,6 +397,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session):
     session.id,
     session.amount_total,
     session.currency,
+    "checkout_session",
   );
 
   try {
@@ -404,14 +473,25 @@ async function handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent): Promi
     return "no_booking_metadata";
   }
 
-  const result = await confirmBookingPayment(bookingId, intent.id);
+  const result = await confirmBookingPayment(
+    bookingId,
+    intent.id,
+    undefined,
+    intent.amount,
+    intent.currency,
+    "payment_intent",
+  );
+
+  if (result === "deferred_awaiting_checkout_session") {
+    return "deferred_awaiting_checkout_session";
+  }
 
   if (result !== "already_succeeded") {
     await writePaymentAuditLog({
       bookingId,
       action: "payment_succeeded",
       actor: "stripe-webhook",
-      newValue: { paymentIntentId: intent.id },
+      newValue: { paymentIntentId: intent.id, amountCents: intent.amount },
     });
   }
 

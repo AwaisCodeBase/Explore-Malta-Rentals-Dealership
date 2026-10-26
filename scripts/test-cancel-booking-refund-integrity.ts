@@ -97,18 +97,56 @@ function testOfflineDepositOutcomeStillInSchema() {
 function createMockCancelHarness(initial: {
   booking: BookingRow;
   unit?: UnitRow;
+  /** When set, a REDEEMED loyalty credit is restored on PENDING_PAYMENT cancel. */
+  redeemedLoyaltyCredit?: boolean;
 }) {
   const booking: BookingRow = { ...initial.booking };
   const unit: UnitRow | null = initial.unit ? { ...initial.unit } : null;
   const occupancyDeletes: string[] = [];
   const statusHistory: Array<{ oldStatus: BookingStatus; newStatus: BookingStatus }> = [];
   let stripeRefundCalls = 0;
+  const loyaltyCredits: Array<{
+    id: string;
+    redeemedBookingId: string | null;
+    status: "REDEEMED" | "AVAILABLE";
+  }> = initial.redeemedLoyaltyCredit
+    ? [{ id: "credit_1", redeemedBookingId: booking.id, status: "REDEEMED" }]
+    : [];
+  let loyaltyRestoreAttempts = 0;
+
+  /** When set, mutates booking before the transactional updateMany (payment-wins race). */
+  let raceFlip: Partial<BookingRow> | null = null;
 
   const tx = {
     booking: {
       update: async ({ data }: { data: Partial<BookingRow> }) => {
         Object.assign(booking, data);
         return booking;
+      },
+      updateMany: async ({
+        where,
+        data,
+      }: {
+        where: {
+          id: string;
+          status?: BookingStatus;
+          paymentStatus?: PaymentStatus | { in: PaymentStatus[] };
+        };
+        data: Partial<BookingRow>;
+      }) => {
+        if (raceFlip) {
+          Object.assign(booking, raceFlip);
+          raceFlip = null;
+        }
+        if (where.id !== booking.id) return { count: 0 };
+        if (where.status && booking.status !== where.status) return { count: 0 };
+        if (where.paymentStatus && typeof where.paymentStatus === "object" && "in" in where.paymentStatus) {
+          if (!where.paymentStatus.in.includes(booking.paymentStatus)) return { count: 0 };
+        } else if (where.paymentStatus && booking.paymentStatus !== where.paymentStatus) {
+          return { count: 0 };
+        }
+        Object.assign(booking, data);
+        return { count: 1 };
       },
     },
     vehicleUnit: {
@@ -126,6 +164,29 @@ function createMockCancelHarness(initial: {
       }) => {
         statusHistory.push({ oldStatus: data.oldStatus, newStatus: data.newStatus });
         return data;
+      },
+    },
+    customerLoyaltyCredit: {
+      updateMany: async ({
+        where,
+        data,
+      }: {
+        where: { redeemedBookingId: string; status: string };
+        data: { status: "AVAILABLE"; redeemedAt: null; redeemedBookingId: null };
+      }) => {
+        loyaltyRestoreAttempts += 1;
+        let count = 0;
+        for (const credit of loyaltyCredits) {
+          if (
+            credit.redeemedBookingId === where.redeemedBookingId &&
+            credit.status === where.status
+          ) {
+            credit.status = data.status;
+            credit.redeemedBookingId = data.redeemedBookingId;
+            count += 1;
+          }
+        }
+        return { count };
       },
     },
     $executeRaw: async () => {
@@ -160,8 +221,16 @@ function createMockCancelHarness(initial: {
     unit,
     occupancyDeletes,
     statusHistory,
+    loyaltyCredits,
+    get loyaltyRestoreAttempts() {
+      return loyaltyRestoreAttempts;
+    },
     get stripeRefundCalls() {
       return stripeRefundCalls;
+    },
+    /** Simulate payment confirmation winning between outer read and tx updateMany. */
+    setRaceFlip(next: Partial<BookingRow>) {
+      raceFlip = next;
     },
     /** Exposed only so tests can prove cancel never touches a refund spy. */
     recordStripeRefundAttempt() {
@@ -287,6 +356,112 @@ async function testCancelBookingUnpaidPendingStillWorks() {
   assert.equal(harness.unit?.status, "AVAILABLE");
 }
 
+async function testDepositOnlyPendingCancelRestoresLoyaltyOnceWithoutRefund() {
+  const harness = createMockCancelHarness({
+    booking: {
+      id: "bkg_dep_only",
+      status: "PENDING_PAYMENT",
+      paymentStatus: "PENDING",
+      securityDepositStatus: "PENDING",
+      vehicleUnitId: "unit_dep",
+    },
+    unit: { id: "unit_dep", status: "RESERVED" },
+    redeemedLoyaltyCredit: true,
+  });
+
+  const first = await cancelBooking(
+    "bkg_dep_only",
+    { ...baseCancelInput, refundPayment: false, depositOutcome: "UNCHANGED" },
+    "admin_1",
+    harness.deps,
+  );
+  assert.equal(first.ok, true);
+  assert.equal(harness.booking.status, "CANCELLED");
+  assert.equal(harness.booking.paymentStatus, "PENDING");
+  assert.equal(harness.loyaltyCredits[0]?.status, "AVAILABLE");
+  assert.equal(harness.loyaltyCredits[0]?.redeemedBookingId, null);
+  assert.equal(harness.loyaltyRestoreAttempts, 1);
+  assert.equal(harness.stripeRefundCalls, 0);
+  assert.equal(harness.unit?.status, "AVAILABLE");
+
+  const second = await cancelBooking(
+    "bkg_dep_only",
+    { ...baseCancelInput, refundPayment: false },
+    "admin_1",
+    harness.deps,
+  );
+  assert.equal(second.ok, false);
+  if (!second.ok) {
+    assert.equal(second.reason, "invalid_status");
+  }
+  // Second cancel never enters the transaction, so loyalty restore is not attempted again.
+  assert.equal(harness.loyaltyRestoreAttempts, 1);
+  assert.equal(harness.loyaltyCredits[0]?.status, "AVAILABLE");
+  assert.equal(harness.stripeRefundCalls, 0);
+}
+
+async function testCancelAfterPaidDoesNotRestoreLoyalty() {
+  const harness = createMockCancelHarness({
+    booking: {
+      id: "bkg_stale_paid",
+      status: "PENDING_PAYMENT",
+      paymentStatus: "PAID",
+      securityDepositStatus: "PENDING",
+      vehicleUnitId: "unit_race",
+    },
+    unit: { id: "unit_race", status: "RESERVED" },
+    redeemedLoyaltyCredit: true,
+  });
+
+  const result = await cancelBooking(
+    "bkg_stale_paid",
+    { ...baseCancelInput, refundPayment: false },
+    "admin_1",
+    harness.deps,
+  );
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.reason, "invalid_status");
+  }
+  assert.equal(harness.booking.status, "PENDING_PAYMENT");
+  assert.equal(harness.booking.paymentStatus, "PAID");
+  assert.equal(harness.loyaltyCredits[0]?.status, "REDEEMED");
+  assert.equal(harness.loyaltyRestoreAttempts, 0);
+}
+
+async function testStalePendingCancelLosesWhenPaymentWinsRace() {
+  const harness = createMockCancelHarness({
+    booking: {
+      id: "bkg_race",
+      status: "PENDING_PAYMENT",
+      paymentStatus: "PENDING",
+      securityDepositStatus: "PENDING",
+      vehicleUnitId: "unit_race2",
+    },
+    unit: { id: "unit_race2", status: "RESERVED" },
+    redeemedLoyaltyCredit: true,
+  });
+
+  // Payment confirmation flips the row after the outer read, before updateMany.
+  harness.setRaceFlip({ status: "CONFIRMED", paymentStatus: "PAID" });
+
+  const result = await cancelBooking(
+    "bkg_race",
+    { ...baseCancelInput, refundPayment: false },
+    "admin_1",
+    harness.deps,
+  );
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.reason, "invalid_status");
+  }
+  assert.equal(harness.booking.status, "CONFIRMED");
+  assert.equal(harness.booking.paymentStatus, "PAID");
+  assert.equal(harness.loyaltyCredits[0]?.status, "REDEEMED");
+  assert.equal(harness.loyaltyRestoreAttempts, 0);
+  assert.equal(harness.statusHistory.length, 0);
+}
+
 async function run() {
   testPaymentStatusPreservedOnCancel();
   testSchemaStillAcceptsLegacyRefundPaymentFlag();
@@ -296,6 +471,9 @@ async function run() {
   await testCancelBookingAlreadyRefundedPreserved();
   await testCancelBookingRepeatedIsRejected();
   await testCancelBookingUnpaidPendingStillWorks();
+  await testDepositOnlyPendingCancelRestoresLoyaltyOnceWithoutRefund();
+  await testCancelAfterPaidDoesNotRestoreLoyalty();
+  await testStalePendingCancelLosesWhenPaymentWinsRace();
   console.log("Cancel booking refund-integrity checks passed.");
 }
 

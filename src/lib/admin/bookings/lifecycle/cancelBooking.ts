@@ -1,9 +1,12 @@
-import type { Prisma, PrismaClient } from "@/generated/prisma/index";
+import type { PaymentStatus, Prisma, PrismaClient } from "@/generated/prisma/index";
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import type { CancelBookingInput } from "@/lib/admin/bookings/lifecycle/booking-lifecycle-schema";
 import { resolvePaymentStatusOnCancel } from "@/lib/admin/bookings/lifecycle/resolve-payment-status-on-cancel";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
 import { restoreLoyaltyCreditForUnpaidBooking } from "@/lib/loyalty/loyalty-credit";
+
+/** Mirrors UNPAID_RELEASE_PAYMENT_STATUSES — kept local to avoid importing Prisma-backed release module. */
+const UNPAID_CANCEL_PAYMENT_STATUSES: PaymentStatus[] = ["PENDING", "FAILED"];
 
 export type CancelBookingResult =
   | { ok: true; booking: AdminBookingDetail }
@@ -26,6 +29,20 @@ export type CancelBookingDeps = {
   deleteOccupancyForBooking?: (tx: OccupancyTx, bookingId: string) => Promise<void>;
 };
 
+class CancelConflictError extends Error {
+  constructor() {
+    super("CANCEL_CONFLICT");
+    this.name = "CancelConflictError";
+  }
+}
+
+/**
+ * Cancels a CONFIRMED or PENDING_PAYMENT booking.
+ *
+ * For PENDING_PAYMENT, the status transition is conditional on the booking still
+ * being unpaid. If payment confirmation wins the race, zero rows are updated,
+ * loyalty is not restored, and the caller receives `invalid_status`.
+ */
 export async function cancelBooking(
   bookingId: string,
   input: CancelBookingInput,
@@ -63,6 +80,14 @@ export async function cancelBooking(
     return { ok: false, reason: "invalid_status" };
   }
 
+  // Stale unpaid snapshot: payment already completed — do not treat as unpaid cancel.
+  if (
+    existing.status === "PENDING_PAYMENT" &&
+    !UNPAID_CANCEL_PAYMENT_STATUSES.includes(existing.paymentStatus)
+  ) {
+    return { ok: false, reason: "invalid_status" };
+  }
+
   const nextPaymentStatus = resolvePaymentStatusOnCancel(
     existing.paymentStatus,
     input.refundPayment,
@@ -75,43 +100,67 @@ export async function cancelBooking(
     nextDepositStatus = "DEDUCTED";
   }
 
-  await db.$transaction(async (tx) => {
-    await tx.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: "CANCELLED",
-        paymentStatus: nextPaymentStatus,
-        securityDepositStatus: nextDepositStatus,
-        depositRefundAmount:
-          input.depositOutcome === "REFUNDED" ? (input.depositRefundAmount ?? null) : null,
-        depositDeductionAmount:
-          input.depositOutcome === "DEDUCTED" ? (input.depositDeductionAmount ?? null) : null,
-        depositDeductionReason:
-          input.depositOutcome === "DEDUCTED" ? input.depositDeductionReason?.trim() || null : null,
-      },
-    });
+  try {
+    await db.$transaction(async (tx) => {
+      const cancelWhere =
+        existing.status === "PENDING_PAYMENT"
+          ? {
+              id: bookingId,
+              status: "PENDING_PAYMENT" as const,
+              paymentStatus: { in: [...UNPAID_CANCEL_PAYMENT_STATUSES] },
+            }
+          : {
+              id: bookingId,
+              status: "CONFIRMED" as const,
+            };
 
-    if (existing.vehicleUnitId) {
-      await tx.vehicleUnit.update({
-        where: { id: existing.vehicleUnitId },
-        data: { status: "AVAILABLE" },
+      const cancelled = await tx.booking.updateMany({
+        where: cancelWhere,
+        data: {
+          status: "CANCELLED",
+          paymentStatus: nextPaymentStatus,
+          securityDepositStatus: nextDepositStatus,
+          depositRefundAmount:
+            input.depositOutcome === "REFUNDED" ? (input.depositRefundAmount ?? null) : null,
+          depositDeductionAmount:
+            input.depositOutcome === "DEDUCTED" ? (input.depositDeductionAmount ?? null) : null,
+          depositDeductionReason:
+            input.depositOutcome === "DEDUCTED" ? input.depositDeductionReason?.trim() || null : null,
+        },
       });
-    }
 
-    await deleteOccupancy(tx, bookingId);
+      if (cancelled.count !== 1) {
+        throw new CancelConflictError();
+      }
 
-    if (existing.status === "PENDING_PAYMENT") {
-      await restoreLoyaltyCreditForUnpaidBooking(tx, bookingId);
-    }
+      if (existing.vehicleUnitId) {
+        await tx.vehicleUnit.update({
+          where: { id: existing.vehicleUnitId },
+          data: { status: "AVAILABLE" },
+        });
+      }
 
-    await recordBookingStatusChange(tx, {
-      bookingId,
-      oldStatus: existing.status,
-      newStatus: "CANCELLED",
-      adminUserId,
-      note: input.note,
+      await deleteOccupancy(tx, bookingId);
+
+      // Restore only after the unpaid → CANCELLED transition succeeded in this tx.
+      if (existing.status === "PENDING_PAYMENT") {
+        await restoreLoyaltyCreditForUnpaidBooking(tx, bookingId);
+      }
+
+      await recordBookingStatusChange(tx, {
+        bookingId,
+        oldStatus: existing.status,
+        newStatus: "CANCELLED",
+        adminUserId,
+        note: input.note,
+      });
     });
-  });
+  } catch (error) {
+    if (error instanceof CancelConflictError) {
+      return { ok: false, reason: "invalid_status" };
+    }
+    throw error;
+  }
 
   const booking = await loadDetail(bookingId);
   if (!booking) {

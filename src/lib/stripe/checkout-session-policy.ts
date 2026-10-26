@@ -63,8 +63,12 @@ function normalizeCurrency(currency: string | null | undefined): string {
 
 /**
  * Returns true only when an open session is proven to match the current
- * two-line combined-deposit checkout (amount, currency, booking, version
- * metadata, line-item amounts, and stored DB allocations).
+ * combined-deposit checkout (amount, currency, booking, version metadata,
+ * line-item amounts, and stored DB allocations).
+ *
+ * Valid shapes:
+ * - Standard: two line items (positive rental + deposit).
+ * - Deposit-only: one deposit line item (rental allocation 0).
  */
 export function canReuseOpenCheckoutSession(input: {
   session: RetrievedCheckoutSession;
@@ -122,7 +126,12 @@ export function canReuseOpenCheckoutSession(input: {
     return false;
   }
 
-  if (session.lineItems.length !== 2) {
+  const expectedLineAmounts =
+    allocation.rentalAmountCents > 0
+      ? [allocation.rentalAmountCents, allocation.depositAmountCents]
+      : [allocation.depositAmountCents];
+
+  if (session.lineItems.length !== expectedLineAmounts.length) {
     return false;
   }
 
@@ -132,7 +141,7 @@ export function canReuseOpenCheckoutSession(input: {
       return false;
     }
     const unit = item.amountTotal ?? item.amountSubtotal;
-    if (unit == null || !Number.isFinite(unit)) {
+    if (unit == null || !Number.isFinite(unit) || unit <= 0) {
       return false;
     }
     // Stripe line item amount_total is for the line (qty already applied).
@@ -140,12 +149,15 @@ export function canReuseOpenCheckoutSession(input: {
   }
 
   const sortedLine = [...lineAmounts].sort((a, b) => a - b);
-  const sortedExpected = [allocation.rentalAmountCents, allocation.depositAmountCents].sort(
-    (a, b) => a - b,
-  );
+  const sortedExpected = [...expectedLineAmounts].sort((a, b) => a - b);
 
-  if (sortedLine[0] !== sortedExpected[0] || sortedLine[1] !== sortedExpected[1]) {
+  if (sortedLine.length !== sortedExpected.length) {
     return false;
+  }
+  for (let i = 0; i < sortedExpected.length; i += 1) {
+    if (sortedLine[i] !== sortedExpected[i]) {
+      return false;
+    }
   }
 
   const lineSum = lineAmounts.reduce((sum, value) => sum + value, 0);

@@ -11,7 +11,10 @@ export type CreateCheckoutSessionInput = {
    * Must equal rentalSubtotalEur + depositAmountEur at cent precision.
    */
   amountEur: number;
-  /** Rental/booking charges only (booking.subtotal). */
+  /**
+   * Rental/booking charges payable online after loyalty credits.
+   * May be 0 when loyalty covers the full rental (deposit-only Checkout).
+   */
   rentalSubtotalEur: number;
   /** Security deposit in euros (booking.depositAmount); must be the fixed €250. */
   depositAmountEur: number;
@@ -55,6 +58,11 @@ export type WebhookFailureCode =
   | "BOOKING_CANCELLED_PAYMENT_RECEIVED"
   /** Stored payload is not a usable Stripe event object (recovery of a corrupt row). */
   | "EVENT_PAYLOAD_INVALID"
+  /**
+   * Stripe charge identity (amount/currency/session/PI) does not match the stored
+   * StripePayment row. Redelivery of the same payload cannot succeed.
+   */
+  | "PAYMENT_INTEGRITY_MISMATCH"
   /** Operational terminal dispositions. */
   | "RETRY_LIMIT_EXCEEDED"
   | "EVENT_DEAD_LETTERED";

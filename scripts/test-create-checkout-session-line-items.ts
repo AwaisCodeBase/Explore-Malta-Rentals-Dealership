@@ -841,8 +841,143 @@ async function main() {
     assert.equal(mock.expireCalls.length, 0);
   }
 
+  async function testCreatesDepositOnlyLineItemAndPersistsZeroRental() {
+    const depositOnlyAllocation = allocateCombinedCheckoutAmounts({
+      totalDueOnlineEur: SECURITY_DEPOSIT_EUR,
+      rentalSubtotalEur: 0,
+      depositAmountEur: SECURITY_DEPOSIT_EUR,
+      depositMethod: "ONLINE",
+    });
+    assert.equal(depositOnlyAllocation.ok, true);
+    if (!depositOnlyAllocation.ok) throw new Error("deposit-only allocation failed");
+
+    const depositOnlyInput = {
+      ...baseInput,
+      amountEur: SECURITY_DEPOSIT_EUR,
+      rentalSubtotalEur: 0,
+      depositAmountEur: SECURITY_DEPOSIT_EUR,
+    };
+
+    const createdLineItems: Array<{ unitAmountCents: number; name: string }> = [];
+    let persistedAllocation: {
+      amountCents: number;
+      rentalAmountCents: number;
+      depositAmountCents: number;
+    } | null = null;
+
+    const mock = createMockDeps({
+      existing: { stripeStatus: "PENDING", sessionId: null },
+    });
+    mock.deps.createStripeCheckoutSession = async (params) => {
+      createdLineItems.push(
+        ...params.lineItems.map((item) => ({
+          unitAmountCents: item.unitAmountCents,
+          name: item.name,
+        })),
+      );
+      assert.equal(
+        params.idempotencyKey,
+        buildCheckoutIdempotencyKey({
+          bookingId: depositOnlyInput.bookingId,
+          allocation: depositOnlyAllocation,
+        }),
+      );
+      return {
+        id: "cs_deposit_only",
+        url: "https://checkout.stripe.test/deposit-only",
+        payment_intent: "pi_deposit_only",
+      };
+    };
+    mock.deps.persistCheckoutSessionIfOwned = async (args) => {
+      persistedAllocation = {
+        amountCents: args.amountCents,
+        rentalAmountCents: args.rentalAmountCents,
+        depositAmountCents: args.depositAmountCents,
+      };
+      return true;
+    };
+
+    const result = await createCheckoutSession(depositOnlyInput, mock.deps);
+    assert.equal(result.ok, true);
+    assert.equal(createdLineItems.length, 1);
+    assert.equal(createdLineItems[0]?.unitAmountCents, depositOnlyAllocation.depositAmountCents);
+    assert.equal(createdLineItems[0]?.name, "Security Deposit");
+    assert.equal(
+      createdLineItems.some((item) => item.unitAmountCents === 0 || /rental/i.test(item.name)),
+      false,
+    );
+    assert.deepEqual(persistedAllocation, {
+      amountCents: 25000,
+      rentalAmountCents: 0,
+      depositAmountCents: 25000,
+    });
+  }
+
+  async function testReusesMatchingDepositOnlyOpenSession() {
+    const depositOnlyAllocation = allocateCombinedCheckoutAmounts({
+      totalDueOnlineEur: SECURITY_DEPOSIT_EUR,
+      rentalSubtotalEur: 0,
+      depositAmountEur: SECURITY_DEPOSIT_EUR,
+      depositMethod: "ONLINE",
+    });
+    assert.equal(depositOnlyAllocation.ok, true);
+    if (!depositOnlyAllocation.ok) throw new Error("deposit-only allocation failed");
+
+    const depositOnlyInput = {
+      ...baseInput,
+      amountEur: SECURITY_DEPOSIT_EUR,
+      rentalSubtotalEur: 0,
+      depositAmountEur: SECURITY_DEPOSIT_EUR,
+    };
+
+    const mock = createMockDeps({
+      existing: {
+        stripeStatus: "PENDING",
+        sessionId: "cs_dep_open",
+        amountCents: depositOnlyAllocation.amountCents,
+        rentalAmountCents: 0,
+        depositAmountCents: depositOnlyAllocation.depositAmountCents,
+      },
+      retrieve: () => ({
+        id: "cs_dep_open",
+        status: "open",
+        url: "https://checkout.stripe.test/cs_dep_open",
+        currency: "eur",
+        amountTotal: depositOnlyAllocation.amountCents,
+        paymentStatus: "unpaid",
+        clientReferenceId: depositOnlyInput.bookingReference,
+        metadata: {
+          bookingId: depositOnlyInput.bookingId,
+          checkoutVersion: CHECKOUT_FORMAT_VERSION,
+          amountCents: String(depositOnlyAllocation.amountCents),
+          rentalAmountCents: "0",
+          depositAmountCents: String(depositOnlyAllocation.depositAmountCents),
+        },
+        lineItemsComplete: true,
+        lineItems: [
+          {
+            amountTotal: depositOnlyAllocation.depositAmountCents,
+            amountSubtotal: depositOnlyAllocation.depositAmountCents,
+            quantity: 1,
+            currency: "eur",
+          },
+        ],
+      }),
+    });
+
+    const result = await createCheckoutSession(depositOnlyInput, mock.deps);
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.sessionId, "cs_dep_open");
+      assert.equal(result.checkoutUrl, "https://checkout.stripe.test/cs_dep_open");
+    }
+    assert.equal(mock.createdKeys.length, 0);
+  }
+
   await testCreatesTwoLineItems();
+  await testCreatesDepositOnlyLineItemAndPersistsZeroRental();
   await testReusesMatchingOpenSession();
+  await testReusesMatchingDepositOnlyOpenSession();
   await testReuseAbortsWhenLockLost();
   await testReuseAbortsWhenStoredSessionReplaced();
   await testAuditFailureAfterPersistStillReturnsSuccess();

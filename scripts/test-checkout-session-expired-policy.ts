@@ -37,6 +37,23 @@ function testAlreadySucceededIgnored() {
   assert.deepEqual(decision, { kind: "ignore", reason: "already_succeeded" });
 }
 
+function testDepositOnlySucceededIgnoredRegardlessOfAllocationMetadata() {
+  // Policy keys only on payment stripeStatus + session id; deposit-only amounts are irrelevant.
+  const decision = decideCheckoutSessionExpiredEffect({
+    eventSessionId: "cs_dep_only",
+    payment: { stripeCheckoutSessionId: "cs_dep_only", stripeStatus: "SUCCEEDED" },
+  });
+  assert.deepEqual(decision, { kind: "ignore", reason: "already_succeeded" });
+}
+
+function testDepositOnlyPendingApplies() {
+  const decision = decideCheckoutSessionExpiredEffect({
+    eventSessionId: "cs_dep_only",
+    payment: { stripeCheckoutSessionId: "cs_dep_only", stripeStatus: "PENDING" },
+  });
+  assert.deepEqual(decision, { kind: "apply" });
+}
+
 function testPaidLineageIgnoredAsAlreadySucceeded() {
   for (const stripeStatus of PAID_LINEAGE_STRIPE_PAYMENT_STATUSES) {
     const matching = decideCheckoutSessionExpiredEffect({
@@ -107,6 +124,8 @@ function main() {
   testStoredSessionExpires();
   testOldSessionAfterReplacementIgnored();
   testAlreadySucceededIgnored();
+  testDepositOnlySucceededIgnoredRegardlessOfAllocationMetadata();
+  testDepositOnlyPendingApplies();
   testPaidLineageIgnoredAsAlreadySucceeded();
   testDuplicateExpiredIgnored();
   testAbsentStoredSessionRetries();

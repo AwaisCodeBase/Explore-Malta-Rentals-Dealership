@@ -37,6 +37,27 @@ function loadPublicAssetRewriteEntries(): Array<{ source: string; destination: s
 }
 
 const nextConfig: NextConfig = {
+  /* Keep native Node DB drivers out of the Edge/webpack instrumentation graph. */
+  serverExternalPackages: [
+    "pg",
+    "pg-connection-string",
+    "pg-pool",
+    "pgpass",
+    "@prisma/adapter-pg",
+  ],
+  webpack: (config, { nextRuntime, webpack }) => {
+    // next dev compiles instrumentation for Edge as well as Node. Replace the
+    // Prisma/pg entry with a no-op so Edge never resolves `fs` / `node:*`.
+    if (nextRuntime === "edge") {
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+          /[\\/]instrumentation-node(\.ts|\.js|\.mjs)?$/,
+          resolve(process.cwd(), "src/instrumentation-edge-stub.ts"),
+        ),
+      );
+    }
+    return config;
+  },
   experimental: {
     /* Lets the App Router wrap client navigations in `document.startViewTransition`,
        so the crossfade in globals.css runs on route changes. */

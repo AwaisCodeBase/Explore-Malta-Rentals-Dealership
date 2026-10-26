@@ -106,6 +106,50 @@ async function testAlreadySucceededIgnored() {
   assert.equal(mock.releaseCalls.length, 0);
 }
 
+/** Deposit-only unpaid checkout expiry must release; succeeded deposit-only must not. */
+async function testDepositOnlyUnpaidExpiresAndReleases() {
+  const mock = createDeps({
+    payment: { stripeCheckoutSessionId: "cs_dep_only", stripeStatus: "PENDING" },
+    updateCount: 1,
+  });
+  const action = await applyCheckoutSessionExpiredEvent(
+    {
+      id: "cs_dep_only",
+      metadata: {
+        bookingId: "booking_dep",
+        amountCents: "25000",
+        rentalAmountCents: "0",
+        depositAmountCents: "25000",
+      },
+    },
+    mock.deps,
+  );
+  assert.equal(action, "checkout_session_expired_released");
+  assert.deepEqual(mock.releaseCalls, ["booking_dep"]);
+  assert.equal(mock.updateCalls.length, 1);
+}
+
+async function testDepositOnlySucceededExpiryDoesNotRelease() {
+  const mock = createDeps({
+    payment: { stripeCheckoutSessionId: "cs_dep_only", stripeStatus: "SUCCEEDED" },
+  });
+  const action = await applyCheckoutSessionExpiredEvent(
+    {
+      id: "cs_dep_only",
+      metadata: {
+        bookingId: "booking_dep",
+        amountCents: "25000",
+        rentalAmountCents: "0",
+        depositAmountCents: "25000",
+      },
+    },
+    mock.deps,
+  );
+  assert.equal(action, "ignored_already_succeeded");
+  assert.equal(mock.releaseCalls.length, 0);
+  assert.equal(mock.updateCalls.length, 0);
+}
+
 async function testPaidLineageDoesNotExpireOrRelease() {
   for (const stripeStatus of PAID_LINEAGE_STRIPE_PAYMENT_STATUSES) {
     const mock = createDeps({
@@ -248,6 +292,8 @@ async function main() {
   await testCurrentSessionExpiresAndReleases();
   await testOldSessionAfterReplacementIgnored();
   await testAlreadySucceededIgnored();
+  await testDepositOnlyUnpaidExpiresAndReleases();
+  await testDepositOnlySucceededExpiryDoesNotRelease();
   await testPaidLineageDoesNotExpireOrRelease();
   await testDuplicateExpiredIgnored();
   await testUpdateManyZeroRetriesWithoutRelease();

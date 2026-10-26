@@ -8,8 +8,17 @@ import {
   isPaidLineageStripePaymentStatus,
   type UnpaidStripePaymentStatus,
 } from "./payment-status-rules";
+import {
+  validateCheckoutSessionForConfirmation,
+  validatePaymentIntentForConfirmation,
+  type StoredPaymentIntegrityFields,
+} from "./payment-confirmation-integrity";
 
 type BookingDb = Pick<Prisma.TransactionClient, "booking" | "bookingStatusHistory">;
+
+type StripePaymentIntegrityRow = StoredPaymentIntegrityFields & {
+  stripeStatus: string;
+};
 
 type StripePaymentDb = {
   stripePayment: {
@@ -27,10 +36,37 @@ type StripePaymentDb = {
     }) => Promise<{ count: number }>;
     findUnique: (args: {
       where: { bookingId: string };
-      select: { stripeStatus: true };
-    }) => Promise<{ stripeStatus: string } | null>;
+      select?: {
+        stripeStatus?: true;
+        amountCents?: true;
+        rentalAmountCents?: true;
+        depositAmountCents?: true;
+        currency?: true;
+        stripeCheckoutSessionId?: true;
+        stripePaymentIntentId?: true;
+      };
+    }) => Promise<StripePaymentIntegrityRow | { stripeStatus: string } | null>;
   };
 };
+
+export type SyncPaidBookingIntegrityEvidence =
+  | {
+      source: "checkout_session";
+      session: {
+        id: string;
+        payment_status: string;
+        amount_total: number | null;
+        currency: string | null;
+      };
+    }
+  | {
+      source: "payment_intent";
+      intent: {
+        id: string;
+        amount: number | null;
+        currency: string | null;
+      };
+    };
 
 /** Booking.paymentStatus values that must not be overwritten to PAID. */
 export const BOOKING_PAYMENT_STATUSES_BLOCKING_PAID = ["PAID", "REFUNDED"] as const;
@@ -163,16 +199,62 @@ function defaultSyncDeps(): SyncPaidBookingAndSendConfirmationDeps {
  *
  * StripePayment → SUCCEEDED only from unpaid statuses (atomic updateMany).
  * Booking.paymentStatus REFUNDED is never moved back to PAID.
+ *
+ * Unpaid → SUCCEEDED requires `integrity` evidence matching the stored payment.
+ * Paid-lineage duplicates skip amount revalidation.
  */
 export async function syncPaidBookingAndSendConfirmation(
   input: {
     bookingId: string;
     paymentIntentId?: string | null;
     checkoutSessionId?: string | null;
+    integrity?: SyncPaidBookingIntegrityEvidence | null;
   },
   deps: SyncPaidBookingAndSendConfirmationDeps = defaultSyncDeps(),
 ): Promise<SyncPaidBookingResult> {
   const { paymentUpdated } = await deps.withTransaction(async (tx) => {
+    const payment = await tx.stripePayment.findUnique({
+      where: { bookingId: input.bookingId },
+      select: {
+        stripeStatus: true,
+        amountCents: true,
+        rentalAmountCents: true,
+        depositAmountCents: true,
+        currency: true,
+        stripeCheckoutSessionId: true,
+        stripePaymentIntentId: true,
+      },
+    });
+
+    if (!payment) {
+      throw new Error(`No StripePayment record found for bookingId=${input.bookingId}`);
+    }
+
+    const isUnpaidTarget = unpaidStripeStatusesAllowingSucceededWrite().includes(
+      payment.stripeStatus as UnpaidStripePaymentStatus,
+    );
+
+    if (isUnpaidTarget) {
+      if (!input.integrity) {
+        throw new Error(
+          `PAYMENT_INTEGRITY_REQUIRED: refusing to confirm unpaid booking ${input.bookingId} without Stripe charge evidence`,
+        );
+      }
+      if (!("amountCents" in payment) || typeof payment.amountCents !== "number") {
+        throw new Error(
+          `PAYMENT_INTEGRITY_REQUIRED: stored payment row incomplete for booking ${input.bookingId}`,
+        );
+      }
+      const stored = payment as StripePaymentIntegrityRow;
+      const check =
+        input.integrity.source === "checkout_session"
+          ? validateCheckoutSessionForConfirmation(stored, input.integrity.session)
+          : validatePaymentIntentForConfirmation(stored, input.integrity.intent);
+      if (!check.ok) {
+        throw new Error(`PAYMENT_INTEGRITY_MISMATCH: ${check.code}: ${check.message}`);
+      }
+    }
+
     const updated = await tx.stripePayment.updateMany({
       where: {
         bookingId: input.bookingId,

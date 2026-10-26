@@ -12,8 +12,20 @@ export {
 export type {
   DeliverConfirmationForStripePaymentResult,
   MarkBookingPaidResult,
+  SyncPaidBookingIntegrityEvidence,
   SyncPaidBookingResult,
 } from "./confirm-paid-booking";
+export {
+  normalizePaymentCurrency,
+  validateCheckoutSessionForConfirmation,
+  validatePaymentIntentForConfirmation,
+  validateStoredPaymentAllocation,
+} from "./payment-confirmation-integrity";
+export type {
+  PaymentIntegrityFailureCode,
+  PaymentIntegrityResult,
+  StoredPaymentIntegrityFields,
+} from "./payment-confirmation-integrity";
 export type { VerifiedPaymentData } from "./payment-service";
 export { constructWebhookEvent, processWebhookEvent } from "./webhook-service";
 export { mapWebhookResultToHttp, WEBHOOK_IN_FLIGHT_HTTP_STATUS } from "./webhook-http-policy";
@@ -88,6 +100,8 @@ export { writePaymentAuditLog } from "./audit-service";
 export {
   allocateCombinedCheckoutAmounts,
   buildCombinedCheckoutLineItems,
+  checkoutLineItemsMatchAllocation,
+  expectedCheckoutLineItemCount,
   lineItemsTotalCents,
   SECURITY_DEPOSIT_CENTS,
 } from "./checkout-allocation";

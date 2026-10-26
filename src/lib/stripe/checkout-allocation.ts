@@ -15,7 +15,10 @@ export type CheckoutAllocationResult =
 export type CheckoutAllocationInput = {
   /** Combined amount charged online (booking.totalDueOnline). */
   totalDueOnlineEur: number;
-  /** Rental/booking charges only (booking.subtotal) — not inferred from the total. */
+  /**
+   * Rental/booking charges payable online after loyalty credits
+   * (not the raw booking.subtotal when loyalty applied).
+   */
   rentalSubtotalEur: number;
   /** Stored deposit amount (booking.depositAmount). */
   depositAmountEur: number;
@@ -28,8 +31,11 @@ function toCents(amountEur: number): number {
 }
 
 /**
- * Builds integer-cent rental/deposit allocations for combined Stripe Checkout.
+ * Builds integer-cent rental/deposit allocations for Stripe Checkout.
  * Rejects inconsistent booking totals rather than silently adjusting them.
+ *
+ * Deposit-only (loyalty covered the rental): rentalAmountCents may be 0 when
+ * amountCents === depositAmountCents === SECURITY_DEPOSIT_CENTS.
  */
 export function allocateCombinedCheckoutAmounts(
   input: CheckoutAllocationInput,
@@ -51,8 +57,12 @@ export function allocateCombinedCheckoutAmounts(
     return { ok: false, error: "Payment amounts must be finite numbers" };
   }
 
-  if (totalDueOnlineEur <= 0 || rentalSubtotalEur <= 0 || depositAmountEur <= 0) {
-    return { ok: false, error: "Rental, deposit, and online total must be greater than zero" };
+  if (totalDueOnlineEur <= 0 || depositAmountEur <= 0) {
+    return { ok: false, error: "Deposit and online total must be greater than zero" };
+  }
+
+  if (rentalSubtotalEur < 0) {
+    return { ok: false, error: "Rental amount cannot be negative" };
   }
 
   const amountCents = toCents(totalDueOnlineEur);
@@ -66,15 +76,19 @@ export function allocateCombinedCheckoutAmounts(
     };
   }
 
-  if (rentalAmountCents <= 0 || depositAmountCents <= 0 || amountCents <= 0) {
+  if (depositAmountCents <= 0 || amountCents <= 0) {
     return { ok: false, error: "Allocation amounts must be positive integer cents" };
+  }
+
+  if (rentalAmountCents < 0) {
+    return { ok: false, error: "Rental allocation cannot be negative" };
   }
 
   if (rentalAmountCents + depositAmountCents !== amountCents) {
     return {
       ok: false,
       error:
-        "Online total must equal rental subtotal plus security deposit (cent-accurate)",
+        "Online total must equal rental due (after loyalty) plus security deposit (cent-accurate)",
     };
   }
 
@@ -94,8 +108,14 @@ export type CheckoutLineItemSpec = {
   metadata?: Record<string, string>;
 };
 
+/** Expected Stripe line-item count for a validated allocation. */
+export function expectedCheckoutLineItemCount(allocation: CheckoutAllocation): number {
+  return allocation.rentalAmountCents > 0 ? 2 : 1;
+}
+
 /**
- * Builds the two Stripe Checkout line items for a validated allocation.
+ * Builds Stripe Checkout line items for a validated allocation.
+ * Positive rental → rental + deposit. Zero rental → deposit only (no €0 rental line).
  * Callers must ensure allocation.ok === true.
  */
 export function buildCombinedCheckoutLineItems(input: {
@@ -108,8 +128,10 @@ export function buildCombinedCheckoutLineItems(input: {
 }): CheckoutLineItemSpec[] {
   const { allocation, vehicleName, bookingId, bookingReference, pickupDate, returnDate } = input;
 
-  return [
-    {
+  const items: CheckoutLineItemSpec[] = [];
+
+  if (allocation.rentalAmountCents > 0) {
+    items.push({
       name: `${vehicleName} Rental`,
       description: `Booking ${bookingReference} · ${pickupDate} → ${returnDate}`,
       unitAmountCents: allocation.rentalAmountCents,
@@ -119,21 +141,64 @@ export function buildCombinedCheckoutLineItems(input: {
         bookingReference,
         allocation: "rental",
       },
+    });
+  }
+
+  items.push({
+    name: "Security Deposit",
+    description: `Refundable security deposit for booking ${bookingReference}`,
+    unitAmountCents: allocation.depositAmountCents,
+    quantity: 1,
+    metadata: {
+      bookingId,
+      bookingReference,
+      allocation: "security_deposit",
     },
-    {
-      name: "Security Deposit",
-      description: `Refundable security deposit for booking ${bookingReference}`,
-      unitAmountCents: allocation.depositAmountCents,
-      quantity: 1,
-      metadata: {
-        bookingId,
-        bookingReference,
-        allocation: "security_deposit",
-      },
-    },
-  ];
+  });
+
+  return items;
 }
 
 export function lineItemsTotalCents(items: CheckoutLineItemSpec[]): number {
   return items.reduce((sum, item) => sum + item.unitAmountCents * item.quantity, 0);
+}
+
+/**
+ * Integrity check for line items built from a validated allocation.
+ * Rejects wrong counts, zero/negative unit amounts, and sum mismatches.
+ */
+export function checkoutLineItemsMatchAllocation(
+  items: CheckoutLineItemSpec[],
+  allocation: CheckoutAllocation,
+): boolean {
+  if (items.length !== expectedCheckoutLineItemCount(allocation)) {
+    return false;
+  }
+  if (items.some((item) => item.unitAmountCents <= 0 || item.quantity !== 1)) {
+    return false;
+  }
+  if (lineItemsTotalCents(items) !== allocation.amountCents) {
+    return false;
+  }
+
+  if (allocation.rentalAmountCents === 0) {
+    const only = items[0];
+    return (
+      only != null &&
+      only.unitAmountCents === allocation.depositAmountCents &&
+      only.metadata?.allocation === "security_deposit"
+    );
+  }
+
+  const allocations = new Set(items.map((item) => item.metadata?.allocation));
+  if (!allocations.has("rental") || !allocations.has("security_deposit")) {
+    return false;
+  }
+
+  const rentalItem = items.find((item) => item.metadata?.allocation === "rental");
+  const depositItem = items.find((item) => item.metadata?.allocation === "security_deposit");
+  return (
+    rentalItem?.unitAmountCents === allocation.rentalAmountCents &&
+    depositItem?.unitAmountCents === allocation.depositAmountCents
+  );
 }

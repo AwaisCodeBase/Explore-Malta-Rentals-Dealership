@@ -28,7 +28,41 @@ type PaymentRow = {
   stripeStatus: string;
   stripePaymentIntentId: string | null;
   stripeCheckoutSessionId: string | null;
+  amountCents: number;
+  rentalAmountCents: number;
+  depositAmountCents: number;
+  currency: string;
 };
+
+function ordinaryCheckoutIntegrity(sessionId = "cs_1", amountCents = 30000) {
+  return {
+    source: "checkout_session" as const,
+    session: {
+      id: sessionId,
+      payment_status: "paid",
+      amount_total: amountCents,
+      currency: "eur",
+    },
+  };
+}
+
+function depositOnlyCheckoutIntegrity(sessionId = "cs_dep") {
+  return ordinaryCheckoutIntegrity(sessionId, 25000);
+}
+
+const ORDINARY_PAYMENT_AMOUNTS = {
+  amountCents: 30000,
+  rentalAmountCents: 5000,
+  depositAmountCents: 25000,
+  currency: "eur",
+} as const;
+
+const DEPOSIT_ONLY_PAYMENT_AMOUNTS = {
+  amountCents: 25000,
+  rentalAmountCents: 0,
+  depositAmountCents: 25000,
+  currency: "eur",
+} as const;
 
 async function loadConfirmModule() {
   return import("../src/lib/stripe/confirm-paid-booking");
@@ -124,7 +158,15 @@ function createSyncDeps(options: {
             }
             return { count: 1 };
           },
-          findUnique: async () => ({ stripeStatus: payment.stripeStatus }),
+          findUnique: async () => ({
+            stripeStatus: payment.stripeStatus,
+            amountCents: payment.amountCents,
+            rentalAmountCents: payment.rentalAmountCents,
+            depositAmountCents: payment.depositAmountCents,
+            currency: payment.currency,
+            stripeCheckoutSessionId: payment.stripeCheckoutSessionId,
+            stripePaymentIntentId: payment.stripePaymentIntentId,
+          }),
         },
       }),
     getStripePaymentStatus: async () => payment.stripeStatus,
@@ -154,7 +196,11 @@ async function testFirstTimeSuccessUpdatesPaymentAndBooking() {
       bookingId: "booking_1",
       stripeStatus: "PENDING",
       stripePaymentIntentId: null,
-      stripeCheckoutSessionId: null,
+      stripeCheckoutSessionId: "cs_1",
+      amountCents: 30000,
+      rentalAmountCents: 5000,
+      depositAmountCents: 25000,
+      currency: "eur",
     },
     booking: { id: "booking_1", status: "PENDING_PAYMENT", paymentStatus: "PENDING" },
   });
@@ -164,6 +210,7 @@ async function testFirstTimeSuccessUpdatesPaymentAndBooking() {
       bookingId: "booking_1",
       paymentIntentId: "pi_1",
       checkoutSessionId: "cs_1",
+      integrity: ordinaryCheckoutIntegrity("cs_1", 30000),
     },
     mock.deps,
   );
@@ -188,6 +235,7 @@ async function testSuccessCannotOverwriteLineageStatuses() {
         stripeStatus: status,
         stripePaymentIntentId: "pi_1",
         stripeCheckoutSessionId: "cs_1",
+        ...ORDINARY_PAYMENT_AMOUNTS,
       },
       booking: { id: "booking_1", status: "CONFIRMED", paymentStatus: "PAID" },
     });
@@ -236,6 +284,7 @@ async function testRepeatedVerificationOfRefundedPaymentIsNoOp() {
       stripeStatus: "REFUNDED",
       stripePaymentIntentId: "pi_1",
       stripeCheckoutSessionId: "cs_1",
+      ...ORDINARY_PAYMENT_AMOUNTS,
     },
     booking: { id: "booking_1", status: "CONFIRMED", paymentStatus: "REFUNDED" },
   });
@@ -261,11 +310,15 @@ async function testLegitimateSuccessReachesConfirmation() {
       stripeStatus: "PROCESSING",
       stripePaymentIntentId: null,
       stripeCheckoutSessionId: "cs_1",
+      ...ORDINARY_PAYMENT_AMOUNTS,
     },
     booking: { id: "booking_1", status: "PENDING_PAYMENT", paymentStatus: "PENDING" },
   });
 
-  const result = await syncPaidBookingAndSendConfirmation({ bookingId: "booking_1" }, mock.deps);
+  const result = await syncPaidBookingAndSendConfirmation(
+    { bookingId: "booking_1", integrity: ordinaryCheckoutIntegrity() },
+    mock.deps,
+  );
   assert.equal(result.paymentUpdated, true);
   assert.equal(result.stripeStatus, "SUCCEEDED");
   assert.equal(mock.deliverCalls, 1);
@@ -286,6 +339,7 @@ async function testPartialRefundStillEligibleForConfirmation() {
       stripeStatus: "PARTIALLY_REFUNDED",
       stripePaymentIntentId: "pi_1",
       stripeCheckoutSessionId: "cs_1",
+      ...ORDINARY_PAYMENT_AMOUNTS,
     },
     booking: { id: "booking_1", status: "CONFIRMED", paymentStatus: "PAID" },
   });
@@ -347,6 +401,7 @@ async function testNoOpDoesNotClaimPaymentWrite() {
       stripeStatus: "DISPUTED",
       stripePaymentIntentId: "pi_1",
       stripeCheckoutSessionId: "cs_1",
+      ...ORDINARY_PAYMENT_AMOUNTS,
     },
     booking: { id: "booking_1", status: "CONFIRMED", paymentStatus: "PAID" },
   });
@@ -387,6 +442,317 @@ async function testPendingPaymentRefundedDoesNotPromoteToPaidConfirmed() {
   assert.equal(booking.paymentStatus, "REFUNDED");
 }
 
+/** Deposit-only Checkout allocation: rental 0 + €250 deposit. */
+const DEPOSIT_ONLY_ALLOCATION = {
+  rentalAmountCents: 0,
+  depositAmountCents: 25000,
+  amountCents: 25000,
+} as const;
+
+async function testDepositOnlyPaidSyncConfirmsBooking() {
+  const { syncPaidBookingAndSendConfirmation } = await loadConfirmModule();
+  const mock = createSyncDeps({
+    payment: {
+      bookingId: "booking_dep",
+      stripeStatus: "PENDING",
+      stripePaymentIntentId: null,
+      stripeCheckoutSessionId: "cs_dep",
+      ...DEPOSIT_ONLY_PAYMENT_AMOUNTS,
+    },
+    booking: { id: "booking_dep", status: "PENDING_PAYMENT", paymentStatus: "PENDING" },
+  });
+
+  // Allocation shape is the deposit-only contract under test (persisted on StripePayment in production).
+  assert.equal(DEPOSIT_ONLY_ALLOCATION.rentalAmountCents, 0);
+  assert.equal(DEPOSIT_ONLY_ALLOCATION.depositAmountCents, 25000);
+  assert.equal(DEPOSIT_ONLY_ALLOCATION.amountCents, 25000);
+
+  const result = await syncPaidBookingAndSendConfirmation(
+    {
+      bookingId: "booking_dep",
+      paymentIntentId: "pi_dep",
+      checkoutSessionId: "cs_dep",
+      integrity: depositOnlyCheckoutIntegrity(),
+    },
+    mock.deps,
+  );
+
+  assert.equal(result.paymentUpdated, true);
+  assert.equal(mock.payment.stripeStatus, "SUCCEEDED");
+  assert.equal(mock.booking.status, "CONFIRMED");
+  assert.equal(mock.booking.paymentStatus, "PAID");
+  assert.equal(mock.deliverCalls, 1);
+}
+
+async function testDepositOnlyDuplicateSyncIsIdempotent() {
+  const { syncPaidBookingAndSendConfirmation } = await loadConfirmModule();
+  const mock = createSyncDeps({
+    payment: {
+      bookingId: "booking_dep",
+      stripeStatus: "PENDING",
+      stripePaymentIntentId: null,
+      stripeCheckoutSessionId: "cs_dep",
+      ...DEPOSIT_ONLY_PAYMENT_AMOUNTS,
+    },
+    booking: { id: "booking_dep", status: "PENDING_PAYMENT", paymentStatus: "PENDING" },
+  });
+
+  const first = await syncPaidBookingAndSendConfirmation(
+    {
+      bookingId: "booking_dep",
+      paymentIntentId: "pi_dep",
+      checkoutSessionId: "cs_dep",
+      integrity: depositOnlyCheckoutIntegrity(),
+    },
+    mock.deps,
+  );
+  const second = await syncPaidBookingAndSendConfirmation(
+    {
+      bookingId: "booking_dep",
+      paymentIntentId: "pi_dep",
+      checkoutSessionId: "cs_dep",
+      integrity: depositOnlyCheckoutIntegrity(),
+    },
+    mock.deps,
+  );
+
+  assert.equal(first.paymentUpdated, true);
+  assert.equal(second.paymentUpdated, false);
+  assert.equal(mock.payment.stripeStatus, "SUCCEEDED");
+  assert.equal(mock.booking.status, "CONFIRMED");
+  assert.equal(mock.booking.paymentStatus, "PAID");
+  // Delivery may be attempted again; one-time email idempotency lives in deliverBookingConfirmationIfNeeded.
+  assert.ok(mock.deliverCalls >= 1);
+}
+
+async function testMismatchedAmountDoesNotConfirm() {
+  const { syncPaidBookingAndSendConfirmation } = await loadConfirmModule();
+  const mock = createSyncDeps({
+    payment: {
+      bookingId: "booking_1",
+      stripeStatus: "PENDING",
+      stripePaymentIntentId: null,
+      stripeCheckoutSessionId: "cs_1",
+      ...ORDINARY_PAYMENT_AMOUNTS,
+    },
+    booking: { id: "booking_1", status: "PENDING_PAYMENT", paymentStatus: "PENDING" },
+  });
+
+  await assert.rejects(
+    () =>
+      syncPaidBookingAndSendConfirmation(
+        {
+          bookingId: "booking_1",
+          integrity: ordinaryCheckoutIntegrity("cs_1", 99999),
+        },
+        mock.deps,
+      ),
+    /AMOUNT_MISMATCH/,
+  );
+  assert.equal(mock.payment.stripeStatus, "PENDING");
+  assert.equal(mock.booking.status, "PENDING_PAYMENT");
+  assert.equal(mock.deliverCalls, 0);
+}
+
+async function testMismatchedCurrencyDoesNotConfirm() {
+  const { syncPaidBookingAndSendConfirmation } = await loadConfirmModule();
+  const mock = createSyncDeps({
+    payment: {
+      bookingId: "booking_1",
+      stripeStatus: "PENDING",
+      stripePaymentIntentId: null,
+      stripeCheckoutSessionId: "cs_1",
+      ...ORDINARY_PAYMENT_AMOUNTS,
+    },
+    booking: { id: "booking_1", status: "PENDING_PAYMENT", paymentStatus: "PENDING" },
+  });
+
+  await assert.rejects(
+    () =>
+      syncPaidBookingAndSendConfirmation(
+        {
+          bookingId: "booking_1",
+          integrity: {
+            source: "checkout_session",
+            session: {
+              id: "cs_1",
+              payment_status: "paid",
+              amount_total: 30000,
+              currency: "usd",
+            },
+          },
+        },
+        mock.deps,
+      ),
+    /CURRENCY_MISMATCH/,
+  );
+  assert.equal(mock.booking.status, "PENDING_PAYMENT");
+}
+
+async function testMismatchedCheckoutSessionIdDoesNotConfirm() {
+  const { syncPaidBookingAndSendConfirmation } = await loadConfirmModule();
+  const mock = createSyncDeps({
+    payment: {
+      bookingId: "booking_1",
+      stripeStatus: "PENDING",
+      stripePaymentIntentId: null,
+      stripeCheckoutSessionId: "cs_expected",
+      ...ORDINARY_PAYMENT_AMOUNTS,
+    },
+    booking: { id: "booking_1", status: "PENDING_PAYMENT", paymentStatus: "PENDING" },
+  });
+
+  await assert.rejects(
+    () =>
+      syncPaidBookingAndSendConfirmation(
+        {
+          bookingId: "booking_1",
+          integrity: ordinaryCheckoutIntegrity("cs_other", 30000),
+        },
+        mock.deps,
+      ),
+    /CHECKOUT_SESSION_MISMATCH/,
+  );
+  assert.equal(mock.booking.status, "PENDING_PAYMENT");
+}
+
+async function testMissingAmountDoesNotConfirm() {
+  const { syncPaidBookingAndSendConfirmation } = await loadConfirmModule();
+  const mock = createSyncDeps({
+    payment: {
+      bookingId: "booking_1",
+      stripeStatus: "PENDING",
+      stripePaymentIntentId: null,
+      stripeCheckoutSessionId: "cs_1",
+      ...ORDINARY_PAYMENT_AMOUNTS,
+    },
+    booking: { id: "booking_1", status: "PENDING_PAYMENT", paymentStatus: "PENDING" },
+  });
+
+  await assert.rejects(
+    () =>
+      syncPaidBookingAndSendConfirmation(
+        {
+          bookingId: "booking_1",
+          integrity: {
+            source: "checkout_session",
+            session: {
+              id: "cs_1",
+              payment_status: "paid",
+              amount_total: null,
+              currency: "eur",
+            },
+          },
+        },
+        mock.deps,
+      ),
+    /AMOUNT_MISSING/,
+  );
+  assert.equal(mock.booking.status, "PENDING_PAYMENT");
+}
+
+async function testPaymentIntentWrongAmountDoesNotConfirm() {
+  const { syncPaidBookingAndSendConfirmation } = await loadConfirmModule();
+  const mock = createSyncDeps({
+    payment: {
+      bookingId: "booking_1",
+      stripeStatus: "PENDING",
+      stripePaymentIntentId: "pi_1",
+      stripeCheckoutSessionId: "cs_1",
+      ...ORDINARY_PAYMENT_AMOUNTS,
+    },
+    booking: { id: "booking_1", status: "PENDING_PAYMENT", paymentStatus: "PENDING" },
+  });
+
+  await assert.rejects(
+    () =>
+      syncPaidBookingAndSendConfirmation(
+        {
+          bookingId: "booking_1",
+          integrity: {
+            source: "payment_intent",
+            intent: { id: "pi_1", amount: 1, currency: "eur" },
+          },
+        },
+        mock.deps,
+      ),
+    /AMOUNT_MISMATCH/,
+  );
+  assert.equal(mock.booking.status, "PENDING_PAYMENT");
+}
+
+async function testPaymentIntentWithoutStoredAssociationDoesNotConfirm() {
+  const { syncPaidBookingAndSendConfirmation } = await loadConfirmModule();
+  const mock = createSyncDeps({
+    payment: {
+      bookingId: "booking_1",
+      stripeStatus: "PENDING",
+      stripePaymentIntentId: null,
+      stripeCheckoutSessionId: null,
+      ...ORDINARY_PAYMENT_AMOUNTS,
+    },
+    booking: { id: "booking_1", status: "PENDING_PAYMENT", paymentStatus: "PENDING" },
+  });
+
+  await assert.rejects(
+    () =>
+      syncPaidBookingAndSendConfirmation(
+        {
+          bookingId: "booking_1",
+          integrity: {
+            source: "payment_intent",
+            intent: { id: "pi_orphan", amount: 30000, currency: "eur" },
+          },
+        },
+        mock.deps,
+      ),
+    /PAYMENT_ASSOCIATION_INSUFFICIENT/,
+  );
+  assert.equal(mock.booking.status, "PENDING_PAYMENT");
+  assert.equal(mock.payment.stripeStatus, "PENDING");
+}
+
+async function testUnpaidSyncWithoutIntegrityEvidenceIsRejected() {
+  const { syncPaidBookingAndSendConfirmation } = await loadConfirmModule();
+  const mock = createSyncDeps({
+    payment: {
+      bookingId: "booking_1",
+      stripeStatus: "PENDING",
+      stripePaymentIntentId: null,
+      stripeCheckoutSessionId: "cs_1",
+      ...ORDINARY_PAYMENT_AMOUNTS,
+    },
+    booking: { id: "booking_1", status: "PENDING_PAYMENT", paymentStatus: "PENDING" },
+  });
+
+  await assert.rejects(
+    () => syncPaidBookingAndSendConfirmation({ bookingId: "booking_1" }, mock.deps),
+    /PAYMENT_INTEGRITY_REQUIRED/,
+  );
+  assert.equal(mock.booking.status, "PENDING_PAYMENT");
+}
+
+async function testUnpaidStripeStatusDoesNotConfirmViaDeliveryGate() {
+  const { deliverBookingConfirmationIfStripePaymentAllows } = await loadConfirmModule();
+  const booking = { id: "booking_dep", status: "PENDING_PAYMENT", paymentStatus: "PENDING" };
+  let deliverCalls = 0;
+
+  const result = await deliverBookingConfirmationIfStripePaymentAllows("booking_dep", {
+    getStripePaymentStatus: async () => "PENDING",
+    deliverConfirmation: async () => {
+      deliverCalls += 1;
+      booking.status = "CONFIRMED";
+      booking.paymentStatus = "PAID";
+      return { success: true, deliveryMode: "resend" };
+    },
+  });
+
+  assert.equal(deliverCalls, 0);
+  assert.equal(result.deliveryMode, "skipped_ineligible_payment");
+  assert.equal(booking.status, "PENDING_PAYMENT");
+  assert.equal(booking.paymentStatus, "PENDING");
+}
+
 async function main() {
   await testFirstTimeSuccessUpdatesPaymentAndBooking();
   await testSuccessCannotOverwriteLineageStatuses();
@@ -399,6 +765,16 @@ async function main() {
   await testNoOpDoesNotClaimPaymentWrite();
   await testUnpaidAllowlistMatchesSharedRules();
   await testPendingPaymentRefundedDoesNotPromoteToPaidConfirmed();
+  await testDepositOnlyPaidSyncConfirmsBooking();
+  await testDepositOnlyDuplicateSyncIsIdempotent();
+  await testUnpaidStripeStatusDoesNotConfirmViaDeliveryGate();
+  await testMismatchedAmountDoesNotConfirm();
+  await testMismatchedCurrencyDoesNotConfirm();
+  await testMismatchedCheckoutSessionIdDoesNotConfirm();
+  await testMissingAmountDoesNotConfirm();
+  await testPaymentIntentWrongAmountDoesNotConfirm();
+  await testPaymentIntentWithoutStoredAssociationDoesNotConfirm();
+  await testUnpaidSyncWithoutIntegrityEvidenceIsRejected();
   console.log("confirm-paid-booking tests passed");
 }
 

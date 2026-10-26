@@ -17,7 +17,10 @@ import type { WebhookFailureCode } from "./types";
 /** Codes a handler is allowed to declare as permanent. */
 export type WebhookPermanentCode = Extract<
   WebhookFailureCode,
-  "EVENT_METADATA_MISSING" | "BOOKING_CANCELLED_PAYMENT_RECEIVED" | "EVENT_PAYLOAD_INVALID"
+  | "EVENT_METADATA_MISSING"
+  | "BOOKING_CANCELLED_PAYMENT_RECEIVED"
+  | "EVENT_PAYLOAD_INVALID"
+  | "PAYMENT_INTEGRITY_MISMATCH"
 >;
 
 /**
@@ -30,6 +33,8 @@ export type WebhookPermanentCode = Extract<
  *  - EVENT_PAYLOAD_INVALID: a stored payload (replayed by operator recovery) lacks a
  *    usable `data.object`. Stripe-delivered events always have one, so this only
  *    arises from a corrupt stored row; retrying the same stored bytes cannot help.
+ *  - PAYMENT_INTEGRITY_MISMATCH: Checkout Session / PaymentIntent amount, currency,
+ *    or object id does not match the stored StripePayment expectation.
  */
 export class WebhookPermanentError extends Error {
   readonly code: WebhookPermanentCode;

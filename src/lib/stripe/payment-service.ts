@@ -9,7 +9,7 @@ import {
 import {
   allocateCombinedCheckoutAmounts,
   buildCombinedCheckoutLineItems,
-  lineItemsTotalCents,
+  checkoutLineItemsMatchAllocation,
 } from "./checkout-allocation";
 import {
   buildCheckoutIdempotencyKey,
@@ -371,7 +371,8 @@ async function compensateOrphanCheckoutSession(
 /**
  * Creates a Stripe Checkout Session for a booking and stores a StripePayment record.
  * Idempotent: if a pending checkout session already exists for this booking, returns the existing URL.
- * Standard checkouts use two line items (rental + fixed security deposit) and matching DB allocations.
+ * Standard checkouts use rental + fixed security deposit line items (or deposit-only
+ * when loyalty covers the rental) and matching DB allocations.
  */
 export async function createCheckoutSession(
   input: CreateCheckoutSessionInput,
@@ -412,7 +413,7 @@ export async function createCheckoutSession(
     returnDate,
   });
 
-  if (lineItems.length !== 2 || lineItemsTotalCents(lineItems) !== allocation.amountCents) {
+  if (!checkoutLineItemsMatchAllocation(lineItems, allocation)) {
     return { ok: false, error: "Checkout line items failed allocation integrity check" };
   }
 
@@ -917,6 +918,15 @@ export async function verifyCheckoutSession(sessionId: string): Promise<
           bookingId: payment.bookingId,
           paymentIntentId,
           checkoutSessionId: sessionId,
+          integrity: {
+            source: "checkout_session",
+            session: {
+              id: session.id,
+              payment_status: session.payment_status,
+              amount_total: session.amount_total,
+              currency: session.currency,
+            },
+          },
         });
       } catch (syncError) {
         console.error("[payment-service] Failed to persist paid booking or send confirmation", {

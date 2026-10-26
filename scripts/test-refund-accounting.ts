@@ -62,6 +62,44 @@ function testCapacityAndCaps() {
   );
 }
 
+/** Deposit-only Checkout: rental allocation 0, deposit 25000. */
+function testDepositOnlyRefundCaps() {
+  const depositOnly: PaymentRefundCounters = {
+    amountCents: 25000,
+    rentalAmountCents: 0,
+    depositAmountCents: 25000,
+    refundedAmountCents: 0,
+    rentalRefundedCents: 0,
+    depositRefundedCents: 0,
+  };
+  const availability = computeRefundAvailability(depositOnly, []);
+  assert.equal(availability.rentalAvailableCents, 0);
+  assert.equal(availability.depositAvailableCents, 25000);
+  assert.equal(availability.combinedAvailableCents, 25000);
+
+  assert.throws(() =>
+    assertPurposeRefundFits({
+      purpose: "RENTAL",
+      amountCents: 1,
+      availability,
+    }),
+  );
+  assert.doesNotThrow(() =>
+    assertPurposeRefundFits({
+      purpose: "SECURITY_DEPOSIT",
+      amountCents: 25000,
+      availability,
+    }),
+  );
+  assert.throws(() =>
+    assertPurposeRefundFits({
+      purpose: "SECURITY_DEPOSIT",
+      amountCents: 25001,
+      availability,
+    }),
+  );
+}
+
 function testIntegerValidation() {
   assert.equal(eurosToCents(10.5), 1050);
   assert.throws(() => assertPositiveIntegerCents(0, "x"));
@@ -305,6 +343,7 @@ function testChannelAndDepositEligibility() {
 
 function main() {
   testCapacityAndCaps();
+  testDepositOnlyRefundCaps();
   testIntegerValidation();
   testHistoricalAmbiguity();
   testIdempotencyKey();

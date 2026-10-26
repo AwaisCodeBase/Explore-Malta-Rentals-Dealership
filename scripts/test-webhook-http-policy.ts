@@ -196,6 +196,11 @@ function testOnlyTypedPermanentErrorsAreTerminal() {
     new WebhookPermanentError("BOOKING_CANCELLED_PAYMENT_RECEIVED", "cancelled"),
   );
   assert.deepEqual(permanent, { retryable: false, code: "BOOKING_CANCELLED_PAYMENT_RECEIVED" });
+
+  const integrity = classifyWebhookFailure(
+    new WebhookPermanentError("PAYMENT_INTEGRITY_MISMATCH", "amount"),
+  );
+  assert.deepEqual(integrity, { retryable: false, code: "PAYMENT_INTEGRITY_MISMATCH" });
   // Same message text on a plain Error is NOT permanent.
   assert.equal(classifyWebhookFailure(new Error("cancelled booking")).retryable, true);
 }

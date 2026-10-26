@@ -620,6 +620,10 @@ model StripePayment {
   stripeStatus            StripePaymentStatus @default(PENDING)
   refundStatus            RefundStatus        @default(NONE)
   refundedAmountCents     Int                 @default(0)
+  rentalAmountCents       Int
+  depositAmountCents      Int                 @default(0)
+  rentalRefundedCents     Int                 @default(0)
+  depositRefundedCents    Int                 @default(0)
   metadata                Json?
   createdAt               DateTime            @default(now())
   updatedAt               DateTime

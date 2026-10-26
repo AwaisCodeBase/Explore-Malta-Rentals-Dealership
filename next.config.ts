@@ -3,6 +3,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import createNextIntlPlugin from "next-intl/plugin";
 
+const reviewProcessorStub = resolve(
+  process.cwd(),
+  "src/lib/reviews/review-request-processor-stub.ts",
+);
+
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const awsBucket = process.env.AWS_S3_BUCKET?.trim();
 const awsRegion = process.env.AWS_REGION?.trim();
@@ -37,6 +42,26 @@ function loadPublicAssetRewriteEntries(): Array<{ source: string; destination: s
 }
 
 const nextConfig: NextConfig = {
+  /* pg optionally requires `fs` and `pg-native`; resend optionally imports React Email. */
+  serverExternalPackages: ["pg", "resend"],
+  webpack: (config, { isServer, nextRuntime, webpack }) => {
+    config.plugins.push(
+      new webpack.IgnorePlugin({ resourceRegExp: /^pg-native$/ }),
+      new webpack.IgnorePlugin({ resourceRegExp: /^@react-email\/render$/ }),
+    );
+
+    /* The browser and edge compilers also parse instrumentation.ts. */
+    if (!isServer || nextRuntime === "edge") {
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+          /[\\/]start-review-request-processor(?:\.ts)?$/,
+          reviewProcessorStub,
+        ),
+      );
+    }
+
+    return config;
+  },
   experimental: {
     /* Lets the App Router wrap client navigations in `document.startViewTransition`,
        so the crossfade in globals.css runs on route changes. */

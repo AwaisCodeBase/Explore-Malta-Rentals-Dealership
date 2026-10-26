@@ -33,6 +33,15 @@ export async function createCheckoutSession(
   }
 
   const amountCents = toAmountCents(amountEur);
+  const bookingAmounts = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { depositAmount: true, depositMethod: true },
+  });
+  const depositAmountCents =
+    bookingAmounts?.depositMethod === "ONLINE"
+      ? toAmountCents(bookingAmounts.depositAmount.toNumber())
+      : 0;
+  const rentalAmountCents = Math.max(0, amountCents - depositAmountCents);
   const baseUrl = getAppBaseUrl();
 
   // Idempotency: check for an existing pending payment record
@@ -122,6 +131,8 @@ export async function createCheckoutSession(
         stripeCheckoutSessionId: session.id,
         stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
         amountCents,
+        rentalAmountCents,
+        depositAmountCents,
         currency: CURRENCY,
         stripeStatus: "PENDING",
         refundStatus: "NONE",
@@ -139,6 +150,8 @@ export async function createCheckoutSession(
         stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
         stripeStatus: "PENDING",
         amountCents,
+        rentalAmountCents,
+        depositAmountCents,
         updatedAt: new Date(),
       },
     });

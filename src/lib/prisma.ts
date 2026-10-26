@@ -95,6 +95,14 @@ const prismaClient =
     ? globalForPrisma.prisma
     : new PrismaClient({
         adapter,
+        /**
+         * Default maxWait is 2s. Neon can take longer than that to hand out a
+         * connection after a cold start, which surfaces as P2028 before any SQL runs.
+         */
+        transactionOptions: {
+          maxWait: 15_000,
+          timeout: 20_000,
+        },
         log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
       });
 

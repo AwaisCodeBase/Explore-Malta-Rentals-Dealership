@@ -1551,7 +1551,11 @@ async function testBudgetIsSoftAndBetweenEvents() {
   assert.equal(w.store.get("evt_soft1").status, "RETRYABLE_FAILED", "later candidates left for the next run");
 }
 
-/** STATIC — F2: no route-level maxDuration was invented; vercel.json is crons-only. */
+/**
+ * STATIC — F2: no route-level maxDuration was invented.
+ * vercel.json may be `{}` (crons intentionally disabled until production readiness)
+ * or crons-only with `$schema` when schedules are re-enabled.
+ */
 function testNoGuessedPlatformDuration() {
   for (const rel of [
     "src/app/api/admin/webhooks/recovery/route.ts",
@@ -1562,9 +1566,15 @@ function testNoGuessedPlatformDuration() {
   ]) {
     assert.doesNotMatch(read(rel), /export const maxDuration|maxDuration\s*[:=]/, `${rel} must not guess a platform limit`);
   }
-  assert.equal(fs.existsSync(path.join(root, "vercel.json")), true, "Hobby cron config present");
+  assert.equal(fs.existsSync(path.join(root, "vercel.json")), true, "vercel.json present");
   const vercel = JSON.parse(read("vercel.json")) as Record<string, unknown>;
-  assert.deepEqual(Object.keys(vercel).sort(), ["$schema", "crons"], "vercel.json must stay crons-only");
+  const keys = Object.keys(vercel).sort();
+  const cronsDisabled = keys.length === 0;
+  const cronsOnly = keys.join(",") === "$schema,crons";
+  assert.ok(
+    cronsDisabled || cronsOnly,
+    `vercel.json must be empty (crons disabled) or crons-only with $schema; got keys=${JSON.stringify(keys)}`,
+  );
   assert.doesNotMatch(JSON.stringify(vercel), /maxDuration/i);
 }
 

@@ -7,6 +7,8 @@ import {
   type VehicleChangePricing,
 } from "@/lib/admin/bookings/calculate-vehicle-change-price";
 import type {
+  ChangeBookingVehicleExcluded,
+  ChangeBookingVehicleExclusionReason,
   ChangeBookingVehicleFailure,
   ChangeBookingVehicleOption,
   ChangeBookingVehicleOptions,
@@ -20,7 +22,11 @@ import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/record
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import { checkVehicleAvailability } from "@/lib/availability/checkVehicleAvailability";
 import { batchCheckVehicleAvailabilityForList } from "@/lib/availability/batchCheckVehicleAvailabilityForList";
-import { BLOCKING_BOOKING_STATUSES, type AvailabilityDbClient } from "@/lib/availability/types";
+import {
+  BLOCKING_BOOKING_STATUSES,
+  type AvailabilityDbClient,
+  type VehicleAvailabilityResult,
+} from "@/lib/availability/types";
 import { isLicenseAllowedForVehicle } from "@/features/booking-flow/lib/license-categories";
 import {
   colorsMatch,
@@ -424,6 +430,41 @@ function auditNote(
   )}) to ${vehicleName} (${unitText(nextPlate, nextColor)}). ${priceSentence}`;
 }
 
+const EXCLUSION_ORDER: readonly ChangeBookingVehicleExclusionReason[] = [
+  "unavailable",
+  "held",
+  "blocked",
+  "license",
+  "storage",
+  "inactive",
+  "current",
+];
+
+function exclusionReasonFromAvailability(
+  result: VehicleAvailabilityResult | undefined,
+): ChangeBookingVehicleExclusionReason {
+  if (result?.reason?.includes("temporarily reserved")) return "held";
+  if (
+    result?.reason?.includes("not available for the chosen dates") &&
+    (result.conflictingBlocks.length > 0 || result.conflictingReservationHolds.length > 0)
+  ) {
+    return "blocked";
+  }
+  return "unavailable";
+}
+
+function excludedVehicle(
+  vehicle: ReplacementVehicle,
+  reason: ChangeBookingVehicleExclusionReason,
+): ChangeBookingVehicleExcluded {
+  return {
+    id: vehicle.id,
+    name: vehicle.name,
+    vehicleType: vehicle.vehicleType,
+    reason,
+  };
+}
+
 export async function listChangeBookingVehicleOptions(
   bookingId: string,
 ): Promise<ListChangeBookingVehicleOptionsResult> {
@@ -435,23 +476,56 @@ export async function listChangeBookingVehicleOptions(
     return failure("invalid_status", booking.status);
   }
 
-  const candidates = await prisma.vehicle.findMany({
-    where: {
-      isActive: true,
-      catalogStatus: { in: ["AVAILABLE", "BOOKED"] },
-      ...(booking.vehicleId ? { id: { not: booking.vehicleId } } : {}),
-    },
+  const fleet = await prisma.vehicle.findMany({
     select: replacementVehicleSelect,
     orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
   });
 
-  const compatible = candidates.filter((vehicle) => replacementRejection(booking, vehicle) === null);
+  const excluded: ChangeBookingVehicleExcluded[] = [];
+  const compatible: ReplacementVehicle[] = [];
+  for (const vehicle of fleet) {
+    if (booking.vehicleId && vehicle.id === booking.vehicleId) {
+      excluded.push(excludedVehicle(vehicle, "current"));
+      continue;
+    }
+    if (!isBookableReplacementVehicle(vehicle)) {
+      excluded.push(excludedVehicle(vehicle, "inactive"));
+      continue;
+    }
+    if (
+      !isLicenseAllowedForVehicle(
+        booking.customerLicenseCategory,
+        vehicle.vehicleType,
+        vehicle.name,
+        vehicle.engineCc,
+      )
+    ) {
+      excluded.push(excludedVehicle(vehicle, "license"));
+      continue;
+    }
+    if (booking.storageBoxSelected && !vehicle.supportsStorageBox) {
+      excluded.push(excludedVehicle(vehicle, "storage"));
+      continue;
+    }
+    compatible.push(vehicle);
+  }
+
   const availability = await batchCheckVehicleAvailabilityForList(
     compatible.map(toListItem),
     booking.pickupDateTime,
     booking.returnDateTime,
   );
-  const available = compatible.filter((vehicle) => availability.get(vehicle.id)?.isAvailable);
+  const available = compatible.filter((vehicle) => {
+    const result = availability.get(vehicle.id);
+    if (result?.isAvailable) return true;
+    excluded.push(excludedVehicle(vehicle, exclusionReasonFromAvailability(result)));
+    return false;
+  });
+  excluded.sort((left, right) => {
+    const reasonOrder = EXCLUSION_ORDER.indexOf(left.reason) - EXCLUSION_ORDER.indexOf(right.reason);
+    if (reasonOrder !== 0) return reasonOrder;
+    return left.name.localeCompare(right.name);
+  });
   const colorsByVehicle = await batchGetAvailableColorsForVehicles({
     vehicleIds: available.map((vehicle) => vehicle.id),
     requestedStart: booking.pickupDateTime,
@@ -487,8 +561,11 @@ export async function listChangeBookingVehicleOptions(
       returnDateTime: booking.returnDateTime.toISOString(),
       currentSubtotal: booking.subtotal.toNumber(),
       canApplyCatalogPrice: booking.extensions.length === 0,
+      customerLicenseCategory: booking.customerLicenseCategory,
+      storageBoxSelected: booking.storageBoxSelected,
       expectedUpdatedAt: booking.updatedAt.toISOString(),
       vehicles,
+      excluded,
     },
   };
 }

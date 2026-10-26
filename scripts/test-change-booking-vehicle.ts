@@ -378,6 +378,12 @@ async function runDatabaseTests(): Promise<void> {
         ["Black"],
       );
       assert.equal(options.options.canApplyCatalogPrice, true);
+      const reasonFor = (id: string) => options.options.excluded.find((vehicle) => vehicle.id === id)?.reason;
+      assert.equal(reasonFor(source.id), "current");
+      assert.equal(reasonFor(blocked.id), "unavailable");
+      assert.equal(reasonFor(motorcycle.id), "license");
+      assert.equal(reasonFor(inactive.id), "inactive");
+      assert.equal(reasonFor(noBox.id), undefined);
     }
     logPass("options include only compatible models with a free unit");
 
@@ -387,6 +393,10 @@ async function runDatabaseTests(): Promise<void> {
       const ids = storageOptions.options.vehicles.map((vehicle) => vehicle.id);
       assert.equal(ids.includes(noBox.id), false);
       assert.equal(ids.includes(target.id), true);
+      assert.equal(
+        storageOptions.options.excluded.find((vehicle) => vehicle.id === noBox.id)?.reason,
+        "storage",
+      );
     }
     logPass("a storage-box booking hides models that cannot take a storage box");
 

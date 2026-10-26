@@ -1,10 +1,11 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Info, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
 import type {
+  ChangeBookingVehicleExclusionReason,
   ChangeBookingVehicleOptions,
   ChangeBookingVehiclePreview,
 } from "@/lib/admin/bookings/change-booking-vehicle-types";
@@ -41,6 +42,16 @@ function formatSignedEur(amount: number): string {
   return formatted;
 }
 
+const EXCLUSION_REASONS = [
+  "unavailable",
+  "held",
+  "blocked",
+  "license",
+  "storage",
+  "inactive",
+  "current",
+] as const satisfies readonly ChangeBookingVehicleExclusionReason[];
+
 function inputClassName(): string {
   return "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#3a7ca5]/40 focus:ring-2 focus:ring-[#3a7ca5]/15";
 }
@@ -62,6 +73,8 @@ export function AdminBookingChangeVehicleDialog({
   const [preview, setPreview] = useState<ChangeBookingVehiclePreview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewLoadedFor, setPreviewLoadedFor] = useState<string | null>(null);
+  const [criteriaOpen, setCriteriaOpen] = useState(false);
+  const [hiddenOpen, setHiddenOpen] = useState(false);
 
   const selected = useMemo(
     () => options?.vehicles.find((vehicle) => vehicle.id === vehicleId) ?? null,
@@ -76,6 +89,13 @@ export function AdminBookingChangeVehicleDialog({
   const visiblePreview = previewRequestKey && previewLoadedFor === previewRequestKey ? preview : null;
   const visiblePreviewError = previewRequestKey && previewLoadedFor === previewRequestKey ? previewError : null;
   const isPreviewing = previewRequestKey !== null && previewLoadedFor !== previewRequestKey;
+  const hiddenGroups = useMemo(() => {
+    const excluded = options?.excluded ?? [];
+    return EXCLUSION_REASONS.flatMap((reason) => {
+      const vehicles = excluded.filter((vehicle) => vehicle.reason === reason);
+      return vehicles.length > 0 ? [{ reason, vehicles }] : [];
+    });
+  }, [options]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -147,6 +167,25 @@ export function AdminBookingChangeVehicleDialog({
     return () => controller.abort();
   }, [booking.id, color, effectivePriceMode, previewRequestKey, t, vehicleId]);
 
+  function hiddenReasonLabel(reason: ChangeBookingVehicleExclusionReason): string {
+    switch (reason) {
+      case "unavailable":
+        return t("changeVehicle.hiddenReasons.unavailable");
+      case "held":
+        return t("changeVehicle.hiddenReasons.held");
+      case "blocked":
+        return t("changeVehicle.hiddenReasons.blocked");
+      case "license":
+        return t("changeVehicle.hiddenReasons.license");
+      case "storage":
+        return t("changeVehicle.hiddenReasons.storage");
+      case "inactive":
+        return t("changeVehicle.hiddenReasons.inactive");
+      case "current":
+        return t("changeVehicle.hiddenReasons.current");
+    }
+  }
+
   function selectVehicle(nextVehicleId: string) {
     setVehicleId(nextVehicleId);
     setColor("");
@@ -200,9 +239,44 @@ export function AdminBookingChangeVehicleDialog({
           </section>
 
           <section className="rounded-xl border border-slate-200 p-4">
-            <h5 className="text-xs font-bold uppercase tracking-wide text-slate-500">
-              {t("changeVehicle.newTitle")}
-            </h5>
+            <div className="flex items-center justify-between gap-2">
+              <h5 className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                {t("changeVehicle.newTitle")}
+              </h5>
+              <button
+                type="button"
+                aria-expanded={criteriaOpen}
+                aria-controls="change-vehicle-criteria"
+                onClick={() => setCriteriaOpen((open) => !open)}
+                className="inline-flex size-7 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-[#2f6688]"
+                title={t("changeVehicle.criteriaTitle")}
+              >
+                <Info className="size-4" aria-hidden />
+                <span className="sr-only">{t("changeVehicle.criteriaTitle")}</span>
+              </button>
+            </div>
+            {criteriaOpen ? (
+              <div id="change-vehicle-criteria" className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">{t("changeVehicle.criteriaTitle")}</p>
+                <p className="mt-1 text-slate-600">{t("changeVehicle.criteriaIntro")}</p>
+                <ul className="mt-2 list-disc space-y-1 pl-4">
+                  <li>{t("changeVehicle.criteriaActive")}</li>
+                  <li>
+                    {t("changeVehicle.criteriaLicence", {
+                      licence: options?.customerLicenseCategory ?? booking.customerLicenseCategory,
+                    })}
+                  </li>
+                  <li>
+                    {(options?.storageBoxSelected ?? booking.storageBoxSelected)
+                      ? t("changeVehicle.criteriaStorageOn")
+                      : t("changeVehicle.criteriaStorageOff")}
+                  </li>
+                  <li>{t("changeVehicle.criteriaAvailability")}</li>
+                  <li>{t("changeVehicle.criteriaCurrent")}</li>
+                </ul>
+                <p className="mt-2 text-slate-600">{t("changeVehicle.criteriaPrice")}</p>
+              </div>
+            ) : null}
             {isLoadingOptions ? (
               <p className="mt-3 inline-flex items-center gap-2 text-sm text-slate-500">
                 <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -210,8 +284,13 @@ export function AdminBookingChangeVehicleDialog({
               </p>
             ) : null}
             {optionsError ? <p className="mt-3 text-sm text-red-600">{optionsError}</p> : null}
+            {options ? (
+              <p className="mt-3 text-sm text-slate-600">
+                {t("changeVehicle.shownSummary", { shown: options.vehicles.length })}
+              </p>
+            ) : null}
             {options && options.vehicles.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-600">{t("changeVehicle.noAlternatives")}</p>
+              <p className="mt-2 text-sm text-slate-600">{t("changeVehicle.noAlternatives")}</p>
             ) : null}
             {options && options.vehicles.length > 0 ? (
               <div className="mt-3 space-y-3">
@@ -259,6 +338,38 @@ export function AdminBookingChangeVehicleDialog({
             ) : null}
           </section>
         </div>
+
+        {options && hiddenGroups.length > 0 ? (
+          <div className="mt-4">
+            <button
+              type="button"
+              aria-expanded={hiddenOpen}
+              onClick={() => setHiddenOpen((open) => !open)}
+              className="text-sm font-semibold text-[#2f6688] hover:underline"
+            >
+              {t("changeVehicle.hiddenToggle", { hidden: options.excluded.length })}
+            </button>
+            {hiddenOpen ? (
+              <div className="mt-2 max-h-56 space-y-3 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-3">
+                {hiddenGroups.map((group) => (
+                  <div key={group.reason}>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          {hiddenReasonLabel(group.reason)}
+                    </p>
+                    <ul className="mt-1 grid gap-1 sm:grid-cols-2">
+                      {group.vehicles.map((vehicle) => (
+                        <li key={vehicle.id} className="text-sm text-slate-800">
+                          {vehicle.name}
+                          <span className="text-slate-500"> · {vehicle.vehicleType}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <fieldset className="mt-4 space-y-2" disabled={!selected}>
           <legend className="text-xs font-bold uppercase tracking-wide text-slate-500">

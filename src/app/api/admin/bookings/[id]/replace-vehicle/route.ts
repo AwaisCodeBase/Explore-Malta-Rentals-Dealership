@@ -36,7 +36,10 @@ export async function POST(request: Request, context: RouteContext) {
     const result = await replaceBookingVehicle(id, parsed.data, session.id);
     if (!result.ok) {
       return NextResponse.json(
-        { success: false as const, message: replaceBookingVehicleErrorMessage(result.reason) },
+        {
+          success: false as const,
+          message: replaceBookingVehicleErrorMessage(result.reason, result.returnDateTime),
+        },
         { status: replaceBookingVehicleStatusCode(result.reason) },
       );
     }

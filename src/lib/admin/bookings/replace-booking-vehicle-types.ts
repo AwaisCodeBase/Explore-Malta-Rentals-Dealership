@@ -19,6 +19,7 @@ export type ReplaceBookingVehicleFailure = {
   ok: false;
   reason: ReplaceBookingVehicleFailureReason;
   status?: string;
+  returnDateTime?: Date;
 };
 
 export type ReplacementVehicleUnitOption = {

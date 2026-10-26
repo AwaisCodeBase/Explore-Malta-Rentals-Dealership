@@ -138,6 +138,7 @@ function basePricingInput(method: "online" | "in_person") {
 
 function testOnlinePricingIncludesDeposit() {
   const pricing = calculateBookingPrice(basePricingInput("online"));
+  assert.ok(pricing);
   assert.equal(pricing.depositAmount, 250);
   assert.equal(pricing.totalDueOnline, pricing.subtotal + 250);
   assert.equal(pricing.totalDueLater, 0);
@@ -145,6 +146,7 @@ function testOnlinePricingIncludesDeposit() {
 
 function testInPersonPricingKeepsDepositLater() {
   const pricing = calculateBookingPrice(basePricingInput("in_person"));
+  assert.ok(pricing);
   assert.equal(pricing.depositAmount, 250);
   assert.equal(pricing.totalDueOnline, pricing.subtotal);
   assert.equal(pricing.totalDueLater, 250);

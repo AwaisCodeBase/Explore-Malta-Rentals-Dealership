@@ -1002,7 +1002,9 @@ async function handleRefundUpdated(refund: Stripe.Refund): Promise<string> {
   );
 }
 
-function mapStripeRefundReason(reason: Stripe.Refund["reason"] | null | undefined): import("@/generated/prisma").RefundReason {
+function mapStripeRefundReason(
+  reason: Stripe.Refund["reason"] | null | undefined,
+): "DUPLICATE" | "FRAUDULENT" | "REQUESTED_BY_CUSTOMER" {
   switch (reason) {
     case "duplicate":
       return "DUPLICATE";

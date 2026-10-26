@@ -8,6 +8,8 @@
 
 import { randomUUID } from "node:crypto";
 
+import type { Prisma } from "@/generated/prisma";
+
 import {
   assertPaymentAllocationIntegrity,
   assertPurposeRefundFits,
@@ -242,8 +244,8 @@ function defaultDeps(): RecoverTerminalRefundDeps {
                 stripePaymentId,
                 action: args.action,
                 actor: args.actor,
-                oldValue: args.oldValue,
-                newValue: args.newValue,
+                oldValue: args.oldValue as Prisma.InputJsonValue,
+                newValue: args.newValue as Prisma.InputJsonValue,
               },
             });
           },

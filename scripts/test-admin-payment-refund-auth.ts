@@ -53,11 +53,11 @@ async function testRequireAdminApiRole() {
 async function testRefundRouteAuthorization() {
   let refundCalls = 0;
   let paymentLookups = 0;
-  let lastInput: CreateRefundInput | null = null;
+  const capturedInputs: CreateRefundInput[] = [];
 
   const createRefund = async (input: CreateRefundInput): Promise<CreateRefundResult> => {
     refundCalls += 1;
-    lastInput = input;
+    capturedInputs.push(input);
     return {
       ok: true,
       status: "succeeded",
@@ -128,7 +128,7 @@ async function testRefundRouteAuthorization() {
   // ADMIN → proceeds; refund called once with purpose + clientRequestId
   refundCalls = 0;
   paymentLookups = 0;
-  lastInput = null;
+  capturedInputs.length = 0;
   const admin = await handleAdminPaymentRefund(request(), "pay_1", {
     authorize: async () => session("ADMIN", "admin-42"),
     findPaymentBookingId,
@@ -137,9 +137,10 @@ async function testRefundRouteAuthorization() {
   assert.equal(admin.status, 200);
   assert.equal(refundCalls, 1);
   assert.equal(paymentLookups, 1);
-  assert.equal(lastInput?.purpose, "RENTAL");
-  assert.equal(lastInput?.clientRequestId, "client-req-test-001");
-  assert.equal(lastInput?.initiatedBy, "admin:admin-42");
+  assert.equal(capturedInputs.length, 1);
+  assert.equal(capturedInputs[0]?.purpose, "RENTAL");
+  assert.equal(capturedInputs[0]?.clientRequestId, "client-req-test-001");
+  assert.equal(capturedInputs[0]?.initiatedBy, "admin:admin-42");
   assert.deepEqual(await admin.json(), {
     success: true,
     status: "succeeded",

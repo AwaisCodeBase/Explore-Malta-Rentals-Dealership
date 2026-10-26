@@ -3,10 +3,16 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import { WhatsAppIcon } from "@/features/home/components/whatsapp-action-link";
+import { usePathname } from "@/i18n/navigation";
 import { getWhatsAppChatUrl, toWhatsAppDigits } from "@/lib/whatsapp-number";
 
 const DEFAULT_MESSAGE =
   "Hi! I'd like to book a ride / ask about availability in Malta.";
+
+/** Vehicle detail pages have their own sticky Reserve bar; hide the FAB there. */
+function isVehicleDetailPath(pathname: string) {
+  return /^\/vehicles\/[^/]+\/?$/.test(pathname);
+}
 
 function joinClasses(...classes: Array<string | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -14,6 +20,7 @@ function joinClasses(...classes: Array<string | undefined>) {
 
 export function WhatsAppFloatingButton() {
   const t = useTranslations("WhatsApp");
+  const pathname = usePathname();
   const panelId = useId();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -41,6 +48,10 @@ export function WhatsAppFloatingButton() {
       document.removeEventListener("pointerdown", onPointer);
     };
   }, [open]);
+
+  if (isVehicleDetailPath(pathname)) {
+    return null;
+  }
 
   return (
     <div

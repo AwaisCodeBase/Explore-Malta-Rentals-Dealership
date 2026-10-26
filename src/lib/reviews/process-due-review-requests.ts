@@ -121,6 +121,9 @@ async function claimNextDueReviewRequest(
       },
     });
     return updated;
+  }, {
+    maxWait: 15_000,
+    timeout: 10_000,
   });
 }
 

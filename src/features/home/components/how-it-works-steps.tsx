@@ -145,11 +145,11 @@ export function HowItWorksSteps({ steps }: HowItWorksStepsProps) {
   return (
     <div
       ref={containerRef}
-      className="how-it-works-timeline relative mx-auto mt-12 max-w-6xl pl-12 sm:mt-14 md:px-6 md:pl-6 lg:max-w-7xl lg:px-8"
+      className="how-it-works-timeline relative mx-auto mt-12 max-w-6xl px-4 sm:mt-14 md:px-6 lg:max-w-7xl lg:px-8"
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute top-10 bottom-10 left-[1.125rem] w-px bg-white/[0.08] md:left-1/2 md:-translate-x-1/2"
+        className="pointer-events-none absolute top-10 bottom-10 left-1/2 w-px -translate-x-1/2 bg-white/[0.08]"
       >
         <div ref={lineRef} className="how-it-works-timeline__line-fill h-full w-full" />
       </div>
@@ -172,7 +172,7 @@ export function HowItWorksSteps({ steps }: HowItWorksStepsProps) {
                   dotRefs.current[index] = element;
                 }}
                 aria-hidden
-                className="how-it-works-timeline__dot absolute top-8 -left-12 z-10 md:left-1/2 md:-translate-x-1/2"
+                className="how-it-works-timeline__dot absolute top-8 left-1/2 z-10"
               />
 
               <HowItWorksStepAbstract

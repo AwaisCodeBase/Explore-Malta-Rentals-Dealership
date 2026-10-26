@@ -857,6 +857,8 @@ body {
 .how-it-works-timeline__dot {
   width: 0.875rem;
   height: 0.875rem;
+  /* margin centers the dot; avoid translateX so GSAP scale doesn't override it */
+  margin-left: -0.4375rem;
   border-radius: 999px;
   border: 2px solid rgb(255 147 15 / 0.55);
   background: #0a0a0a;
@@ -1801,6 +1803,25 @@ body {
   }
 }
 
+/*
+ * On portrait phones the landscape showroom scene is cover-cropped, which
+ * clips the wall screen (left 45% → 90%) on the right. Zoom into that screen
+ * so the full TV frame fits; keep cover + scale so the film fills it (no gaps).
+ */
+@media (max-width: 767px) {
+  .hero-cinematic__video-scene {
+    top: 32%;
+    left: 50%;
+    width: 200vw;
+    height: auto;
+    min-width: 0;
+    min-height: 0;
+    aspect-ratio: 1672 / 941;
+    /* Wall-screen center ≈ 67.6% x / 46.3% y of the 1672×941 art */
+    transform: translate(-67.6%, -46.3%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-watch-video,
   .hero-watch-video__icon,
@@ -2735,6 +2756,11 @@ html:has(.home-preloader-boundary[data-preloader-active="true"]) {
 }
 
 @media (max-width: 640px) {
+  .landing-preloader__title-base,
+  .landing-preloader__title-fill {
+    font-size: clamp(2.4rem, 8.5vw, 3.25rem);
+  }
+
   .landing-preloader__accent {
     left: clamp(6%, 10vw, 14%);
     opacity: 0.55;

@@ -1,5 +1,5 @@
 {
-  "crons": [
+  "_crons_disabled_until_pro": [
     {
       "path": "/api/cron/review-requests",
       "schedule": "* * * * *"

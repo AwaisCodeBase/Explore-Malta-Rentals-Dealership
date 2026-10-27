@@ -9,6 +9,7 @@ import { randomBytes } from "node:crypto";
 
 import type { BookingStatus, VehicleUnitStatus } from "../src/generated/prisma/index";
 import { calculateVehicleChangePrice } from "../src/lib/admin/bookings/calculate-vehicle-change-price";
+import { resolveHandOverVehicleUnitId } from "../src/lib/admin/bookings/resolve-hand-over-vehicle-unit-id";
 import { isVehicleChangeBookingStatus } from "../src/lib/admin/bookings/vehicle-change-eligibility";
 
 const testSuffix = Date.now().toString(36);
@@ -123,6 +124,32 @@ function runPureTests(): void {
   assert.equal(extended.ok, false);
   if (!extended.ok) assert.equal(extended.reason, "price_mode_unavailable");
   logPass("an extended booking cannot be repriced from the new model");
+
+  assert.equal(
+    resolveHandOverVehicleUnitId({
+      formVehicleUnitId: "old-unit",
+      bookingVehicleUnitId: "new-unit",
+      selectableUnitIds: ["new-unit", "spare-unit"],
+    }),
+    "new-unit",
+  );
+  assert.equal(
+    resolveHandOverVehicleUnitId({
+      formVehicleUnitId: "new-unit",
+      bookingVehicleUnitId: "new-unit",
+      selectableUnitIds: ["new-unit", "spare-unit"],
+    }),
+    "new-unit",
+  );
+  assert.equal(
+    resolveHandOverVehicleUnitId({
+      formVehicleUnitId: "stale-unit",
+      bookingVehicleUnitId: null,
+      selectableUnitIds: ["only-available"],
+    }),
+    "only-available",
+  );
+  logPass("handover form drops a stale unit id after the booked model changes");
 }
 
 async function runDatabaseTests(): Promise<void> {
@@ -703,9 +730,309 @@ async function runDatabaseTests(): Promise<void> {
   }
 }
 
+/**
+ * Dedicated consistency check:
+ * change model → old unit/occupancy released → new model/unit locked →
+ * handover rejects the old unit and accepts the new unit.
+ */
+async function runReleaseAndHandoverConsistencyTest(): Promise<void> {
+  const { prisma } = await import("../src/lib/prisma");
+  const { changeBookingVehicle } = await import("../src/lib/admin/bookings/changeBookingVehicle");
+  const { handOverVehicle } = await import("../src/lib/admin/bookings/lifecycle/handOverVehicle");
+  const { insertBookingOccupancy } = await import("../src/lib/vehicle-unit-occupancy");
+  const { findAvailableVehicleUnits } = await import("../src/lib/vehicle-units/findAvailableVehicleUnits");
+  const { listAdminVehicleUnits } = await import("../src/lib/admin/vehicle-units/listAdminVehicleUnits");
+
+  const vehicleIds: string[] = [];
+  const bookingIds: string[] = [];
+  let adminId: string | null = null;
+
+  async function cleanup(): Promise<void> {
+    if (bookingIds.length > 0) {
+      await prisma.booking.deleteMany({ where: { id: { in: bookingIds } } });
+    }
+    if (vehicleIds.length > 0) {
+      await prisma.vehicle.deleteMany({ where: { id: { in: vehicleIds } } });
+    }
+    if (adminId) {
+      await prisma.adminUser.delete({ where: { id: adminId } }).catch(() => undefined);
+    }
+    await prisma.$disconnect();
+  }
+
+  function plate(prefix: string): string {
+    return `${prefix}${randomBytes(3).toString("hex").toUpperCase()}`.slice(0, 16);
+  }
+
+  try {
+    const admin = await prisma.adminUser.create({
+      data: {
+        name: "Change Release Test",
+        email: `change-release-${testSuffix}@test.local`,
+        role: "STAFF",
+      },
+    });
+    adminId = admin.id;
+
+    const heldSlug = `held-${testSuffix}-${randomBytes(2).toString("hex")}`;
+    const nextSlug = `next-${testSuffix}-${randomBytes(2).toString("hex")}`;
+
+    const heldVehicle = await prisma.vehicle.create({
+      data: {
+        name: `Held Lex Aura ${testSuffix}`,
+        slug: heldSlug,
+        vehicleType: "Scooter",
+        engineCc: 50,
+        baseDailyRate: 30,
+        isActive: true,
+        catalogStatus: "AVAILABLE",
+        units: {
+          create: [
+            {
+              licensePlate: plate("HLD"),
+              color: "Red",
+              status: "RESERVED",
+              isActive: true,
+            },
+          ],
+        },
+      },
+      include: { units: true },
+    });
+    vehicleIds.push(heldVehicle.id);
+    const heldUnit = heldVehicle.units[0];
+    if (!heldUnit) throw new Error("Expected held unit");
+
+    const nextVehicle = await prisma.vehicle.create({
+      data: {
+        name: `Next Blocked Model ${testSuffix}`,
+        slug: nextSlug,
+        vehicleType: "Scooter",
+        engineCc: 50,
+        baseDailyRate: 33,
+        isActive: true,
+        catalogStatus: "AVAILABLE",
+        units: {
+          create: [
+            {
+              licensePlate: plate("NXT"),
+              color: "Orange",
+              status: "AVAILABLE",
+              isActive: true,
+            },
+            {
+              licensePlate: plate("NXB"),
+              color: "Black",
+              status: "MAINTENANCE",
+              isActive: true,
+            },
+          ],
+        },
+      },
+      include: { units: { orderBy: { createdAt: "asc" } } },
+    });
+    vehicleIds.push(nextVehicle.id);
+    const nextUnit = nextVehicle.units.find((unit) => unit.status === "AVAILABLE");
+    if (!nextUnit) throw new Error("Expected available replacement unit");
+
+    const pickup = atUtc(3);
+    const returnAt = atUtc(5);
+    const booking = await prisma.booking.create({
+      data: {
+        bookingReference: `REL-${randomBytes(4).toString("hex").toUpperCase()}`,
+        status: "CONFIRMED",
+        vehicleId: heldVehicle.id,
+        vehicleUnitId: heldUnit.id,
+        vehicleNameSnapshot: heldVehicle.name,
+        vehicleLicensePlateSnapshot: heldUnit.licensePlate,
+        vehicleColorSnapshot: "Red",
+        vehicleType: "Scooter",
+        vehicleTypeSnapshot: "Scooter",
+        pickupDateTime: pickup,
+        returnDateTime: returnAt,
+        actualDurationHours: 48,
+        billableDays: 3,
+        pickupOption: "OFFICE",
+        dropoffOption: "OFFICE",
+        customerFullName: "Release Consistency Customer",
+        customerPhone: "+35699000077",
+        customerEmail: `change-release-${testSuffix}@test.local`,
+        customerNationality: "Maltese",
+        customerDateOfBirth: new Date("1990-01-01"),
+        customerLicenseCategory: "B",
+        depositMethod: "IN_PERSON",
+        depositAmount: 250,
+        baseDailyRateSnapshot: 25,
+        appliedDailyRateSnapshot: 25,
+        rentalCost: 75,
+        subtotal: 75,
+        totalDueOnline: 75,
+        totalDueLater: 250,
+      },
+    });
+    bookingIds.push(booking.id);
+    await insertBookingOccupancy(prisma, {
+      vehicleUnitId: heldUnit.id,
+      pickupAt: pickup,
+      returnAt,
+      bookingId: booking.id,
+    });
+
+    const beforeChange = await prisma.booking.findUniqueOrThrow({
+      where: { id: booking.id },
+      include: { unitOccupancies: true },
+    });
+    assert.equal(beforeChange.vehicleId, heldVehicle.id);
+    assert.equal(beforeChange.vehicleUnitId, heldUnit.id);
+    assert.equal(beforeChange.unitOccupancies[0]?.vehicleUnitId, heldUnit.id);
+
+    const changed = await changeBookingVehicle(
+      booking.id,
+      nextVehicle.id,
+      "Orange",
+      "keep_existing",
+      admin.id,
+      beforeChange.updatedAt,
+    );
+    assert.equal(changed.ok, true);
+
+    const afterChange = await prisma.booking.findUniqueOrThrow({
+      where: { id: booking.id },
+      include: {
+        vehicle: { select: { id: true, name: true } },
+        vehicleUnit: { select: { id: true, vehicleId: true, licensePlate: true, color: true, status: true } },
+        unitOccupancies: true,
+      },
+    });
+
+    assert.equal(afterChange.vehicleId, nextVehicle.id);
+    assert.equal(afterChange.vehicle?.id, nextVehicle.id);
+    assert.equal(afterChange.vehicleNameSnapshot, nextVehicle.name);
+    assert.equal(afterChange.vehicleUnitId, nextUnit.id);
+    assert.equal(afterChange.vehicleUnit?.id, nextUnit.id);
+    assert.equal(afterChange.vehicleUnit?.vehicleId, nextVehicle.id);
+    assert.equal(afterChange.vehicleLicensePlateSnapshot, nextUnit.licensePlate);
+    assert.equal(afterChange.vehicleColorSnapshot, "Orange");
+    assert.notEqual(afterChange.vehicleUnitId, heldUnit.id);
+    assert.notEqual(afterChange.vehicleId, heldVehicle.id);
+
+    assert.equal(afterChange.unitOccupancies.length, 1);
+    assert.equal(afterChange.unitOccupancies[0]?.vehicleUnitId, nextUnit.id);
+    assert.equal(afterChange.unitOccupancies[0]?.bookingId, booking.id);
+
+    const heldOccupancyLeft = await prisma.vehicleUnitOccupancy.count({
+      where: { bookingId: booking.id, vehicleUnitId: heldUnit.id },
+    });
+    assert.equal(heldOccupancyLeft, 0);
+    const heldUnitLinks = await prisma.booking.count({
+      where: { vehicleUnitId: heldUnit.id, status: { in: ["PENDING_PAYMENT", "CONFIRMED", "VEHICLE_HANDED_OVER", "RETURNED"] } },
+    });
+    assert.equal(heldUnitLinks, 0);
+
+    const heldUnitAfter = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: heldUnit.id } });
+    assert.equal(heldUnitAfter.status, "AVAILABLE");
+    assert.equal(heldUnitAfter.vehicleId, heldVehicle.id);
+
+    const nextUnitAfter = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: nextUnit.id } });
+    assert.equal(nextUnitAfter.vehicleId, nextVehicle.id);
+    assert.ok(["AVAILABLE", "RESERVED"].includes(nextUnitAfter.status));
+
+    const heldStillFree = await findAvailableVehicleUnits({
+      vehicleId: heldVehicle.id,
+      requestedStart: pickup,
+      requestedEnd: returnAt,
+    });
+    assert.equal(heldStillFree.some((unit) => unit.id === heldUnit.id), true);
+
+    const nextStillLocked = await findAvailableVehicleUnits({
+      vehicleId: nextVehicle.id,
+      requestedStart: pickup,
+      requestedEnd: returnAt,
+    });
+    assert.equal(nextStillLocked.some((unit) => unit.id === nextUnit.id), false);
+
+    const adminUnits = await listAdminVehicleUnits(afterChange.vehicleId!);
+    assert.equal(adminUnits.every((unit) => unit.vehicleId === nextVehicle.id), true);
+    assert.equal(adminUnits.some((unit) => unit.id === nextUnit.id), true);
+    assert.equal(adminUnits.some((unit) => unit.id === heldUnit.id), false);
+
+    const staleFormUnitId = resolveHandOverVehicleUnitId({
+      formVehicleUnitId: heldUnit.id,
+      bookingVehicleUnitId: afterChange.vehicleUnitId,
+      selectableUnitIds: adminUnits
+        .filter((unit) => unit.isActive && (unit.id === afterChange.vehicleUnitId || unit.status === "AVAILABLE"))
+        .map((unit) => unit.id),
+    });
+    assert.equal(staleFormUnitId, nextUnit.id);
+    assert.notEqual(staleFormUnitId, heldUnit.id);
+
+    const staleHandOver = await handOverVehicle(
+      booking.id,
+      {
+        paymentReceivedAmount: 75,
+        paymentMethod: "CASH",
+        paymentConfirmed: true,
+        securityDepositCollectedAmount: 250,
+        depositCollectedConfirmed: true,
+        handoverDateTime: new Date(),
+        handoverNotes: "stale unit attempt",
+        vehicleUnitId: heldUnit.id,
+      },
+      admin.id,
+    );
+    assert.equal(staleHandOver.ok, false);
+    if (!staleHandOver.ok) {
+      assert.equal(staleHandOver.reason, "vehicle_unit_mismatch");
+    }
+    const stillConfirmed = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
+    assert.equal(stillConfirmed.status, "CONFIRMED");
+    assert.equal(stillConfirmed.vehicleId, nextVehicle.id);
+    assert.equal(stillConfirmed.vehicleUnitId, nextUnit.id);
+
+    const handOver = await handOverVehicle(
+      booking.id,
+      {
+        paymentReceivedAmount: 75,
+        paymentMethod: "CASH",
+        paymentConfirmed: true,
+        securityDepositCollectedAmount: 250,
+        depositCollectedConfirmed: true,
+        handoverDateTime: new Date(),
+        handoverNotes: "handover after model change",
+        vehicleUnitId: nextUnit.id,
+      },
+      admin.id,
+    );
+    assert.equal(handOver.ok, true);
+
+    const afterHandOver = await prisma.booking.findUniqueOrThrow({
+      where: { id: booking.id },
+      include: {
+        vehicleUnit: true,
+        unitOccupancies: true,
+      },
+    });
+    assert.equal(afterHandOver.status, "VEHICLE_HANDED_OVER");
+    assert.equal(afterHandOver.vehicleId, nextVehicle.id);
+    assert.equal(afterHandOver.vehicleUnitId, nextUnit.id);
+    assert.equal(afterHandOver.vehicleUnit?.status, "OUT_WITH_CUSTOMER");
+    assert.equal(afterHandOver.vehicleLicensePlateSnapshot, nextUnit.licensePlate);
+    assert.equal(afterHandOver.unitOccupancies[0]?.vehicleUnitId, nextUnit.id);
+
+    const heldUnitFinal = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: heldUnit.id } });
+    assert.equal(heldUnitFinal.status, "AVAILABLE");
+    assert.equal(heldUnitFinal.vehicleId, heldVehicle.id);
+
+    logPass("vehicle change releases the old unit lock and lets handover use only the new unit");
+  } finally {
+    await cleanup();
+  }
+}
+
 async function main(): Promise<void> {
   runPureTests();
   await runDatabaseTests();
+  await runReleaseAndHandoverConsistencyTest();
   console.log("change booking vehicle tests PASS");
 }
 

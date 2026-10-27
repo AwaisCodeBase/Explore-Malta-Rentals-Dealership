@@ -709,6 +709,376 @@ async function runDatabaseTests(): Promise<void> {
     assert.equal(shortOld.status, "NOT_AVAILABLE");
     logPass("a sub-24-hour rental can be replaced onto another model without repricing");
 
+    const sourceModel = await createVehicle({
+      name: `Consistency Source ${testSuffix}`,
+      baseDailyRate: 28,
+      units: [
+        { color: "Red", status: "OUT_WITH_CUSTOMER" },
+        { color: "Black", status: "AVAILABLE" },
+      ],
+    });
+    const firstModel = await createVehicle({
+      name: `Consistency First ${testSuffix}`,
+      baseDailyRate: 41,
+      units: [
+        { color: "Blue", status: "AVAILABLE" },
+        { color: "White", status: "RESERVED" },
+      ],
+    });
+    const secondModel = await createVehicle({
+      name: `Consistency Second ${testSuffix}`,
+      baseDailyRate: 52,
+      units: [{ color: "Green", status: "AVAILABLE" }],
+    });
+    const sourceUnit = sourceModel.units[0];
+    const sourceSibling = sourceModel.units[1];
+    const firstUnit = firstModel.units[0];
+    const firstSibling = firstModel.units[1];
+    const secondUnit = secondModel.units[0];
+    if (!sourceUnit || !sourceSibling || !firstUnit || !firstSibling || !secondUnit) {
+      throw new Error("Expected consistency units");
+    }
+
+    const consistentPickup = hoursFromNow(-20);
+    const consistentReturn = hoursFromNow(80);
+    const consistentBooking = await createBooking({
+      vehicleId: sourceModel.id,
+      unitId: sourceUnit.id,
+      plate: sourceUnit.licensePlate,
+      color: "Red",
+      name: sourceModel.name,
+      pickup: consistentPickup,
+      returnAt: consistentReturn,
+      unitStatus: "OUT_WITH_CUSTOMER",
+    });
+
+    type ConsistencyLink = {
+      vehicleId: string;
+      unitId: string;
+      name: string;
+      plate: string;
+      color: string;
+      releasedStatus: "AVAILABLE" | "MAINTENANCE" | "NOT_AVAILABLE" | null;
+    };
+
+    async function assertReplacementConsistency(links: ConsistencyLink[]): Promise<void> {
+      const current = links[links.length - 1];
+      if (!current) throw new Error("Expected a current vehicle");
+
+      const saved = await prisma.booking.findUniqueOrThrow({
+        where: { id: consistentBooking.id },
+        include: {
+          vehicle: { select: { id: true, name: true, vehicleType: true, catalogStatus: true } },
+          vehicleUnit: { select: { id: true, vehicleId: true, licensePlate: true, color: true, status: true } },
+          unitOccupancies: { orderBy: { pickupAt: "asc" } },
+          vehicleAssignments: { orderBy: { startedAt: "asc" } },
+        },
+      });
+      const liveUnits = await prisma.vehicleUnit.findMany({
+        where: {
+          id: { in: [sourceUnit.id, sourceSibling.id, firstUnit.id, firstSibling.id, secondUnit.id] },
+        },
+        select: { id: true, vehicleId: true, licensePlate: true, color: true, status: true, isActive: true },
+      });
+      const liveById = new Map(liveUnits.map((unit) => [unit.id, unit]));
+      const vehicles = await prisma.vehicle.findMany({
+        where: { id: { in: [sourceModel.id, firstModel.id, secondModel.id] } },
+        select: { id: true, catalogStatus: true },
+      });
+
+      assert.equal(saved.status, "VEHICLE_HANDED_OVER");
+      assert.equal(saved.pickupDateTime.toISOString(), consistentPickup.toISOString());
+      assert.equal(saved.returnDateTime.toISOString(), consistentReturn.toISOString());
+      assert.equal(saved.vehicleId, current.vehicleId);
+      assert.equal(saved.vehicleUnitId, current.unitId);
+      assert.equal(saved.vehicle?.id, current.vehicleId);
+      assert.equal(saved.vehicle?.name, current.name);
+      assert.equal(saved.vehicle?.catalogStatus, "AVAILABLE");
+      assert.equal(saved.vehicleUnit?.id, current.unitId);
+      assert.equal(saved.vehicleUnit?.vehicleId, current.vehicleId);
+      assert.equal(saved.vehicleUnit?.licensePlate, current.plate);
+      assert.equal(saved.vehicleUnit?.status, "OUT_WITH_CUSTOMER");
+      assert.equal(saved.vehicleNameSnapshot, current.name);
+      assert.equal(saved.vehicleLicensePlateSnapshot, current.plate);
+      assert.equal(saved.vehicleColorSnapshot, current.color);
+      assert.equal(saved.vehicleTypeSnapshot, saved.vehicle?.vehicleType);
+      assert.equal(vehicles.every((vehicle) => vehicle.catalogStatus === "AVAILABLE"), true);
+
+      assert.equal(saved.unitOccupancies.length, links.length);
+      assert.equal(saved.vehicleAssignments.length, links.length);
+      assert.equal(saved.vehicleAssignments.filter((row) => row.endedAt === null).length, 1);
+
+      for (let index = 0; index < links.length; index += 1) {
+        const link = links[index];
+        const occupancy = saved.unitOccupancies[index];
+        const assignment = saved.vehicleAssignments[index];
+        const live = link ? liveById.get(link.unitId) : undefined;
+        if (!link || !occupancy || !assignment || !live) {
+          throw new Error(`Missing consistency row ${index}`);
+        }
+        const next = links[index + 1];
+        assert.equal(live.vehicleId, link.vehicleId);
+        assert.equal(live.licensePlate, link.plate);
+        assert.equal(live.color, link.color);
+        assert.equal(live.isActive, true);
+        assert.equal(live.status, next ? link.releasedStatus : "OUT_WITH_CUSTOMER");
+        assert.notEqual(live.status, next ? "OUT_WITH_CUSTOMER" : link.releasedStatus);
+
+        assert.equal(occupancy.vehicleUnitId, link.unitId);
+        assert.equal(occupancy.bookingId, saved.id);
+        assert.equal(assignment.vehicleId, link.vehicleId);
+        assert.equal(assignment.vehicleUnitId, link.unitId);
+        assert.equal(assignment.vehicleNameSnapshot, link.name);
+        assert.equal(assignment.licensePlateSnapshot, link.plate);
+        assert.equal(assignment.colorSnapshot, link.color);
+        assert.equal(assignment.startedAt.toISOString(), occupancy.pickupAt.toISOString());
+
+        if (index === 0) {
+          assert.equal(occupancy.pickupAt.toISOString(), saved.pickupDateTime.toISOString());
+        }
+        if (!next) {
+          assert.equal(occupancy.returnAt.toISOString(), saved.returnDateTime.toISOString());
+          assert.equal(assignment.endedAt, null);
+          assert.equal(assignment.endDisposition, null);
+        } else {
+          const nextOccupancy = saved.unitOccupancies[index + 1];
+          assert.ok(nextOccupancy);
+          assert.equal(occupancy.returnAt.toISOString(), nextOccupancy.pickupAt.toISOString());
+          assert.equal(assignment.endedAt?.toISOString(), occupancy.returnAt.toISOString());
+          assert.equal(assignment.endDisposition, link.releasedStatus);
+          assert.ok(occupancy.returnAt.getTime() > occupancy.pickupAt.getTime());
+          assert.ok(occupancy.returnAt.getTime() < saved.returnDateTime.getTime());
+        }
+      }
+
+      const coveredUnitIds = new Set(links.map((link) => link.unitId));
+      const strayOccupancy = await prisma.vehicleUnitOccupancy.count({
+        where: {
+          bookingId: saved.id,
+          vehicleUnitId: { notIn: [...coveredUnitIds] },
+        },
+      });
+      assert.equal(strayOccupancy, 0);
+
+      const openPastLocks = await prisma.vehicleUnitOccupancy.count({
+        where: {
+          bookingId: saved.id,
+          vehicleUnitId: { not: current.unitId },
+          returnAt: { gt: new Date() },
+        },
+      });
+      assert.equal(openPastLocks, 0);
+
+      for (const sibling of [
+        { id: sourceSibling.id, vehicleId: sourceModel.id, status: "AVAILABLE" as const },
+        { id: firstSibling.id, vehicleId: firstModel.id, status: "RESERVED" as const },
+      ]) {
+        const siblingUnit = liveById.get(sibling.id);
+        assert.equal(siblingUnit?.vehicleId, sibling.vehicleId);
+        assert.equal(siblingUnit?.status, sibling.status);
+        const siblingLocks = await prisma.vehicleUnitOccupancy.count({ where: { vehicleUnitId: sibling.id } });
+        assert.equal(siblingLocks, 0);
+      }
+
+      const currentFree = await findAvailableVehicleUnits({
+        vehicleId: current.vehicleId,
+        requestedStart: new Date(),
+        requestedEnd: saved.returnDateTime,
+      });
+      assert.equal(currentFree.some((unit) => unit.id === current.unitId), false);
+
+      for (const link of links) {
+        if (link.releasedStatus !== "AVAILABLE") continue;
+        const releasedFree = await findAvailableVehicleUnits({
+          vehicleId: link.vehicleId,
+          requestedStart: new Date(),
+          requestedEnd: saved.returnDateTime,
+        });
+        assert.equal(releasedFree.some((unit) => unit.id === link.unitId), true);
+      }
+    }
+
+    const beforeFirst = await prisma.booking.findUniqueOrThrow({ where: { id: consistentBooking.id } });
+    const firstSwap = await replaceBookingVehicle(
+      consistentBooking.id,
+      replacementInput(beforeFirst, firstUnit.id, "AVAILABLE"),
+      admin.id,
+    );
+    assert.equal(firstSwap.ok, true);
+    await assertReplacementConsistency([
+      {
+        vehicleId: sourceModel.id,
+        unitId: sourceUnit.id,
+        name: sourceModel.name,
+        plate: sourceUnit.licensePlate,
+        color: "Red",
+        releasedStatus: "AVAILABLE",
+      },
+      {
+        vehicleId: firstModel.id,
+        unitId: firstUnit.id,
+        name: firstModel.name,
+        plate: firstUnit.licensePlate,
+        color: "Blue",
+        releasedStatus: null,
+      },
+    ]);
+
+    const beforeSecond = await prisma.booking.findUniqueOrThrow({ where: { id: consistentBooking.id } });
+    const secondSwap = await replaceBookingVehicle(
+      consistentBooking.id,
+      replacementInput(beforeSecond, secondUnit.id, "MAINTENANCE"),
+      admin.id,
+    );
+    assert.equal(secondSwap.ok, true);
+    await assertReplacementConsistency([
+      {
+        vehicleId: sourceModel.id,
+        unitId: sourceUnit.id,
+        name: sourceModel.name,
+        plate: sourceUnit.licensePlate,
+        color: "Red",
+        releasedStatus: "AVAILABLE",
+      },
+      {
+        vehicleId: firstModel.id,
+        unitId: firstUnit.id,
+        name: firstModel.name,
+        plate: firstUnit.licensePlate,
+        color: "Blue",
+        releasedStatus: "MAINTENANCE",
+      },
+      {
+        vehicleId: secondModel.id,
+        unitId: secondUnit.id,
+        name: secondModel.name,
+        plate: secondUnit.licensePlate,
+        color: "Green",
+        releasedStatus: null,
+      },
+    ]);
+
+    const beforeExtend = await prisma.booking.findUniqueOrThrow({
+      where: { id: consistentBooking.id },
+      include: { unitOccupancies: { orderBy: { pickupAt: "asc" } } },
+    });
+    const closedEnds = beforeExtend.unitOccupancies
+      .filter((row) => row.vehicleUnitId !== secondUnit.id)
+      .map((row) => row.returnAt.toISOString());
+    const extendedReturnAt = hoursFromNow(100);
+    const extendedConsistent = await extendBooking(
+      consistentBooking.id,
+      extendedReturnAt,
+      admin.id,
+      beforeExtend.updatedAt,
+    );
+    assert.equal(extendedConsistent.ok, true);
+    const afterExtend = await prisma.booking.findUniqueOrThrow({
+      where: { id: consistentBooking.id },
+      include: {
+        unitOccupancies: { orderBy: { pickupAt: "asc" } },
+        vehicleUnit: { select: { status: true, vehicleId: true } },
+      },
+    });
+    assert.equal(afterExtend.vehicleId, secondModel.id);
+    assert.equal(afterExtend.vehicleUnitId, secondUnit.id);
+    assert.equal(afterExtend.vehicleUnit?.status, "OUT_WITH_CUSTOMER");
+    assert.equal(afterExtend.vehicleUnit?.vehicleId, secondModel.id);
+    assert.equal(afterExtend.returnDateTime.toISOString(), extendedReturnAt.toISOString());
+    const currentAfterExtend = afterExtend.unitOccupancies.find((row) => row.vehicleUnitId === secondUnit.id);
+    assert.equal(currentAfterExtend?.returnAt.toISOString(), extendedReturnAt.toISOString());
+    assert.deepEqual(
+      afterExtend.unitOccupancies
+        .filter((row) => row.vehicleUnitId !== secondUnit.id)
+        .map((row) => row.returnAt.toISOString()),
+      closedEnds,
+    );
+    const sourceAfterExtend = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: sourceUnit.id } });
+    const firstAfterExtend = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: firstUnit.id } });
+    assert.equal(sourceAfterExtend.status, "AVAILABLE");
+    assert.equal(firstAfterExtend.status, "MAINTENANCE");
+
+    const intervalsBeforeReturn = afterExtend.unitOccupancies.map((row) => ({
+      vehicleUnitId: row.vehicleUnitId,
+      pickupAt: row.pickupAt.toISOString(),
+      returnAt: row.returnAt.toISOString(),
+    }));
+    const returnedConsistent = await markVehicleReturned(
+      consistentBooking.id,
+      {
+        returnRecordedAt: new Date(),
+        unitStatusAfterReturn: "AVAILABLE",
+        note: "Consistency return",
+      },
+      admin.id,
+    );
+    assert.equal(returnedConsistent.ok, true);
+    const afterConsistentReturn = await prisma.booking.findUniqueOrThrow({
+      where: { id: consistentBooking.id },
+      include: {
+        unitOccupancies: { orderBy: { pickupAt: "asc" } },
+        vehicleAssignments: { orderBy: { startedAt: "asc" } },
+      },
+    });
+    const sourceAfterReturn = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: sourceUnit.id } });
+    const firstAfterReturn = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: firstUnit.id } });
+    const secondAfterReturn = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: secondUnit.id } });
+    const sourceSiblingAfterReturn = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: sourceSibling.id } });
+    const firstSiblingAfterReturn = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: firstSibling.id } });
+    assert.equal(afterConsistentReturn.status, "RETURNED");
+    assert.equal(afterConsistentReturn.vehicleId, secondModel.id);
+    assert.equal(afterConsistentReturn.vehicleUnitId, secondUnit.id);
+    assert.equal(afterConsistentReturn.vehicleNameSnapshot, secondModel.name);
+    assert.equal(afterConsistentReturn.vehicleLicensePlateSnapshot, secondUnit.licensePlate);
+    assert.deepEqual(
+      afterConsistentReturn.unitOccupancies.map((row) => ({
+        vehicleUnitId: row.vehicleUnitId,
+        pickupAt: row.pickupAt.toISOString(),
+        returnAt: row.returnAt.toISOString(),
+      })),
+      intervalsBeforeReturn,
+    );
+    assert.equal(afterConsistentReturn.vehicleAssignments.length, 3);
+    assert.equal(afterConsistentReturn.vehicleAssignments.filter((row) => row.endedAt === null).length, 1);
+    assert.equal(sourceAfterReturn.status, "AVAILABLE");
+    assert.equal(firstAfterReturn.status, "MAINTENANCE");
+    assert.equal(secondAfterReturn.status, "AVAILABLE");
+    assert.equal(sourceSiblingAfterReturn.status, "AVAILABLE");
+    assert.equal(firstSiblingAfterReturn.status, "RESERVED");
+
+    const completedConsistent = await completeBooking(
+      consistentBooking.id,
+      {
+        depositOutcome: "REFUNDED",
+        depositRefundAmount: 250,
+        unitStatusAfterCompletion: "NOT_AVAILABLE",
+      },
+      admin.id,
+    );
+    assert.equal(completedConsistent.ok, true);
+    const afterConsistentComplete = await prisma.booking.findUniqueOrThrow({
+      where: { id: consistentBooking.id },
+      include: { unitOccupancies: true, vehicleAssignments: { orderBy: { startedAt: "asc" } } },
+    });
+    const sourceAfterComplete = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: sourceUnit.id } });
+    const firstAfterComplete = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: firstUnit.id } });
+    const secondAfterComplete = await prisma.vehicleUnit.findUniqueOrThrow({ where: { id: secondUnit.id } });
+    assert.equal(afterConsistentComplete.status, "COMPLETED");
+    assert.equal(afterConsistentComplete.vehicleId, secondModel.id);
+    assert.equal(afterConsistentComplete.vehicleUnitId, secondUnit.id);
+    assert.equal(afterConsistentComplete.unitOccupancies.length, 0);
+    assert.equal(afterConsistentComplete.vehicleAssignments.length, 3);
+    assert.equal(afterConsistentComplete.vehicleAssignments[0]?.vehicleUnitId, sourceUnit.id);
+    assert.equal(afterConsistentComplete.vehicleAssignments[0]?.endDisposition, "AVAILABLE");
+    assert.equal(afterConsistentComplete.vehicleAssignments[1]?.vehicleUnitId, firstUnit.id);
+    assert.equal(afterConsistentComplete.vehicleAssignments[1]?.endDisposition, "MAINTENANCE");
+    assert.equal(afterConsistentComplete.vehicleAssignments[2]?.vehicleUnitId, secondUnit.id);
+    assert.equal(afterConsistentComplete.vehicleAssignments[2]?.endedAt, null);
+    assert.equal(sourceAfterComplete.status, "AVAILABLE");
+    assert.equal(firstAfterComplete.status, "MAINTENANCE");
+    assert.equal(secondAfterComplete.status, "NOT_AVAILABLE");
+    logPass("chained replacement keeps vehicles, units, dates, and statuses consistent");
+
     const raceBooking = await createBooking({
       vehicleId: nmax.id,
       unitId: currentUnit.id,

@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminBookingChangeVehicleDialog } from "@/features/admin/components/admin-booking-change-vehicle-dialog";
 import { AdminBookingReplaceVehicleDialog } from "@/features/admin/components/admin-booking-replace-vehicle-dialog";
 import { AdminBookingExtendDialog } from "@/features/admin/components/admin-booking-extend-dialog";
+import { resolveHandOverVehicleUnitId } from "@/lib/admin/bookings/resolve-hand-over-vehicle-unit-id";
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import type { AdminVehicleUnitDto } from "@/lib/admin/vehicle-units/types";
 import { buildBookingCancellationEmailDraft } from "@/lib/email/buildBookingCancellationEmailDraft";
@@ -392,6 +393,41 @@ export function AdminBookingLifecycleActions({
     [booking.vehicleUnitId, vehicleUnits],
   );
 
+  const handOverUnitId = useMemo(
+    () =>
+      resolveHandOverVehicleUnitId({
+        formVehicleUnitId: handOverForm.vehicleUnitId,
+        bookingVehicleUnitId: booking.vehicleUnitId,
+        selectableUnitIds: selectableUnits.map((unit) => unit.id),
+      }),
+    [booking.vehicleUnitId, handOverForm.vehicleUnitId, selectableUnits],
+  );
+
+  useEffect(() => {
+    setHandOverForm((current) => {
+      const nextUnitId = booking.vehicleUnitId ?? selectableUnits[0]?.id ?? "";
+      const unitStillValid =
+        Boolean(current.vehicleUnitId) &&
+        selectableUnits.some((unit) => unit.id === current.vehicleUnitId);
+      if (unitStillValid && current.vehicleUnitId === (booking.vehicleUnitId ?? current.vehicleUnitId)) {
+        return current;
+      }
+      return {
+        ...current,
+        paymentReceivedAmount: booking.totalDueLater + booking.totalDueOnline,
+        securityDepositCollectedAmount: booking.depositAmount,
+        vehicleUnitId: nextUnitId,
+      };
+    });
+  }, [
+    booking.depositAmount,
+    booking.totalDueLater,
+    booking.totalDueOnline,
+    booking.vehicleId,
+    booking.vehicleUnitId,
+    selectableUnits,
+  ]);
+
   useEffect(() => {
     const stored = readLifecycleSuccess(booking.id);
     if (stored) {
@@ -578,7 +614,20 @@ export function AdminBookingLifecycleActions({
               effects={t("guidelines.actions.handOver.effects")}
               effectsLabel={t("guidelines.effectsLabel")}
               icon={KeyRound}
-              onAction={() => setActiveDialog("handOver")}
+              onAction={() => {
+                setError(null);
+                setHandOverForm((current) => ({
+                  ...current,
+                  paymentReceivedAmount: booking.totalDueLater + booking.totalDueOnline,
+                  securityDepositCollectedAmount: booking.depositAmount,
+                  handoverDateTime: toLocalDateTimeInputValue(null),
+                  vehicleUnitId:
+                    booking.vehicleUnitId ??
+                    selectableUnits[0]?.id ??
+                    "",
+                }));
+                setActiveDialog("handOver");
+              }}
             />
           ) : null}
           {showExtend ? (
@@ -699,7 +748,7 @@ export function AdminBookingLifecycleActions({
               <label>
                 <span className={labelClassName()}>{t("handOver.vehicleUnit")}</span>
                 <select
-                  value={handOverForm.vehicleUnitId}
+                  value={handOverUnitId}
                   onChange={(event) => setHandOverForm((current) => ({ ...current, vehicleUnitId: event.target.value }))}
                   className={inputClassName()}
                 >
@@ -813,12 +862,12 @@ export function AdminBookingLifecycleActions({
               </button>
               <button
                 type="button"
-                disabled={isSubmitting || !handOverForm.vehicleUnitId}
+                disabled={isSubmitting || !handOverUnitId}
                 onClick={() =>
                   submitAction("hand-over", {
                     ...handOverForm,
                     handoverDateTime: new Date(handOverForm.handoverDateTime).toISOString(),
-                    vehicleUnitId: handOverForm.vehicleUnitId || undefined,
+                    vehicleUnitId: handOverUnitId || undefined,
                   })
                 }
                 className={lifecycleConfirmButtonClassName}

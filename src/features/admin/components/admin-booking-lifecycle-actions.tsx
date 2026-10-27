@@ -3,7 +3,7 @@
 import { ArrowRight, ArrowRightLeft, Bike, CalendarPlus, CheckCircle2, KeyRound, Loader2, RotateCcw, Undo2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AdminBookingChangeVehicleDialog } from "@/features/admin/components/admin-booking-change-vehicle-dialog";
 import { AdminBookingReplaceVehicleDialog } from "@/features/admin/components/admin-booking-replace-vehicle-dialog";
@@ -16,6 +16,36 @@ type AdminBookingLifecycleActionsProps = Readonly<{
   booking: AdminBookingDetail;
   vehicleUnits: AdminVehicleUnitDto[];
 }>;
+
+const LIFECYCLE_SUCCESS_STORAGE_KEY = "admin-booking-lifecycle-success";
+
+function readLifecycleSuccess(bookingId: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(LIFECYCLE_SUCCESS_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { bookingId?: string; message?: string };
+    if (parsed.bookingId !== bookingId || !parsed.message?.trim()) {
+      return null;
+    }
+    window.sessionStorage.removeItem(LIFECYCLE_SUCCESS_STORAGE_KEY);
+    return parsed.message;
+  } catch {
+    return null;
+  }
+}
+
+function storeLifecycleSuccess(bookingId: string, message: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(
+      LIFECYCLE_SUCCESS_STORAGE_KEY,
+      JSON.stringify({ bookingId, message }),
+    );
+  } catch {
+    // Ignore quota / private-mode failures; in-memory toast still runs.
+  }
+}
 
 type ActiveDialog = "handOver" | "markReturned" | "complete" | "cancel" | "restore" | "extend" | "changeVehicle" | "replaceVehicle" | null;
 
@@ -307,6 +337,7 @@ export function AdminBookingLifecycleActions({
   const [cancelDialogStep, setCancelDialogStep] = useState<CancelDialogStep>("details");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const [handOverForm, setHandOverForm] = useState({
     paymentReceivedAmount: booking.totalDueLater + booking.totalDueOnline,
@@ -361,6 +392,24 @@ export function AdminBookingLifecycleActions({
     [booking.vehicleUnitId, vehicleUnits],
   );
 
+  useEffect(() => {
+    const stored = readLifecycleSuccess(booking.id);
+    if (stored) {
+      setSuccessMessage(stored);
+    }
+  }, [booking.id, booking.updatedAt]);
+
+  useEffect(() => {
+    if (!successMessage) return;
+    const timer = window.setTimeout(() => setSuccessMessage(null), 8_000);
+    return () => window.clearTimeout(timer);
+  }, [successMessage]);
+
+  function announceSuccess(message: string) {
+    storeLifecycleSuccess(booking.id, message);
+    setSuccessMessage(message);
+  }
+
   async function submitAction(path: string, body: unknown) {
     setIsSubmitting(true);
     setError(null);
@@ -374,6 +423,7 @@ export function AdminBookingLifecycleActions({
         success: boolean;
         message?: string;
         emailSent?: boolean;
+        booking?: AdminBookingDetail;
       };
       if (!response.ok || !payload.success) {
         setError(payload.message ?? t("genericError"));
@@ -381,6 +431,26 @@ export function AdminBookingLifecycleActions({
       }
       if (path === "cancel" && payload.emailSent === false) {
         window.alert(payload.message ?? t("cancelDialog.emailFailed"));
+      }
+      if (path === "change-vehicle") {
+        announceSuccess(
+          t("changeVehicle.successToast", {
+            vehicle: payload.booking?.vehicleName ?? t("changeVehicle.vehicle"),
+          }),
+        );
+      }
+      if (path === "extend") {
+        const latestExtension = payload.booking?.extensions[0];
+        const amount =
+          latestExtension !== undefined
+            ? new Intl.NumberFormat("en-MT", {
+                style: "currency",
+                currency: "EUR",
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(latestExtension.additionalAmount)
+            : "—";
+        announceSuccess(t("extend.successToast", { amount }));
       }
       setActiveDialog(null);
       setCancelDialogStep("details");
@@ -463,6 +533,19 @@ export function AdminBookingLifecycleActions({
 
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+      {successMessage ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed right-4 bottom-4 z-[60] w-[min(92vw,24rem)] rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-sm text-emerald-950 shadow-lg"
+        >
+          <p className="flex items-center gap-2 font-semibold">
+            <CheckCircle2 className="size-4 shrink-0 text-emerald-600" aria-hidden />
+            {successMessage}
+          </p>
+        </div>
+      ) : null}
+
       <h3 className="text-base font-bold text-slate-950">{t("title")}</h3>
 
       <LifecycleGuideline status={booking.status} t={t} />
@@ -483,6 +566,7 @@ export function AdminBookingLifecycleActions({
               icon={Bike}
               onAction={() => {
                 setError(null);
+                setSuccessMessage(null);
                 setActiveDialog("changeVehicle");
               }}
             />

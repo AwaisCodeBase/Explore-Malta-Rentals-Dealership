@@ -1956,7 +1956,8 @@
           "updatedSubtotalSum": "{current} + {additional} = {total}",
           "unchangedCharges": "Delivery and storage box charges stay as they are.",
           "available": "The assigned unit is free for this extension.",
-          "confirm": "Confirm extension"
+          "confirm": "Confirm extension",
+          "successToast": "Booking extended successfully. Additional amount due: {amount}."
         },
         "changeVehicle": {
           "title": "Change vehicle",
@@ -2013,7 +2014,8 @@
           "duesNote": "Amounts due on this booking are updated. Card payments are not charged or refunded.",
           "preview": "Checking availability and price…",
           "emptySelection": "Choose a replacement model to see the price and unit.",
-          "confirm": "Confirm vehicle change"
+          "confirm": "Confirm vehicle change",
+          "successToast": "Vehicle changed to {vehicle}."
         },
         "replaceVehicle": {
           "title": "Replace vehicle",

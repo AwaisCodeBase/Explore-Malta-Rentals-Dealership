@@ -1,11 +1,12 @@
 "use client";
 
-import { Bell, ChevronDown, ChevronLeft, LogOut } from "lucide-react";
+import { ChevronDown, ChevronLeft, LogOut } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 
+import { AdminNotificationsBell } from "@/features/admin/components/admin-notifications-bell";
 import { LOGO_PATH } from "@/lib/site-brand-copy";
 import type { AdminSessionUser } from "@/lib/admin-auth/types";
 
@@ -95,13 +96,7 @@ export function AdminHeader({ locale, user, title }: AdminHeaderProps) {
       <h1 className="text-xl font-bold tracking-[-0.03em] text-slate-950 sm:text-2xl">{resolvedTitle}</h1>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        <button
-          type="button"
-          className="inline-flex size-10 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition duration-200 hover:border-[#3a7ca5]/25 hover:bg-slate-50 hover:text-[#3a7ca5] hover:shadow-md active:scale-95"
-          aria-label={t("notificationsLabel")}
-        >
-          <Bell className="size-[18px]" aria-hidden />
-        </button>
+        <AdminNotificationsBell locale={locale} />
 
         <div ref={menuRef} className="relative">
           <button

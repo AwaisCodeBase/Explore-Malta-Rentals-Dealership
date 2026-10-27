@@ -2,6 +2,7 @@ import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import { getAdminBookingById } from "@/lib/admin/bookings/getAdminBookingById";
 import type { MarkVehicleReturnedInput } from "@/lib/admin/bookings/lifecycle/booking-lifecycle-schema";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
+import { notifyVehicleReturned } from "@/lib/admin/notifications";
 import { issueLoyaltyCreditForReturnedBooking } from "@/lib/loyalty/loyalty-credit";
 import { prisma } from "@/lib/prisma";
 import { scheduleReviewRequestForReturnedBooking } from "@/lib/reviews/schedule-review-request";
@@ -122,6 +123,8 @@ export async function markVehicleReturned(
   if (!booking) {
     return { ok: false, reason: "not_found" };
   }
+
+  await notifyVehicleReturned(booking, adminUserId);
 
   return { ok: true, booking };
 }

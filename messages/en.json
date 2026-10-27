@@ -1161,6 +1161,17 @@
     "navSectionManagement": "Management",
     "settings": "Settings",
     "notificationsLabel": "Notifications",
+    "notifications": {
+      "loading": "Loading notifications…",
+      "empty": "No notifications yet.",
+      "markRead": "Mark as read",
+      "markAllRead": "Mark all read",
+      "unreadCount": "{count, plural, =0 {No unread} one {# unread} other {# unread}}",
+      "justNow": "Just now",
+      "minutesAgo": "{count, plural, one {# min ago} other {# min ago}}",
+      "hoursAgo": "{count, plural, one {# hr ago} other {# hr ago}}",
+      "daysAgo": "{count, plural, one {# day ago} other {# days ago}}"
+    },
     "loginLogoAlt": "Explore Malta Rentals logo",
     "dashboardTitle": "Overview",
     "dashboardDescription": "Secure admin workspace for Explore Malta Rentals operations. Module sections will be enabled in upcoming releases.",

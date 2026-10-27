@@ -142,6 +142,7 @@ model AdminUser {
   vehicleReplacements BookingVehicleAssignment[]
   initiatedEmails     EmailLog[]
   manualReviewResends BookingReviewRequest[] @relation("BookingReviewRequestManualResend")
+  notificationsCreated AdminNotification[]
 
   @@index([role, isActive])
 }
@@ -346,6 +347,7 @@ model Booking {
   StripePayment                              StripePayment?
   unitOccupancies                            VehicleUnitOccupancy[]
   vehicleAssignments                         BookingVehicleAssignment[]
+  adminNotifications                         AdminNotification[]
 
   @@index([status, createdAt])
   @@index([paymentStatus])
@@ -358,6 +360,28 @@ model Booking {
   @@index([vehicleId])
   @@index([vehicleUnitId])
   @@index([termsVersionId])
+}
+
+/// Shared admin inbox for booking lifecycle events. Read state is shared across admins.
+model AdminNotification {
+  id               String                @id @default(cuid())
+  type             AdminNotificationType
+  title            String
+  message          String
+  bookingId        String?
+  bookingReference String?
+  metadata         Json?
+  isRead           Boolean               @default(false)
+  readAt           DateTime?
+  createdByAdminId String?
+  createdAt        DateTime              @default(now())
+  booking          Booking?              @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  createdByAdmin   AdminUser?            @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([isRead, createdAt])
+  @@index([createdAt])
+  @@index([bookingId])
+  @@index([createdByAdminId])
 }
 
 /// Incremental return-date extension. Amounts are the extra charge at the original booking rate.
@@ -861,6 +885,17 @@ enum ReservationHoldStatus {
 enum AdminRole {
   ADMIN
   STAFF
+}
+
+enum AdminNotificationType {
+  BOOKING_CREATED
+  BOOKING_CANCELLED
+  PAYMENT_RECEIVED
+  BOOKING_EXTENDED
+  VEHICLE_CHANGED
+  VEHICLE_HANDED_OVER
+  VEHICLE_REPLACED
+  VEHICLE_RETURNED
 }
 
 enum HotelSettlementStatus {

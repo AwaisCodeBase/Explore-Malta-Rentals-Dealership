@@ -7,6 +7,7 @@ import { BLOCKING_BOOKING_STATUSES } from "@/lib/availability/types";
 import { getAdminBookingById } from "@/lib/admin/bookings/getAdminBookingById";
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import { calculateBookingExtensionCharge } from "@/lib/admin/bookings/calculate-booking-extension-charge";
+import { notifyBookingExtended } from "@/lib/admin/notifications";
 import { additionalBillableCalendarDays } from "@/lib/admin/bookings/extension-calendar-days";
 import {
   findUnitExtensionConflict,
@@ -359,6 +360,8 @@ export async function extendBooking(
     if (!booking) {
       return { ok: false, reason: "not_found" };
     }
+
+    await notifyBookingExtended(booking, adminUserId);
 
     return { ok: true, booking };
   } catch (error) {

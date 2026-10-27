@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/index";
+import { notifyPaymentReceived } from "@/lib/admin/notifications";
 import { prisma } from "@/lib/prisma";
 import { deliverBookingConfirmationIfNeeded } from "@/lib/email/deliverBookingConfirmation";
 
@@ -7,13 +8,14 @@ type BookingDb = Pick<Prisma.TransactionClient, "booking" | "bookingStatusHistor
 /**
  * Marks the booking paid and promotes a soft-reserve to Confirmed.
  * Safe to call repeatedly: already-confirmed/cancelled bookings are left as-is.
+ * Returns whether payment status newly transitioned to PAID.
  */
 export async function markBookingPaidAndConfirmIfPending(
   db: BookingDb,
   bookingId: string,
   note: string,
-): Promise<void> {
-  await db.booking.updateMany({
+): Promise<{ paymentNewlyPaid: boolean }> {
+  const paid = await db.booking.updateMany({
     where: { id: bookingId, paymentStatus: { not: "PAID" } },
     data: { paymentStatus: "PAID" },
   });
@@ -34,6 +36,8 @@ export async function markBookingPaidAndConfirmIfPending(
       },
     });
   }
+
+  return { paymentNewlyPaid: paid.count > 0 };
 }
 
 /**
@@ -46,6 +50,8 @@ export async function syncPaidBookingAndSendConfirmation(input: {
   paymentIntentId?: string | null;
   checkoutSessionId?: string | null;
 }): Promise<void> {
+  let paymentNewlyPaid = false;
+
   await prisma.$transaction(async (tx) => {
     await tx.stripePayment.updateMany({
       where: { bookingId: input.bookingId, stripeStatus: { not: "SUCCEEDED" } },
@@ -57,12 +63,33 @@ export async function syncPaidBookingAndSendConfirmation(input: {
       },
     });
 
-    await markBookingPaidAndConfirmIfPending(
+    const result = await markBookingPaidAndConfirmIfPending(
       tx,
       input.bookingId,
       "[stripe] Payment succeeded — booking confirmed",
     );
+    paymentNewlyPaid = result.paymentNewlyPaid;
   });
 
   await deliverBookingConfirmationIfNeeded(input.bookingId);
+
+  if (paymentNewlyPaid) {
+    const booking = await prisma.booking.findUnique({
+      where: { id: input.bookingId },
+      select: {
+        id: true,
+        bookingReference: true,
+        customerFullName: true,
+        vehicleNameSnapshot: true,
+      },
+    });
+    if (booking) {
+      await notifyPaymentReceived({
+        bookingId: booking.id,
+        bookingReference: booking.bookingReference,
+        customerFullName: booking.customerFullName,
+        vehicleName: booking.vehicleNameSnapshot,
+      });
+    }
+  }
 }

@@ -2,6 +2,7 @@ import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import { getAdminBookingById } from "@/lib/admin/bookings/getAdminBookingById";
 import type { CancelBookingInput } from "@/lib/admin/bookings/lifecycle/booking-lifecycle-schema";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
+import { notifyBookingCancelled } from "@/lib/admin/notifications";
 import { restoreLoyaltyCreditForUnpaidBooking } from "@/lib/loyalty/loyalty-credit";
 import { deleteOccupancyForBooking } from "@/lib/vehicle-unit-occupancy";
 import { prisma } from "@/lib/prisma";
@@ -93,6 +94,8 @@ export async function cancelBooking(
   if (!booking) {
     return { ok: false, reason: "not_found" };
   }
+
+  await notifyBookingCancelled(booking, adminUserId);
 
   return { ok: true, booking };
 }

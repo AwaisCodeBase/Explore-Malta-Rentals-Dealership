@@ -4,6 +4,7 @@ import { Prisma } from "@/generated/prisma";
 import { stripe } from "./stripe-client";
 import { prisma } from "@/lib/prisma";
 import { writePaymentAuditLog } from "./audit-service";
+import { notifyPaymentReceived } from "@/lib/admin/notifications";
 import { markBookingPaidAndConfirmIfPending } from "./confirm-paid-booking";
 import { deliverBookingConfirmationIfNeeded } from "@/lib/email/deliverBookingConfirmation";
 import { releaseUnpaidBooking } from "@/lib/booking/releaseUnpaidBooking";
@@ -136,7 +137,7 @@ async function confirmBookingPayment(
   amountCents?: number | null,
   currency?: string | null,
 ): Promise<"payment_confirmed" | "already_succeeded"> {
-  return prisma.$transaction(async (tx) => {
+  const outcome = await prisma.$transaction(async (tx) => {
     const stripePayment = await tx.stripePayment.findUnique({ where: { bookingId } });
     if (!stripePayment) {
       throw new Error(`No StripePayment record found for bookingId=${bookingId}`);
@@ -145,12 +146,15 @@ async function confirmBookingPayment(
     if (stripePayment.stripeStatus === "SUCCEEDED") {
       // Success-page fallback may have marked Stripe/payment paid without confirming
       // the booking. Still promote PENDING_PAYMENT → CONFIRMED if needed.
-      await markBookingPaidAndConfirmIfPending(
+      const paidResult = await markBookingPaidAndConfirmIfPending(
         tx,
         bookingId,
         "[stripe-webhook] Payment succeeded — booking confirmed",
       );
-      return "already_succeeded";
+      return {
+        status: "already_succeeded" as const,
+        paymentNewlyPaid: paidResult.paymentNewlyPaid,
+      };
     }
 
     await tx.stripePayment.update({
@@ -171,7 +175,7 @@ async function confirmBookingPayment(
       throw new Error(`Cannot confirm payment for cancelled booking ${bookingId}`);
     }
 
-    await markBookingPaidAndConfirmIfPending(
+    const paidResult = await markBookingPaidAndConfirmIfPending(
       tx,
       bookingId,
       "[stripe-webhook] Payment succeeded — booking confirmed",
@@ -192,8 +196,33 @@ async function confirmBookingPayment(
       });
     }
 
-    return "payment_confirmed";
+    return {
+      status: "payment_confirmed" as const,
+      paymentNewlyPaid: paidResult.paymentNewlyPaid,
+    };
   });
+
+  if (outcome.paymentNewlyPaid) {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        bookingReference: true,
+        customerFullName: true,
+        vehicleNameSnapshot: true,
+      },
+    });
+    if (booking) {
+      await notifyPaymentReceived({
+        bookingId: booking.id,
+        bookingReference: booking.bookingReference,
+        customerFullName: booking.customerFullName,
+        vehicleName: booking.vehicleNameSnapshot,
+      });
+    }
+  }
+
+  return outcome.status;
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<string> {

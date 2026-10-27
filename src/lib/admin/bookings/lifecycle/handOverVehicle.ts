@@ -2,6 +2,10 @@ import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import { getAdminBookingById } from "@/lib/admin/bookings/getAdminBookingById";
 import type { HandOverVehicleInput } from "@/lib/admin/bookings/lifecycle/booking-lifecycle-schema";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
+import {
+  notifyPaymentReceived,
+  notifyVehicleHandedOver,
+} from "@/lib/admin/notifications";
 import { prisma } from "@/lib/prisma";
 import {
   isVehicleUnitOccupancyExclusionError,
@@ -31,6 +35,7 @@ export async function handOverVehicle(
     select: {
       id: true,
       status: true,
+      paymentStatus: true,
       vehicleId: true,
       vehicleUnitId: true,
       pickupDateTime: true,
@@ -137,6 +142,18 @@ export async function handOverVehicle(
   const booking = await getAdminBookingById(bookingId);
   if (!booking) {
     return { ok: false, reason: "not_found" };
+  }
+
+  await notifyVehicleHandedOver(booking, adminUserId);
+
+  if (input.paymentConfirmed && existing.paymentStatus !== "PAID") {
+    await notifyPaymentReceived({
+      bookingId: booking.id,
+      bookingReference: booking.bookingReference,
+      customerFullName: booking.customerFullName,
+      vehicleName: booking.vehicleName,
+      createdByAdminId: adminUserId,
+    });
   }
 
   return { ok: true, booking };

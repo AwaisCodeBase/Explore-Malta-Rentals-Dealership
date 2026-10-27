@@ -148,10 +148,11 @@ export function AdminNotificationsBell({ locale }: AdminNotificationsBellProps) 
         }
       });
 
+      // Server closes cleanly before Vercel maxDuration; reconnect immediately.
       source.addEventListener("reconnect", () => {
         source?.close();
         if (!cancelled) {
-          reconnectTimer = setTimeout(connect, 1000);
+          reconnectTimer = setTimeout(connect, 250);
         }
       });
 
@@ -159,7 +160,7 @@ export function AdminNotificationsBell({ locale }: AdminNotificationsBellProps) 
         source?.close();
         if (!cancelled) {
           setLoading(false);
-          reconnectTimer = setTimeout(connect, 3000);
+          reconnectTimer = setTimeout(connect, 2000);
         }
       };
     };

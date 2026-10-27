@@ -9,15 +9,22 @@ import { AdminUnauthorizedError, requireAdminApi } from "@/lib/admin-auth";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+/**
+ * Vercel Pro serverless max is 300s. Closing slightly earlier lets us send a
+ * clean `reconnect` event instead of a hard "Task timed out after 300 seconds".
+ */
+export const maxDuration = 300;
+
 const HEARTBEAT_MS = 15_000;
-const DB_POLL_MS = 8_000;
-const STREAM_MAX_MS = 5 * 60_000;
+const DB_POLL_MS = 5_000;
+/** Leave ~25s buffer before Vercel's hard kill so reconnect is graceful. */
+const STREAM_MAX_MS = 275_000;
 
 function encodeSse(event: string, data: unknown): Uint8Array {
   return new TextEncoder().encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await requireAdminApi();
   } catch (error) {
@@ -73,6 +80,11 @@ export async function GET() {
         }
       };
 
+      const abort = () => {
+        cleanup();
+      };
+      request.signal.addEventListener("abort", abort);
+
       try {
         const initial = await listAdminNotifications({ limit: 30 });
         for (const item of initial.items) {
@@ -100,8 +112,11 @@ export async function GET() {
         push("heartbeat", { at: new Date().toISOString() });
       }, HEARTBEAT_MS);
 
+      // DB poll covers multi-instance Vercel: in-memory bus only reaches
+      // subscribers on the same function instance.
       pollTimer = setInterval(() => {
         void (async () => {
+          if (closed) return;
           try {
             const newer = await listAdminNotificationsSince(lastSeenAt);
             for (const item of newer) {

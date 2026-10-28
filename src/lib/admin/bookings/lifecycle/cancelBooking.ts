@@ -3,6 +3,7 @@ import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import type { CancelBookingInput } from "@/lib/admin/bookings/lifecycle/booking-lifecycle-schema";
 import { resolvePaymentStatusOnCancel } from "@/lib/admin/bookings/lifecycle/resolve-payment-status-on-cancel";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
+import { notifyBookingCancelled } from "@/lib/admin/notifications";
 import { restoreLoyaltyCreditForUnpaidBooking } from "@/lib/loyalty/loyalty-credit";
 
 /** Mirrors UNPAID_RELEASE_PAYMENT_STATUSES — kept local to avoid importing Prisma-backed release module. */
@@ -166,6 +167,8 @@ export async function cancelBooking(
   if (!booking) {
     return { ok: false, reason: "not_found" };
   }
+
+  await notifyBookingCancelled(booking, adminUserId);
 
   return { ok: true, booking };
 }

@@ -16,6 +16,7 @@ import {
   insertBookingOccupancy,
   isVehicleUnitOccupancyExclusionError,
 } from "@/lib/vehicle-unit-occupancy";
+import { notifyBookingCreated } from "@/lib/admin/notifications";
 import { deliverBookingConfirmationIfNeeded } from "@/lib/email/deliverBookingConfirmation";
 import { prisma } from "@/lib/prisma";
 import { isLicenseAllowedForEngine } from "@/lib/vehicles/engine-cc";
@@ -1021,6 +1022,13 @@ export async function submitBooking(payload: BookingSubmissionInput): Promise<Su
   if (totalDueOnline <= 0) {
     await deliverBookingConfirmationIfNeeded(booking.id);
   }
+
+  await notifyBookingCreated({
+    bookingId: booking.id,
+    bookingReference: booking.bookingReference,
+    customerFullName: validation.data.customer.fullName,
+    vehicleName: resolvedVehicle.vehicleNameSnapshot,
+  });
 
   return {
     bookingReference: booking.bookingReference,

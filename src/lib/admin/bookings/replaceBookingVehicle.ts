@@ -2,6 +2,7 @@ import { Prisma, type BookingStatus, type VehicleUnitStatus } from "@/generated/
 
 import { getAdminBookingById } from "@/lib/admin/bookings/getAdminBookingById";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
+import { notifyVehicleReplaced } from "@/lib/admin/notifications";
 import type {
   ReplaceBookingVehicleFailure,
   ReplaceBookingVehicleInput,
@@ -535,6 +536,9 @@ async function replaceBookingVehicleOnce(
   if (!booking) {
     return failure("not_found");
   }
+
+  await notifyVehicleReplaced(booking, adminUserId);
+
   return { ok: true, booking };
 }
 

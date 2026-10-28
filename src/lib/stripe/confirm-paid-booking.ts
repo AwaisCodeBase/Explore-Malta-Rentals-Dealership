@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/index";
+import { notifyPaymentReceived } from "@/lib/admin/notifications";
 import { prisma } from "@/lib/prisma";
 import { deliverBookingConfirmationIfNeeded } from "@/lib/email/deliverBookingConfirmation";
 import type { SendBookingConfirmationResult } from "@/lib/email/types";
@@ -282,6 +283,26 @@ export async function syncPaidBookingAndSendConfirmation(
     getStripePaymentStatus: async () => stripeStatus,
     deliverConfirmation: deps.deliverConfirmation,
   });
+
+  if (paymentUpdated) {
+    const booking = await prisma.booking.findUnique({
+      where: { id: input.bookingId },
+      select: {
+        id: true,
+        bookingReference: true,
+        customerFullName: true,
+        vehicleNameSnapshot: true,
+      },
+    });
+    if (booking) {
+      await notifyPaymentReceived({
+        bookingId: booking.id,
+        bookingReference: booking.bookingReference,
+        customerFullName: booking.customerFullName,
+        vehicleName: booking.vehicleNameSnapshot,
+      });
+    }
+  }
 
   return { paymentUpdated, stripeStatus, confirmation };
 }

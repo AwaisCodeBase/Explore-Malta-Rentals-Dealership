@@ -19,6 +19,7 @@ import {
   isVehicleChangeBookingStatus,
 } from "@/lib/admin/bookings/vehicle-change-eligibility";
 import { recordBookingStatusChange } from "@/lib/admin/bookings/lifecycle/recordBookingStatusChange";
+import { notifyVehicleChanged } from "@/lib/admin/notifications";
 import type { AdminBookingDetail } from "@/lib/admin/bookings/types";
 import { checkVehicleAvailability } from "@/lib/availability/checkVehicleAvailability";
 import { batchCheckVehicleAvailabilityForList } from "@/lib/availability/batchCheckVehicleAvailabilityForList";
@@ -726,6 +727,9 @@ async function changeBookingVehicleOnce(
   if (!booking) {
     return failure("not_found");
   }
+
+  await notifyVehicleChanged(booking, adminUserId);
+
   return { ok: true, booking };
 }
 

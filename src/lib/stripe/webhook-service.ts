@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { stripe } from "./stripe-client";
 import { prisma } from "@/lib/prisma";
 import { writePaymentAuditLog } from "./audit-service";
+import { notifyPaymentReceived } from "@/lib/admin/notifications";
 import {
   deliverBookingConfirmationIfStripePaymentAllows,
   markBookingPaidAndConfirmIfPending,
@@ -248,7 +249,9 @@ async function confirmBookingPayment(
 ): Promise<
   "payment_confirmed" | "already_succeeded" | "deferred_awaiting_checkout_session"
 > {
-  return prisma.$transaction(async (tx) => {
+  let paymentNewlyPaid = false;
+
+  const status = await prisma.$transaction(async (tx) => {
     const stripePayment = await tx.stripePayment.findUnique({ where: { bookingId } });
     if (!stripePayment) {
       throw new Error(`No StripePayment record found for bookingId=${bookingId}`);
@@ -260,11 +263,12 @@ async function confirmBookingPayment(
     if (isPaidLineageStripePaymentStatus(stripePayment.stripeStatus)) {
       // Success-page / partial-refund path: still promote PENDING_PAYMENT when allowed.
       if (isConfirmationEligibleStripePaymentStatus(stripePayment.stripeStatus)) {
-        await markBookingPaidAndConfirmIfPending(
+        const paidResult = await markBookingPaidAndConfirmIfPending(
           tx,
           bookingId,
           "[stripe-webhook] Payment succeeded — booking confirmed",
         );
+        paymentNewlyPaid = paidResult.paymentStatusUpdated;
       }
       return "already_succeeded";
     }
@@ -348,11 +352,12 @@ async function confirmBookingPayment(
       );
     }
 
-    await markBookingPaidAndConfirmIfPending(
+    const paidResult = await markBookingPaidAndConfirmIfPending(
       tx,
       bookingId,
       "[stripe-webhook] Payment succeeded — booking confirmed",
     );
+    paymentNewlyPaid = paidResult.paymentStatusUpdated;
 
     if (checkoutSessionId) {
       await tx.stripeTransaction.create({
@@ -371,6 +376,28 @@ async function confirmBookingPayment(
 
     return "payment_confirmed";
   });
+
+  if (paymentNewlyPaid) {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        bookingReference: true,
+        customerFullName: true,
+        vehicleNameSnapshot: true,
+      },
+    });
+    if (booking) {
+      await notifyPaymentReceived({
+        bookingId: booking.id,
+        bookingReference: booking.bookingReference,
+        customerFullName: booking.customerFullName,
+        vehicleName: booking.vehicleNameSnapshot,
+      });
+    }
+  }
+
+  return status;
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<string> {

@@ -18,7 +18,10 @@ export async function GET(_request: Request, context: RouteContext) {
     const result = await listReplaceBookingVehicleOptions(id);
     if (!result.ok) {
       return NextResponse.json(
-        { success: false as const, message: replaceBookingVehicleErrorMessage(result.reason) },
+        {
+          success: false as const,
+          message: replaceBookingVehicleErrorMessage(result.reason, result.returnDateTime),
+        },
         { status: replaceBookingVehicleStatusCode(result.reason) },
       );
     }

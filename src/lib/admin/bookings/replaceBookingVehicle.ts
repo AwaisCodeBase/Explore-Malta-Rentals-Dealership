@@ -94,8 +94,14 @@ const DISPOSITION_LABELS: Record<ReplacementUnitDisposition, string> = {
 function failure(
   reason: ReplaceBookingVehicleFailure["reason"],
   status?: BookingStatus,
+  returnDateTime?: Date,
 ): ReplaceBookingVehicleFailure {
-  return status ? { ok: false, reason, status } : { ok: false, reason };
+  return {
+    ok: false,
+    reason,
+    ...(status ? { status } : {}),
+    ...(returnDateTime ? { returnDateTime } : {}),
+  };
 }
 
 function euro(amount: number): string {
@@ -269,7 +275,7 @@ export async function listReplaceBookingVehicleOptions(
 
   const replacementAt = new Date();
   if (!hasRemainingPeriod(replacementAt, booking.returnDateTime)) {
-    return failure("no_remaining_period");
+    return failure("no_remaining_period", undefined, booking.returnDateTime);
   }
 
   const candidates = await prisma.vehicle.findMany({
@@ -392,7 +398,7 @@ async function replaceBookingVehicleOnce(
 
         const replacementAt = new Date();
         if (!hasRemainingPeriod(replacementAt, booking.returnDateTime)) {
-          return failure("no_remaining_period");
+          return failure("no_remaining_period", undefined, booking.returnDateTime);
         }
         if (input.vehicleUnitId === booking.vehicleUnitId) {
           return failure("same_unit");

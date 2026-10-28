@@ -22,6 +22,15 @@ export type ChangeBookingVehicleColorOption = {
   availableUnitCount: number;
 };
 
+export type ChangeBookingVehicleExclusionReason =
+  | "current"
+  | "unavailable"
+  | "held"
+  | "blocked"
+  | "license"
+  | "storage"
+  | "inactive";
+
 export type ChangeBookingVehicleOption = {
   id: string;
   name: string;
@@ -35,6 +44,13 @@ export type ChangeBookingVehicleOption = {
   colors: ChangeBookingVehicleColorOption[];
 };
 
+export type ChangeBookingVehicleExcluded = {
+  id: string;
+  name: string;
+  vehicleType: VehicleType;
+  reason: ChangeBookingVehicleExclusionReason;
+};
+
 export type ChangeBookingVehicleOptions = {
   bookingReference: string;
   currentVehicleId: string | null;
@@ -46,8 +62,11 @@ export type ChangeBookingVehicleOptions = {
   returnDateTime: string;
   currentSubtotal: number;
   canApplyCatalogPrice: boolean;
+  customerLicenseCategory: string;
+  storageBoxSelected: boolean;
   expectedUpdatedAt: string;
   vehicles: ChangeBookingVehicleOption[];
+  excluded: ChangeBookingVehicleExcluded[];
 };
 
 export type ChangeBookingVehiclePreview = {

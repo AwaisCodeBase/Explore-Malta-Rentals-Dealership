@@ -1,3 +1,4 @@
+import { formatMaltaDateTime } from "@/lib/format-malta-datetime";
 import type { ReplaceBookingVehicleFailureReason } from "@/lib/admin/bookings/replace-booking-vehicle-types";
 
 export function replaceBookingVehicleStatusCode(reason: ReplaceBookingVehicleFailureReason): number {
@@ -6,14 +7,22 @@ export function replaceBookingVehicleStatusCode(reason: ReplaceBookingVehicleFai
   return 409;
 }
 
-export function replaceBookingVehicleErrorMessage(reason: ReplaceBookingVehicleFailureReason): string {
+export function replaceBookingVehicleErrorMessage(
+  reason: ReplaceBookingVehicleFailureReason,
+  returnDateTime?: Date,
+): string {
   switch (reason) {
     case "no_availability":
     case "vehicle_not_found":
       return "The selected replacement vehicle is no longer available.";
+    case "no_remaining_period": {
+      const when = returnDateTime ? formatMaltaDateTime(returnDateTime.toISOString()) : null;
+      return when
+        ? `The scheduled return (${when}) has already passed, so there is no remaining rental period to assign another bike.`
+        : "The scheduled return has already passed, so there is no remaining rental period to assign another bike.";
+    }
     case "invalid_status":
     case "missing_vehicle_unit":
-    case "no_remaining_period":
       return "This booking is no longer in an active handed-over state.";
     case "current_unit_changed":
       return "The vehicle assigned to this booking has changed. Refresh and try again.";
